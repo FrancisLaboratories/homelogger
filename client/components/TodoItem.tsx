@@ -1,6 +1,6 @@
 import Form from 'react-bootstrap/Form';
 import ListGroup from 'react-bootstrap/ListGroup';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { SERVER_URL } from "@/pages/_app";
 
 interface TodoItemProps {
@@ -8,17 +8,24 @@ interface TodoItemProps {
     label: string;
     checked: boolean;
     onDelete: (id: string) => void;
+    onToggle?: (id: string, checked: boolean) => void;
     applianceId?: number;
     spaceType?: string;
     sourceLabel?: string;
     createdAt?: string;
 }
 
-const TodoItem: React.FC<TodoItemProps> = ({ id, label, checked, onDelete, applianceId, spaceType, sourceLabel, createdAt }) => {
+const TodoItem: React.FC<TodoItemProps> = ({ id, label, checked, onDelete, onToggle, applianceId, spaceType, sourceLabel, createdAt }) => {
     const [isChecked, setIsChecked] = useState<boolean>(checked);
 
+    useEffect(() => {
+        setIsChecked(checked);
+    }, [checked]);
+
     const handleCheckboxChange = async () => {
-        setIsChecked(!isChecked);
+        const newChecked = !isChecked;
+        setIsChecked(newChecked);
+        if (onToggle) onToggle(id, newChecked);
 
         try {
             const response = await fetch(SERVER_URL + `/todo/update/${id}`, {
@@ -26,7 +33,7 @@ const TodoItem: React.FC<TodoItemProps> = ({ id, label, checked, onDelete, appli
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ checked: !isChecked }),
+                body: JSON.stringify({ checked: newChecked }),
             });
 
             if (!response.ok) {

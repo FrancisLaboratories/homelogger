@@ -120,6 +120,10 @@ const HomePage: React.FC = () => {
     setTodos((prevTodos) => prevTodos.filter((todo) => String(todo.id) !== id));
   };
 
+  const handleToggleTodo = (id: string, checked: boolean) => {
+    setTodos((prevTodos) => prevTodos.map(t => (String(t.id) === String(id) ? { ...t, checked } : t)));
+  };
+
   return (
     <Container>
       <MyNavbar />
@@ -180,7 +184,7 @@ const HomePage: React.FC = () => {
               <React.Fragment key={k}>
                 <ListGroup.Item className="fw-bold">{k}</ListGroup.Item>
                 {groups[k].slice().sort(comparator).map((todo) => (
-                  <TodoItem key={String(todo.id)} id={String(todo.id)} label={todo.label} checked={todo.checked} onDelete={handleDeleteTodo} applianceId={todo.applianceId || undefined} spaceType={todo.spaceType || undefined} sourceLabel={todo.sourceLabel || undefined} createdAt={todo.createdAt || todo.CreatedAt || todo.created_at || undefined} />
+                  <TodoItem key={String(todo.id)} id={String(todo.id)} label={todo.label} checked={todo.checked} onDelete={handleDeleteTodo} onToggle={handleToggleTodo} applianceId={todo.applianceId || undefined} spaceType={todo.spaceType || undefined} sourceLabel={todo.sourceLabel || undefined} createdAt={todo.createdAt || todo.CreatedAt || todo.created_at || undefined} />
                 ))}
               </React.Fragment>
             ));
@@ -188,7 +192,7 @@ const HomePage: React.FC = () => {
 
           const sorted = filtered.slice().sort(comparator);
           return sorted.map((todo, index) => (
-            <TodoItem key={index} id={String(todo.id)} label={todo.label} checked={todo.checked} onDelete={handleDeleteTodo} applianceId={todo.applianceId || undefined} spaceType={todo.spaceType || undefined} sourceLabel={todo.sourceLabel || undefined} createdAt={todo.createdAt || todo.CreatedAt || todo.created_at || undefined} />
+            <TodoItem key={index} id={String(todo.id)} label={todo.label} checked={todo.checked} onDelete={handleDeleteTodo} onToggle={handleToggleTodo} applianceId={todo.applianceId || undefined} spaceType={todo.spaceType || undefined} sourceLabel={todo.sourceLabel || undefined} createdAt={todo.createdAt || todo.CreatedAt || todo.created_at || undefined} />
           ));
         })()}
       </ListGroup>

@@ -118,6 +118,10 @@ const TodosSection: React.FC<Props> = ({applianceId, spaceType}) => {
         setTodos(prev => prev.filter(t => t.id !== id));
     };
 
+    const handleToggle = (id: string, checked: boolean) => {
+        setTodos(prev => prev.map(t => (String(t.id) === String(id) ? { ...t, checked } : t)));
+    };
+
     return (
         <Card>
             <Card.Body>
@@ -181,7 +185,7 @@ const TodosSection: React.FC<Props> = ({applianceId, spaceType}) => {
                                     <React.Fragment key={k}>
                                         <ListGroup.Item className="fw-bold">{k}</ListGroup.Item>
                                         {groups[k].slice().sort(comparator).map((t: any) => (
-                                            <TodoItem key={t.id} id={t.id} label={t.label} checked={t.checked} onDelete={handleDelete} applianceId={t.applianceId} spaceType={t.spaceType} sourceLabel={t.sourceLabel} createdAt={t.createdAt || t.CreatedAt || t.created_at} />
+                                            <TodoItem key={t.id} id={t.id} label={t.label} checked={t.checked} onDelete={handleDelete} onToggle={handleToggle} applianceId={t.applianceId} spaceType={t.spaceType} sourceLabel={t.sourceLabel} createdAt={t.createdAt || t.CreatedAt || t.created_at} />
                                         ))}
                                     </React.Fragment>
                                 ));
@@ -189,7 +193,7 @@ const TodosSection: React.FC<Props> = ({applianceId, spaceType}) => {
 
                             const sorted = filtered.slice().sort(comparator);
                             return sorted.map((t: any) => (
-                                <TodoItem key={t.id} id={t.id} label={t.label} checked={t.checked} onDelete={handleDelete} applianceId={t.applianceId} spaceType={t.spaceType} sourceLabel={t.sourceLabel} createdAt={t.createdAt || t.CreatedAt || t.created_at} />
+                                <TodoItem key={t.id} id={t.id} label={t.label} checked={t.checked} onDelete={handleDelete} onToggle={handleToggle} applianceId={t.applianceId} spaceType={t.spaceType} sourceLabel={t.sourceLabel} createdAt={t.createdAt || t.CreatedAt || t.created_at} />
                             ));
                         })()}
                     </ListGroup>
