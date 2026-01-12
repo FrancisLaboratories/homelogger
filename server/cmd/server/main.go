@@ -16,10 +16,8 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/masoncfrancis/homelogger/server/internal/database"
 	"github.com/masoncfrancis/homelogger/server/internal/models"
+	"github.com/masoncfrancis/homelogger/server/internal/version"
 )
-
-// Version is the application version. It can be overridden at build time using -ldflags "-X main.Version=..."
-var Version = "v0.1.2"
 
 var backupMu sync.Mutex
 
@@ -29,7 +27,7 @@ func main() {
 	shortV := flag.Bool("v", false, "Print version and exit (shorthand)")
 	flag.Parse()
 	if (showVersion != nil && *showVersion) || (shortV != nil && *shortV) {
-		fmt.Println(Version)
+		fmt.Println(version.Version)
 		os.Exit(0)
 	}
 
@@ -72,7 +70,7 @@ func main() {
 
 		status := fiber.Map{
 			"status":  "ok",
-			"version": Version,
+			"version": version.Version,
 			"db":      dbStatus,
 		}
 
@@ -899,6 +897,6 @@ func main() {
 		return c.SendStream(pr)
 	})
 
-	fmt.Printf("Starting HomeLogger Server %s on port 8083\n", Version)
+	fmt.Printf("Starting HomeLogger Server %s on port 8083\n", version.Version)
 	app.Listen(":8083")
 }

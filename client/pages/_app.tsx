@@ -1,5 +1,6 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
 import type { AppProps } from 'next/app'
+import { APP_VERSION } from '../version'
 
 if (!process.env.NEXT_PUBLIC_SERVER_URL) {
   throw new Error('NEXT_PUBLIC_SERVER_URL environment variable is not set, and is required.');
@@ -14,7 +15,7 @@ export default function App({ Component, pageProps }: AppProps) {
       <Component {...pageProps} />
       <footer style={{padding: '12px 0', marginTop: '24px'}}>
         <div style={{textAlign: 'center', color: '#6c757d', fontSize: '0.9rem'}}>
-          HomeLogger v0.1.2 — <a href="https://github.com/FrancisLaboratories/homelogger" target="_blank" rel="noopener noreferrer" style={{display: 'inline-flex', alignItems: 'center', color: '#6c757d', textDecoration: 'none'}}>
+          HomeLogger v{APP_VERSION} — <a href="https://github.com/FrancisLaboratories/homelogger" target="_blank" rel="noopener noreferrer" style={{display: 'inline-flex', alignItems: 'center', color: '#6c757d', textDecoration: 'none'}}>
             <img src="/github.png" alt="GitHub" style={{width: 16, height: 16, marginLeft: 6}} />
           </a>
         </div>
