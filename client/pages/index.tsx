@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { Container } from 'react-bootstrap';
+import { Container, Form } from 'react-bootstrap';
 import "bootstrap-icons/font/bootstrap-icons.css";
 import MyNavbar from '../components/Navbar';
 import ListGroup from 'react-bootstrap/ListGroup';
@@ -25,6 +25,8 @@ type Todo = {
 
 const HomePage: React.FC = () => {
   const [todos, setTodos] = useState<Todo[]>([]);
+  const [sortOption, setSortOption] = useState<string>('created_desc');
+  const [filterOption, setFilterOption] = useState<string>('all');
 
   useEffect(() => {
     const fetchTodos = async () => {
@@ -95,10 +97,50 @@ const HomePage: React.FC = () => {
       <MyNavbar />
       <h4 id='maintext'>To-dos:</h4>
 
+      <div style={{display: 'flex', gap: '8px', marginBottom: '8px'}}>
+        <Form.Select aria-label="Sort todos" value={sortOption} onChange={(e) => setSortOption(e.target.value)} style={{maxWidth: '220px'}}>
+          <option value="created_desc">Created (newest)</option>
+          <option value="created_asc">Created (oldest)</option>
+          <option value="label_asc">Label (A - Z)</option>
+          <option value="label_desc">Label (Z - A)</option>
+        </Form.Select>
+
+        <Form.Select aria-label="Filter todos" value={filterOption} onChange={(e) => setFilterOption(e.target.value)} style={{maxWidth: '180px'}}>
+          <option value="all">All</option>
+          <option value="completed">Completed</option>
+          <option value="not_completed">Not completed</option>
+        </Form.Select>
+      </div>
+
       <ListGroup>
-        {todos.map((todo, index) => (
-          <TodoItem key={index} id={String(todo.id)} label={todo.label} checked={todo.checked} onDelete={handleDeleteTodo} applianceId={todo.applianceId || undefined} spaceType={todo.spaceType || undefined} sourceLabel={todo.sourceLabel || undefined} createdAt={todo.createdAt || todo.CreatedAt || todo.created_at || undefined} />
-        ))}
+        {(() => {
+          const filtered = todos.filter((t) => {
+            if (filterOption === 'all') return true;
+            if (filterOption === 'completed') return !!t.checked;
+            if (filterOption === 'not_completed') return !t.checked;
+            return true;
+          });
+
+          const sorted = filtered.slice().sort((a, b) => {
+            const sa = (a.label || '').toString();
+            const sb = (b.label || '').toString();
+
+            const ca = a.createdAt || a.CreatedAt || a.created_at || null;
+            const cb = b.createdAt || b.CreatedAt || b.created_at || null;
+
+            if (sortOption === 'label_asc') return sa.localeCompare(sb);
+            if (sortOption === 'label_desc') return sb.localeCompare(sa);
+
+            const da = ca ? new Date(ca).getTime() : 0;
+            const db = cb ? new Date(cb).getTime() : 0;
+            if (sortOption === 'created_asc') return da - db || sa.localeCompare(sb);
+            return db - da || sa.localeCompare(sb);
+          });
+
+          return sorted.map((todo, index) => (
+            <TodoItem key={index} id={String(todo.id)} label={todo.label} checked={todo.checked} onDelete={handleDeleteTodo} applianceId={todo.applianceId || undefined} spaceType={todo.spaceType || undefined} sourceLabel={todo.sourceLabel || undefined} createdAt={todo.createdAt || todo.CreatedAt || todo.created_at || undefined} />
+          ));
+        })()}
       </ListGroup>
       <i className="bi bi-plus-square-fill" onClick={handleAddTodo} style={{ fontSize: '2rem', cursor: "pointer" }}></i>
     </Container>
