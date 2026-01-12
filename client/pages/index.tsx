@@ -27,6 +27,7 @@ const HomePage: React.FC = () => {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [sortOption, setSortOption] = useState<string>('created_desc');
   const [filterOption, setFilterOption] = useState<string>('not_completed');
+  const [groupBySource, setGroupBySource] = useState<boolean>(false);
 
   const prettySpace = (s?: string | null) => {
     if (!s) return null;
@@ -46,8 +47,10 @@ const HomePage: React.FC = () => {
     try {
       const savedSort = localStorage.getItem('homelogger_todo_sort');
       const savedFilter = localStorage.getItem('homelogger_todo_filter');
+      const savedGroup = localStorage.getItem('homelogger_todo_group');
       if (savedSort) setSortOption(savedSort);
       if (savedFilter) setFilterOption(savedFilter);
+      if (savedGroup) setGroupBySource(savedGroup === 'true');
     } catch (e) {
       // ignore
     }
@@ -128,7 +131,6 @@ const HomePage: React.FC = () => {
           <option value="created_asc">Created (oldest)</option>
           <option value="label_asc">Label (A - Z)</option>
           <option value="label_desc">Label (Z - A)</option>
-          <option value="group_source">Group by appliance / space</option>
         </Form.Select>
 
         <Form.Select aria-label="Filter todos" value={filterOption} onChange={(e) => { setFilterOption(e.target.value); try { localStorage.setItem('homelogger_todo_filter', e.target.value); } catch {} }} style={{maxWidth: '180px'}}>
@@ -136,6 +138,8 @@ const HomePage: React.FC = () => {
           <option value="completed">Completed</option>
           <option value="not_completed">Not completed</option>
         </Form.Select>
+
+        <Form.Check type="checkbox" label="Group by appliance / space" checked={groupBySource} onChange={(e) => { setGroupBySource(e.target.checked); try { localStorage.setItem('homelogger_todo_group', e.target.checked ? 'true' : 'false'); } catch {} }} style={{alignSelf: 'center', marginLeft: '8px'}} />
       </div>
 
       <ListGroup>
@@ -147,7 +151,7 @@ const HomePage: React.FC = () => {
             return true;
           });
 
-          const sorted = filtered.slice().sort((a, b) => {
+          const comparator = (a: Todo, b: Todo) => {
             const sa = (a.label || '').toString();
             const sb = (b.label || '').toString();
 
@@ -161,11 +165,11 @@ const HomePage: React.FC = () => {
             const db = cb ? new Date(cb).getTime() : 0;
             if (sortOption === 'created_asc') return da - db || sa.localeCompare(sb);
             return db - da || sa.localeCompare(sb);
-          });
+          };
 
-          if (sortOption === 'group_source') {
+          if (groupBySource) {
             const groups: Record<string, Todo[]> = {};
-            sorted.forEach((t) => {
+            filtered.forEach((t) => {
               const key = t.sourceLabel || prettySpace(t.spaceType || null) || 'General';
               if (!groups[key]) groups[key] = [];
               groups[key].push(t);
@@ -175,13 +179,14 @@ const HomePage: React.FC = () => {
             return keys.map((k) => (
               <React.Fragment key={k}>
                 <ListGroup.Item className="fw-bold">{k}</ListGroup.Item>
-                {groups[k].map((todo, index) => (
+                {groups[k].slice().sort(comparator).map((todo) => (
                   <TodoItem key={String(todo.id)} id={String(todo.id)} label={todo.label} checked={todo.checked} onDelete={handleDeleteTodo} applianceId={todo.applianceId || undefined} spaceType={todo.spaceType || undefined} sourceLabel={todo.sourceLabel || undefined} createdAt={todo.createdAt || todo.CreatedAt || todo.created_at || undefined} />
                 ))}
               </React.Fragment>
             ));
           }
 
+          const sorted = filtered.slice().sort(comparator);
           return sorted.map((todo, index) => (
             <TodoItem key={index} id={String(todo.id)} label={todo.label} checked={todo.checked} onDelete={handleDeleteTodo} applianceId={todo.applianceId || undefined} spaceType={todo.spaceType || undefined} sourceLabel={todo.sourceLabel || undefined} createdAt={todo.createdAt || todo.CreatedAt || todo.created_at || undefined} />
           ));
