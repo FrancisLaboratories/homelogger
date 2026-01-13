@@ -58,7 +58,7 @@ const AddApplianceModal: React.FC<AddApplianceModalProps> = ({show, handleClose,
                         <Form.Label>Appliance name</Form.Label>
                         <Form.Control
                             type="text"
-                            placeholder="Enter appliance name..."
+                            placeholder="e.g. Kitchen Refrigerator, Upstairs Vacuum..."
                             value={applianceName}
                             onChange={(e) => setApplianceName(e.target.value)}
                         />
@@ -66,23 +66,17 @@ const AddApplianceModal: React.FC<AddApplianceModalProps> = ({show, handleClose,
                     <Form.Group controlId="formType">
                         <Form.Label>Type</Form.Label>
                         <Form.Control
-                            as="select"
+                            type="text"
+                            placeholder="e.g. Refrigerator, Oven, Washer..."
                             value={type}
                             onChange={(e) => setType(e.target.value)}
-                        >
-                            <option disabled={true} value="">Click to select appliance type...</option>
-                            <option value="Washer">Washer</option>
-                            <option value="Dryer">Dryer</option>
-                            <option value="Refrigerator">Refrigerator</option>
-                            <option value="Stove/Oven">Stove/Oven</option>
-                            <option value="Microwave">Microwave</option>
-                        </Form.Control>
+                        />
                     </Form.Group>
                     <Form.Group controlId="formLocation">
                         <Form.Label>Location</Form.Label>
                         <Form.Control
                             type="text"
-                            placeholder="Enter location..."
+                            placeholder="e.g. Living Room, Kitchen..."
                             value={location}
                             onChange={(e) => setLocation(e.target.value)}
                         />
@@ -91,7 +85,7 @@ const AddApplianceModal: React.FC<AddApplianceModalProps> = ({show, handleClose,
                         <Form.Label>Manufacturer</Form.Label>
                         <Form.Control
                             type="text"
-                            placeholder="Enter manufacturer..."
+                            placeholder="e.g. Whirlpool, Samsung, LG..."
                             value={manufacturer}
                             onChange={(e) => setManufacturer(e.target.value)}
                         />
@@ -100,7 +94,7 @@ const AddApplianceModal: React.FC<AddApplianceModalProps> = ({show, handleClose,
                         <Form.Label>Model Number</Form.Label>
                         <Form.Control
                             type="text"
-                            placeholder="Enter model number..."
+                            placeholder="e.g. WRX735SDHZ, RF28R7351SG..."
                             value={modelNumber}
                             onChange={(e) => setModelNumber(e.target.value)}
                         />
@@ -109,7 +103,7 @@ const AddApplianceModal: React.FC<AddApplianceModalProps> = ({show, handleClose,
                         <Form.Label>Serial Number</Form.Label>
                         <Form.Control
                             type="text"
-                            placeholder="Enter serial number..."
+                            placeholder="e.g. 12345ABC, SN987654321..."
                             value={serialNumber}
                             onChange={(e) => setSerialNumber(e.target.value)}
                         />
@@ -118,7 +112,7 @@ const AddApplianceModal: React.FC<AddApplianceModalProps> = ({show, handleClose,
                         <Form.Label>Year Purchased</Form.Label>
                         <Form.Control
                             type="text"
-                            placeholder="Enter year purchased..."
+                            placeholder="e.g. 2020, 2021..."
                             value={yearPurchased}
                             onChange={(e) => setYearPurchased(e.target.value)}
                         />
@@ -127,7 +121,7 @@ const AddApplianceModal: React.FC<AddApplianceModalProps> = ({show, handleClose,
                         <Form.Label>Purchase Price</Form.Label>
                         <Form.Control
                             type="text"
-                            placeholder="Enter purchase price..."
+                            placeholder="e.g. 499.99, 1299.00..."
                             value={purchasePrice}
                             onChange={(e) => setPurchasePrice(e.target.value)}
                         />
