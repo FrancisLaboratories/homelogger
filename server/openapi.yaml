@@ -860,3 +860,193 @@ paths:
                   error:
                     type: string
                     example: "File not found"
+  /notes:
+    get:
+      summary: Get notes (optionally filter by appliance or space)
+      parameters:
+        - name: applianceId
+          in: query
+          required: false
+          schema:
+            type: integer
+            example: 0
+        - name: spaceType
+          in: query
+          required: false
+          schema:
+            type: string
+            example: "HVAC"
+      responses:
+        '200':
+          description: A list of notes (filtered)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                      example: 1
+                    title:
+                      type: string
+                      example: "Furnace service notes"
+                    body:
+                      type: string
+                      example: "Checked filters and cleaned burners"
+                    applianceId:
+                      type: integer
+                      nullable: true
+                      example: 0
+                    spaceType:
+                      type: string
+                      nullable: true
+                      example: "HVAC"
+  /notes/add:
+    post:
+      summary: Add a new note
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  example: "Furnace service notes"
+                body:
+                  type: string
+                  example: "Checked filters and cleaned burners"
+                applianceId:
+                  type: integer
+                  description: Optional appliance ID to associate the note with
+                  example: 0
+                spaceType:
+                  type: string
+                  description: Optional space type (e.g., HVAC, Plumbing) to associate the note with
+                  example: "HVAC"
+      responses:
+        '201':
+          description: Note created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 1
+                  title:
+                    type: string
+                    example: "Furnace service notes"
+                  body:
+                    type: string
+                    example: "Checked filters and cleaned burners"
+                  applianceId:
+                    type: integer
+                    nullable: true
+                    example: 0
+                  spaceType:
+                    type: string
+                    nullable: true
+                    example: "HVAC"
+  /notes/{id}:
+    get:
+      summary: Get a note by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: A note object
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 1
+                  title:
+                    type: string
+                    example: "Furnace service notes"
+                  body:
+                    type: string
+                    example: "Checked filters and cleaned burners"
+                  applianceId:
+                    type: integer
+                    nullable: true
+                    example: 0
+                  spaceType:
+                    type: string
+                    nullable: true
+                    example: "HVAC"
+        '404':
+          description: Note not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Note not found"
+  /notes/update/{id}:
+    put:
+      summary: Update a note
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  example: "Furnace service notes"
+                body:
+                  type: string
+                  example: "Checked filters and cleaned burners"
+      responses:
+        '200':
+          description: Note updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 1
+                  title:
+                    type: string
+                    example: "Furnace service notes"
+                  body:
+                    type: string
+                    example: "Checked filters and cleaned burners"
+  /notes/delete/{id}:
+    delete:
+      summary: Delete a note
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: Note deleted

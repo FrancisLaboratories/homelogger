@@ -705,6 +705,128 @@ func main() {
 		return c.JSON(files)
 	})
 
+	// Notes endpoints
+	app.Get("/notes", func(c *fiber.Ctx) error {
+		// Connect to gorm
+		db, err := database.ConnectGorm()
+		if err != nil {
+			return c.SendString("Error connecting GORM to db")
+		}
+
+		// Get optional filters
+		applianceIdStr := c.Query("applianceId")
+		spaceType := c.Query("spaceType")
+		var applianceId uint = 0
+		if applianceIdStr != "" {
+			if idUint, err := strconv.ParseUint(applianceIdStr, 10, 32); err == nil {
+				applianceId = uint(idUint)
+			}
+		}
+
+		notes, err := database.GetNotes(db, applianceId, spaceType)
+		if err != nil {
+			return c.SendString("Error getting notes:" + err.Error())
+		}
+
+		return c.JSON(notes)
+	})
+
+	app.Post("/notes/add", func(c *fiber.Ctx) error {
+		db, err := database.ConnectGorm()
+		if err != nil {
+			return c.SendString("Error connecting GORM to db")
+		}
+
+		var body struct {
+			Title       string `json:"title"`
+			Body        string `json:"body"`
+			ApplianceID uint   `json:"applianceId"`
+			SpaceType   string `json:"spaceType"`
+		}
+		if err := c.BodyParser(&body); err != nil {
+			return c.SendString("Error parsing body")
+		}
+
+		var applianceId uint = 0
+		if body.ApplianceID != 0 {
+			applianceId = body.ApplianceID
+		}
+
+		note, err := database.AddNote(db, body.Title, body.Body, applianceId, body.SpaceType)
+		if err != nil {
+			return c.SendString("Error adding note:" + err.Error())
+		}
+
+		return c.JSON(note)
+	})
+
+	app.Get("/notes/:id", func(c *fiber.Ctx) error {
+		id := c.Params("id")
+		idUint, err := strconv.ParseUint(id, 10, 32)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).SendString("Invalid ID format")
+		}
+
+		db, err := database.ConnectGorm()
+		if err != nil {
+			return c.SendString("Error connecting GORM to db")
+		}
+
+		note, err := database.GetNote(db, uint(idUint))
+		if err != nil {
+			return c.Status(fiber.StatusNotFound).SendString("Note not found: " + err.Error())
+		}
+		return c.JSON(note)
+	})
+
+	app.Put("/notes/update/:id", func(c *fiber.Ctx) error {
+		id := c.Params("id")
+		idUint, err := strconv.ParseUint(id, 10, 32)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).SendString("Invalid ID format")
+		}
+
+		var body struct {
+			Title string `json:"title"`
+			Body  string `json:"body"`
+		}
+		if err := c.BodyParser(&body); err != nil {
+			return c.SendString("Error parsing body")
+		}
+
+		db, err := database.ConnectGorm()
+		if err != nil {
+			return c.SendString("Error connecting GORM to db")
+		}
+
+		updated, err := database.UpdateNote(db, uint(idUint), body.Title, body.Body)
+		if err != nil {
+			return c.SendString("Error updating note:" + err.Error())
+		}
+
+		return c.JSON(updated)
+	})
+
+	app.Delete("/notes/delete/:id", func(c *fiber.Ctx) error {
+		id := c.Params("id")
+		idUint, err := strconv.ParseUint(id, 10, 32)
+		if err != nil {
+			return c.SendString("Invalid ID format")
+		}
+
+		db, err := database.ConnectGorm()
+		if err != nil {
+			return c.SendString("Error connecting GORM to db")
+		}
+
+		err = database.DeleteNote(db, uint(idUint))
+		if err != nil {
+			return c.SendString("Error deleting note:" + err.Error())
+		}
+
+		return c.SendString("Note deleted")
+	})
+
 	// Associate an existing uploaded file with a maintenance, repair, appliance, or space
 	app.Post("/files/attach", func(c *fiber.Ctx) error {
 		var body struct {

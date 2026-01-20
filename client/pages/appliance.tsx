@@ -6,6 +6,7 @@ import MaintenanceSection, {MaintenanceReferenceType, MaintenanceSpaceType} from
 import RepairSection, {RepairReferenceType, RepairSpaceType} from '@/components/RepairSection';
 import DocumentationSection from '@/components/DocumentationSection';
 import TodosSection from '@/components/TodosSection';
+import NotesSection from '@/components/NotesSection';
 import MyNavbar from '@/components/Navbar';
 import {SERVER_URL} from "@/pages/_app";
 import EditApplianceModal from '@/components/EditApplianceModal';
@@ -135,6 +136,9 @@ const AppliancePage: React.FC = () => {
                         </Tab>
                         <Tab eventKey="todos" title="To-dos">
                             <TodosSection applianceId={appliance.id} />
+                        </Tab>
+                        <Tab eventKey="notes" title="Notes">
+                            <NotesSection applianceId={appliance.id} />
                         </Tab>
                     </Tabs>
                     <Button variant="secondary" onClick={() => window.location.href = '/appliances.html'} style={{marginTop: '10px'}}>

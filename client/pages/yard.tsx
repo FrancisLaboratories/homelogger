@@ -4,6 +4,7 @@ import MaintenanceSection, {MaintenanceReferenceType, MaintenanceSpaceType} from
 import RepairSection, {RepairReferenceType, RepairSpaceType} from '@/components/RepairSection';
 import DocumentationSection from '@/components/DocumentationSection';
 import TodosSection from '@/components/TodosSection';
+import NotesSection from '@/components/NotesSection';
 import MyNavbar from '../components/Navbar';
 
 const YardPage: React.FC = () => {
@@ -20,6 +21,9 @@ const YardPage: React.FC = () => {
                 </Tab>
                 <Tab eventKey="documents" title="Documents">
                     <DocumentationSection spaceType={MaintenanceSpaceType.Yard} />
+                </Tab>
+                <Tab eventKey="notes" title="Notes">
+                    <NotesSection spaceType={MaintenanceSpaceType.Yard} />
                 </Tab>
                 <Tab eventKey="todos" title="To-dos">
                     <TodosSection spaceType={MaintenanceSpaceType.Yard} />
