@@ -4,7 +4,9 @@ import { Container } from 'react-bootstrap'
 export default function Document() {
   return (
     <Html data-bs-theme='dark'>
-      <Head />
+      <Head>
+        <link rel="icon" href="data:," />
+      </Head>
       <body>
         <Main />
         <NextScript />
