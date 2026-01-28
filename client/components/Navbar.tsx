@@ -8,7 +8,9 @@ const MyNavbar: React.FC = () => {
 
   return (
     <Navbar expand="lg">
-      <Navbar.Brand href="/">HomeLogger</Navbar.Brand>
+      <Navbar.Brand as={Link} href="/">
+        <img src="/logoname.png" alt="HomeLogger" style={{ height: 28 }} />
+      </Navbar.Brand>
       <Navbar.Toggle aria-controls="basic-navbar-nav" />
       <Navbar.Collapse id="basic-navbar-nav">
         <Nav className="mr-auto">
