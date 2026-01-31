@@ -1,3 +1,8 @@
+
+<p align="center">
+	<img src="client/public/logoname.png" alt="HomeLogger wordmark" width="320" />
+</p>
+
 # HomeLogger
 
 HomeLogger is a simple home maintenance and asset tracker for homeowners. It centralizes appliances, repairs, and maintenance tasks so you can record work, receipts, and schedules for things around your home.
