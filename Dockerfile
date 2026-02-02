@@ -5,7 +5,7 @@ WORKDIR /client
 
 # Install dependencies
 COPY client/package.json client/package-lock.json ./
-RUN npm ci --silent
+RUN npm ci
 
 # Copy the rest of the application code
 COPY client/ .
