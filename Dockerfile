@@ -37,7 +37,7 @@ RUN go build -o main ./cmd/server
 # Stage 3: Final image based on Alpine, running nginx + the Go server
 FROM alpine:latest as final
 
-RUN apk add --no-cache ca-certificates nginx
+RUN apk add --no-cache ca-certificates nginx bash curl
 
 # Ensure the runtime working directory matches expectations in server code
 WORKDIR /root
@@ -67,4 +67,5 @@ EXPOSE 80 8083
 CMD nginx -g "daemon off;" & /usr/local/bin/main
 
 # The healthcheck script checks the frontend `/health` and backend `/api/health` endpoints
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 CMD "/usr/local/bin/healthcheck.sh http://localhost/health http://localhost/api/health || exit 1"
+# Use exec form so Docker runs the script directly; ensure script uses bash and curl (installed above)
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 CMD ["/usr/local/bin/healthcheck.sh","http://localhost/health","http://localhost/api/health"]
