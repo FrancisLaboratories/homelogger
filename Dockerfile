@@ -56,16 +56,15 @@ COPY nginx-default.conf /etc/nginx/conf.d/default.conf
 COPY --from=server-builder /app/main /usr/local/bin/main
 RUN chmod +x /usr/local/bin/main
 
-# Expose ports (80 for nginx, 8083 for Go service)
-EXPOSE 80 8083
-
-# Start the Go server in background, then run nginx in foreground
-CMD /usr/local/bin/main & exec nginx -g 'daemon off;'
-
 # Copy healthcheck script and use a single unified HEALTHCHECK that calls it.
 COPY prod.healthcheck.sh /usr/local/bin/healthcheck.sh
 RUN chmod +x /usr/local/bin/healthcheck.sh
 
-# The healthcheck script checks the frontend `/health` and backend `/api/health` endpoints.
-# Run it via CMD-SHELL so we can pass explicit URLs for the production layout.
+# Expose ports (80 for nginx, 8083 for Go service)
+EXPOSE 80 8083
+
+# Start both nginx and the Go server 
+CMD nginx -g "daemon off;" & /usr/local/bin/main
+
+# The healthcheck script checks the frontend `/health` and backend `/api/health` endpoints
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 CMD "/usr/local/bin/healthcheck.sh http://localhost/health http://localhost/api/health || exit 1"
