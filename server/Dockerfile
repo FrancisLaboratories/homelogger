@@ -34,3 +34,5 @@ EXPOSE 8083
 
 # Command to run the executable
 CMD ["./main"]
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 CMD wget --no-verbose --spider http://localhost:8083/health || exit 1
