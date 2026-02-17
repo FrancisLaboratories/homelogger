@@ -76,9 +76,9 @@ func registerSettingsRoutes(app *fiber.App, db *gorm.DB) {
 
 	app.Get("/settings/options", func(c *fiber.Ctx) error {
 		options := fiber.Map{
-			"locales":            []string{"en-US"},
+			"locales":            []string{"en-US", "en-ZA", "en-UK"},
 			"languages":          []string{"en"},
-			"currencies":         []string{"USD", "EUR", "GBP", "CAD", "AUD", "JPY"},
+			"currencies":         []string{"USD", "EUR", "GBP", "CAD", "AUD", "JPY", "ZAR"},
 			"timeZones":          []string{"UTC", "America/New_York", "America/Chicago", "America/Denver", "America/Los_Angeles", "Europe/London", "Europe/Berlin", "Asia/Tokyo", "Australia/Sydney"},
 			"measurementSystems": []string{"imperial", "metric"},
 			"weekStartOptions":   []int{0, 1, 6},

@@ -1,8 +1,6 @@
 package database
 
 import (
-	"errors"
-
 	"github.com/masoncfrancis/homelogger/server/internal/models"
 	"gorm.io/gorm"
 )
