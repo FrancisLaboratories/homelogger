@@ -638,6 +638,306 @@ func main() {
 		return c.SendString("Budget scenario deleted")
 	})
 
+	// Upgrade project endpoints
+	app.Get("/upgrades", func(c *fiber.Ctx) error {
+		db, err := database.ConnectGorm()
+		if err != nil {
+			return c.SendString("Error connecting GORM to db")
+		}
+
+		projects, err := database.GetUpgradeProjects(db)
+		if err != nil {
+			return c.SendString("Error getting upgrade projects:" + err.Error())
+		}
+
+		return c.JSON(projects)
+	})
+
+	app.Post("/upgrades/add", func(c *fiber.Ctx) error {
+		db, err := database.ConnectGorm()
+		if err != nil {
+			return c.SendString("Error connecting GORM to db")
+		}
+
+		var body struct {
+			Title         string  `json:"title"`
+			Description   string  `json:"description"`
+			Status        string  `json:"status"`
+			Priority      string  `json:"priority"`
+			TargetDate    string  `json:"targetDate"`
+			EstimatedCost float64 `json:"estimatedCost"`
+			Notes         string  `json:"notes"`
+			CategoryID    *uint   `json:"categoryId"`
+		}
+		err = c.BodyParser(&body)
+		if err != nil {
+			return c.SendString("Error parsing body")
+		}
+
+		project, err := database.AddUpgradeProject(db, &models.UpgradeProject{
+			Title:         body.Title,
+			Description:   body.Description,
+			Status:        body.Status,
+			Priority:      body.Priority,
+			TargetDate:    body.TargetDate,
+			EstimatedCost: body.EstimatedCost,
+			Notes:         body.Notes,
+			CategoryID:    body.CategoryID,
+		})
+		if err != nil {
+			return c.SendString("Error adding upgrade project:" + err.Error())
+		}
+
+		return c.JSON(project)
+	})
+
+	app.Put("/upgrades/update/:id", func(c *fiber.Ctx) error {
+		db, err := database.ConnectGorm()
+		if err != nil {
+			return c.SendString("Error connecting GORM to db")
+		}
+
+		id := c.Params("id")
+		idUint, err := strconv.ParseUint(id, 10, 32)
+		if err != nil {
+			return c.SendString("Invalid ID format")
+		}
+
+		var body struct {
+			Title         string  `json:"title"`
+			Description   string  `json:"description"`
+			Status        string  `json:"status"`
+			Priority      string  `json:"priority"`
+			TargetDate    string  `json:"targetDate"`
+			EstimatedCost float64 `json:"estimatedCost"`
+			Notes         string  `json:"notes"`
+			CategoryID    *uint   `json:"categoryId"`
+		}
+		err = c.BodyParser(&body)
+		if err != nil {
+			return c.SendString("Error parsing body")
+		}
+
+		project, err := database.GetUpgradeProject(db, uint(idUint))
+		if err != nil {
+			return c.SendString("Error getting upgrade project:" + err.Error())
+		}
+
+		project.Title = body.Title
+		project.Description = body.Description
+		project.Status = body.Status
+		project.Priority = body.Priority
+		project.TargetDate = body.TargetDate
+		project.EstimatedCost = body.EstimatedCost
+		project.Notes = body.Notes
+		project.CategoryID = body.CategoryID
+
+		updatedProject, err := database.UpdateUpgradeProject(db, project)
+		if err != nil {
+			return c.SendString("Error updating upgrade project:" + err.Error())
+		}
+
+		return c.JSON(updatedProject)
+	})
+
+	app.Get("/upgrades/:id", func(c *fiber.Ctx) error {
+		db, err := database.ConnectGorm()
+		if err != nil {
+			return c.SendString("Error connecting GORM to db")
+		}
+
+		id := c.Params("id")
+		idUint, err := strconv.ParseUint(id, 10, 32)
+		if err != nil {
+			return c.SendString("Invalid ID format")
+		}
+
+		project, err := database.GetUpgradeProject(db, uint(idUint))
+		if err != nil {
+			return c.SendString("Error getting upgrade project:" + err.Error())
+		}
+
+		return c.JSON(project)
+	})
+
+	app.Delete("/upgrades/delete/:id", func(c *fiber.Ctx) error {
+		db, err := database.ConnectGorm()
+		if err != nil {
+			return c.SendString("Error connecting GORM to db")
+		}
+
+		id := c.Params("id")
+		idUint, err := strconv.ParseUint(id, 10, 32)
+		if err != nil {
+			return c.SendString("Invalid ID format")
+		}
+
+		err = database.DeleteUpgradeProject(db, uint(idUint))
+		if err != nil {
+			return c.SendString("Error deleting upgrade project:" + err.Error())
+		}
+
+		return c.SendString("Upgrade project deleted")
+	})
+
+	// Recurring task endpoints
+	app.Get("/recurring", func(c *fiber.Ctx) error {
+		db, err := database.ConnectGorm()
+		if err != nil {
+			return c.SendString("Error connecting GORM to db")
+		}
+
+		tasks, err := database.GetRecurringTasks(db)
+		if err != nil {
+			return c.SendString("Error getting recurring tasks:" + err.Error())
+		}
+
+		return c.JSON(tasks)
+	})
+
+	app.Post("/recurring/add", func(c *fiber.Ctx) error {
+		db, err := database.ConnectGorm()
+		if err != nil {
+			return c.SendString("Error connecting GORM to db")
+		}
+
+		var body struct {
+			Name           string  `json:"name"`
+			Description    string  `json:"description"`
+			IntervalValue  int     `json:"intervalValue"`
+			IntervalUnit   string  `json:"intervalUnit"`
+			NextDueDate    string  `json:"nextDueDate"`
+			EstimatedCost  float64 `json:"estimatedCost"`
+			ReferenceType  string  `json:"referenceType"`
+			SpaceType      string  `json:"spaceType"`
+			ApplianceID    *uint   `json:"applianceId"`
+			CategoryID     *uint   `json:"categoryId"`
+			AutoCreateTodo bool    `json:"autoCreateTodo"`
+			Notes          string  `json:"notes"`
+		}
+		err = c.BodyParser(&body)
+		if err != nil {
+			return c.SendString("Error parsing body")
+		}
+
+		task, err := database.AddRecurringTask(db, &models.RecurringTask{
+			Name:           body.Name,
+			Description:    body.Description,
+			IntervalValue:  body.IntervalValue,
+			IntervalUnit:   body.IntervalUnit,
+			NextDueDate:    body.NextDueDate,
+			EstimatedCost:  body.EstimatedCost,
+			ReferenceType:  body.ReferenceType,
+			SpaceType:      body.SpaceType,
+			ApplianceID:    body.ApplianceID,
+			CategoryID:     body.CategoryID,
+			AutoCreateTodo: body.AutoCreateTodo,
+			Notes:          body.Notes,
+		})
+		if err != nil {
+			return c.SendString("Error adding recurring task:" + err.Error())
+		}
+
+		return c.JSON(task)
+	})
+
+	app.Put("/recurring/update/:id", func(c *fiber.Ctx) error {
+		db, err := database.ConnectGorm()
+		if err != nil {
+			return c.SendString("Error connecting GORM to db")
+		}
+
+		id := c.Params("id")
+		idUint, err := strconv.ParseUint(id, 10, 32)
+		if err != nil {
+			return c.SendString("Invalid ID format")
+		}
+
+		var body struct {
+			Name           string  `json:"name"`
+			Description    string  `json:"description"`
+			IntervalValue  int     `json:"intervalValue"`
+			IntervalUnit   string  `json:"intervalUnit"`
+			NextDueDate    string  `json:"nextDueDate"`
+			EstimatedCost  float64 `json:"estimatedCost"`
+			ReferenceType  string  `json:"referenceType"`
+			SpaceType      string  `json:"spaceType"`
+			ApplianceID    *uint   `json:"applianceId"`
+			CategoryID     *uint   `json:"categoryId"`
+			AutoCreateTodo bool    `json:"autoCreateTodo"`
+			Notes          string  `json:"notes"`
+		}
+		err = c.BodyParser(&body)
+		if err != nil {
+			return c.SendString("Error parsing body")
+		}
+
+		task, err := database.GetRecurringTask(db, uint(idUint))
+		if err != nil {
+			return c.SendString("Error getting recurring task:" + err.Error())
+		}
+
+		task.Name = body.Name
+		task.Description = body.Description
+		task.IntervalValue = body.IntervalValue
+		task.IntervalUnit = body.IntervalUnit
+		task.NextDueDate = body.NextDueDate
+		task.EstimatedCost = body.EstimatedCost
+		task.ReferenceType = body.ReferenceType
+		task.SpaceType = body.SpaceType
+		task.ApplianceID = body.ApplianceID
+		task.CategoryID = body.CategoryID
+		task.AutoCreateTodo = body.AutoCreateTodo
+		task.Notes = body.Notes
+
+		updatedTask, err := database.UpdateRecurringTask(db, task)
+		if err != nil {
+			return c.SendString("Error updating recurring task:" + err.Error())
+		}
+
+		return c.JSON(updatedTask)
+	})
+
+	app.Get("/recurring/:id", func(c *fiber.Ctx) error {
+		db, err := database.ConnectGorm()
+		if err != nil {
+			return c.SendString("Error connecting GORM to db")
+		}
+
+		id := c.Params("id")
+		idUint, err := strconv.ParseUint(id, 10, 32)
+		if err != nil {
+			return c.SendString("Invalid ID format")
+		}
+
+		task, err := database.GetRecurringTask(db, uint(idUint))
+		if err != nil {
+			return c.SendString("Error getting recurring task:" + err.Error())
+		}
+
+		return c.JSON(task)
+	})
+
+	app.Delete("/recurring/delete/:id", func(c *fiber.Ctx) error {
+		db, err := database.ConnectGorm()
+		if err != nil {
+			return c.SendString("Error connecting GORM to db")
+		}
+
+		id := c.Params("id")
+		idUint, err := strconv.ParseUint(id, 10, 32)
+		if err != nil {
+			return c.SendString("Invalid ID format")
+		}
+
+		err = database.DeleteRecurringTask(db, uint(idUint))
+		if err != nil {
+			return c.SendString("Error deleting recurring task:" + err.Error())
+		}
+
+		return c.SendString("Recurring task deleted")
+	})
+
 	// Maintenance endpoints
 	app.Get("/maintenance", func(c *fiber.Ctx) error {
 		applianceId := c.Query("applianceId")
