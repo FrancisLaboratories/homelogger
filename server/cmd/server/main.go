@@ -938,6 +938,152 @@ func main() {
 		return c.SendString("Recurring task deleted")
 	})
 
+	// Planned cost endpoints
+	app.Get("/planned-costs", func(c *fiber.Ctx) error {
+		db, err := database.ConnectGorm()
+		if err != nil {
+			return c.SendString("Error connecting GORM to db")
+		}
+
+		scenarioIdStr := c.Query("scenarioId")
+		var scenarioId uint = 0
+		if scenarioIdStr != "" {
+			if idUint, err := strconv.ParseUint(scenarioIdStr, 10, 32); err == nil {
+				scenarioId = uint(idUint)
+			}
+		}
+
+		costs, err := database.GetPlannedCosts(db, scenarioId)
+		if err != nil {
+			return c.SendString("Error getting planned costs:" + err.Error())
+		}
+
+		return c.JSON(costs)
+	})
+
+	app.Post("/planned-costs/add", func(c *fiber.Ctx) error {
+		db, err := database.ConnectGorm()
+		if err != nil {
+			return c.SendString("Error connecting GORM to db")
+		}
+
+		var body struct {
+			ScenarioID *uint   `json:"scenarioId"`
+			CategoryID *uint   `json:"categoryId"`
+			SourceType string  `json:"sourceType"`
+			SourceID   *uint   `json:"sourceId"`
+			CostDate   string  `json:"costDate"`
+			Amount     float64 `json:"amount"`
+			Notes      string  `json:"notes"`
+		}
+		err = c.BodyParser(&body)
+		if err != nil {
+			return c.SendString("Error parsing body")
+		}
+
+		cost, err := database.AddPlannedCost(db, &models.PlannedCost{
+			ScenarioID: body.ScenarioID,
+			CategoryID: body.CategoryID,
+			SourceType: body.SourceType,
+			SourceID:   body.SourceID,
+			CostDate:   body.CostDate,
+			Amount:     body.Amount,
+			Notes:      body.Notes,
+		})
+		if err != nil {
+			return c.SendString("Error adding planned cost:" + err.Error())
+		}
+
+		return c.JSON(cost)
+	})
+
+	app.Put("/planned-costs/update/:id", func(c *fiber.Ctx) error {
+		db, err := database.ConnectGorm()
+		if err != nil {
+			return c.SendString("Error connecting GORM to db")
+		}
+
+		id := c.Params("id")
+		idUint, err := strconv.ParseUint(id, 10, 32)
+		if err != nil {
+			return c.SendString("Invalid ID format")
+		}
+
+		var body struct {
+			ScenarioID *uint   `json:"scenarioId"`
+			CategoryID *uint   `json:"categoryId"`
+			SourceType string  `json:"sourceType"`
+			SourceID   *uint   `json:"sourceId"`
+			CostDate   string  `json:"costDate"`
+			Amount     float64 `json:"amount"`
+			Notes      string  `json:"notes"`
+		}
+		err = c.BodyParser(&body)
+		if err != nil {
+			return c.SendString("Error parsing body")
+		}
+
+		cost, err := database.GetPlannedCost(db, uint(idUint))
+		if err != nil {
+			return c.SendString("Error getting planned cost:" + err.Error())
+		}
+
+		cost.ScenarioID = body.ScenarioID
+		cost.CategoryID = body.CategoryID
+		cost.SourceType = body.SourceType
+		cost.SourceID = body.SourceID
+		cost.CostDate = body.CostDate
+		cost.Amount = body.Amount
+		cost.Notes = body.Notes
+
+		updatedCost, err := database.UpdatePlannedCost(db, cost)
+		if err != nil {
+			return c.SendString("Error updating planned cost:" + err.Error())
+		}
+
+		return c.JSON(updatedCost)
+	})
+
+	app.Get("/planned-costs/:id", func(c *fiber.Ctx) error {
+		db, err := database.ConnectGorm()
+		if err != nil {
+			return c.SendString("Error connecting GORM to db")
+		}
+
+		id := c.Params("id")
+		idUint, err := strconv.ParseUint(id, 10, 32)
+		if err != nil {
+			return c.SendString("Invalid ID format")
+		}
+
+		cost, err := database.GetPlannedCost(db, uint(idUint))
+		if err != nil {
+			return c.SendString("Error getting planned cost:" + err.Error())
+		}
+
+		return c.JSON(cost)
+	})
+
+	app.Delete("/planned-costs/delete/:id", func(c *fiber.Ctx) error {
+		db, err := database.ConnectGorm()
+		if err != nil {
+			return c.SendString("Error connecting GORM to db")
+		}
+
+		id := c.Params("id")
+		idUint, err := strconv.ParseUint(id, 10, 32)
+		if err != nil {
+			return c.SendString("Invalid ID format")
+		}
+
+		err = database.DeletePlannedCost(db, uint(idUint))
+		if err != nil {
+			return c.SendString("Error deleting planned cost:" + err.Error())
+		}
+
+		return c.SendString("Planned cost deleted")
+	})
+
 	// Maintenance endpoints
 	app.Get("/maintenance", func(c *fiber.Ctx) error {
 		applianceId := c.Query("applianceId")
