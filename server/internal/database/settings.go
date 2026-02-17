@@ -13,25 +13,25 @@ func DefaultSettings() models.Settings {
 		Language:          "en",
 		Currency:          "USD",
 		TimeZone:          "UTC",
-		MeasurementSystem: "imperial",
+		MeasurementSystem: "metric",
 		WeekStart:         0,
-		DateFormat:        "",
+		DateFormat:        "YYYY-MM-DD",
 		NumberingSystem:   "latn",
 	}
 }
 
-// EnsureSettings guarantees a single settings row exists.
-func EnsureSettings(db *gorm.DB) (*models.Settings, error) {
-	var settings models.Settings
-	result := db.First(&settings)
-	if result.Error == nil {
-		return &settings, nil
-	}
-	if !errors.Is(result.Error, gorm.ErrRecordNotFound) {
-		return nil, result.Error
-	}
+	// EnsureSettings guarantees a single settings row exists.
+	func EnsureSettings(db *gorm.DB) (*models.Settings, error) {
+		var settings models.Settings
+		result := db.Limit(1).Find(&settings)
+		if result.Error != nil {
+			return nil, result.Error
+		}
+		if result.RowsAffected > 0 {
+			return &settings, nil
+		}
 
-	defaultSettings := DefaultSettings()
+		defaultSettings := DefaultSettings()
 	if err := db.Create(&defaultSettings).Error; err != nil {
 		return nil, err
 	}

@@ -14,9 +14,9 @@ export const defaultSettings: RegionalSettings = {
   language: "en",
   currency: "USD",
   timeZone: "UTC",
-  measurementSystem: "imperial",
+  measurementSystem: "metric",
   weekStart: 0,
-  dateFormat: "",
+  dateFormat: "YYYY-MM-DD",
   numberingSystem: "latn",
 };
 
