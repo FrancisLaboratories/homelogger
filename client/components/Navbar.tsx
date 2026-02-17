@@ -15,6 +15,9 @@ const MyNavbar: React.FC = () => {
       <Navbar.Collapse id="basic-navbar-nav">
         <Nav className="mr-auto">
           <Nav.Link as={Link} href="/" active={router.pathname === '/'}>Home</Nav.Link>
+          <Nav.Link as={Link} href="/upgrades.html" active={router.pathname === '/upgrades'}>Upgrades</Nav.Link>
+          <Nav.Link as={Link} href="/budgeting.html" active={router.pathname === '/budgeting'}>Budgeting</Nav.Link>
+          <Nav.Link as={Link} href="/recurring.html" active={router.pathname === '/recurring'}>Recurring</Nav.Link>
           <Nav.Link as={Link} href="/appliances.html" active={router.pathname === '/appliances.html'}>Appliances</Nav.Link>
           <Nav.Link as={Link} href="/building-exterior.html" active={router.pathname === '/building-exterior.html'}>Building Exterior</Nav.Link>
           <Nav.Link as={Link} href="/building-interior.html" active={router.pathname === '/building-interior.html'}>Building Interior</Nav.Link>

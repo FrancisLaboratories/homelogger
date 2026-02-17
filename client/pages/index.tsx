@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { Container, Form } from 'react-bootstrap';
+import { Card, Col, Container, Form, Row } from 'react-bootstrap';
 import "bootstrap-icons/font/bootstrap-icons.css";
 import MyNavbar from '../components/Navbar';
 import ListGroup from 'react-bootstrap/ListGroup';
@@ -23,11 +23,52 @@ type Todo = {
   created_at?: string | null;
 };
 
+type BudgetScenario = {
+  id: number;
+  name: string;
+  startDate: string;
+  horizonMonths: number;
+  inflationRate: number;
+  isActive: boolean;
+  notes: string;
+};
+
+type PlannedCost = {
+  id: number;
+  scenarioId?: number | null;
+  categoryId?: number | null;
+  sourceType: string;
+  sourceId?: number | null;
+  costDate: string;
+  amount: number;
+  notes: string;
+};
+
+type UpgradeProject = {
+  id: number;
+  title: string;
+  status: string;
+  targetDate: string;
+  estimatedCost: number;
+};
+
+type RecurringTask = {
+  id: number;
+  name: string;
+  nextDueDate: string;
+  estimatedCost: number;
+};
+
 const HomePage: React.FC = () => {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [sortOption, setSortOption] = useState<string>('created_desc');
   const [filterOption, setFilterOption] = useState<string>('not_completed');
   const [groupBySource, setGroupBySource] = useState<boolean>(false);
+  const [scenarios, setScenarios] = useState<BudgetScenario[]>([]);
+  const [selectedScenarioId, setSelectedScenarioId] = useState<number | null>(null);
+  const [plannedCosts, setPlannedCosts] = useState<PlannedCost[]>([]);
+  const [upgrades, setUpgrades] = useState<UpgradeProject[]>([]);
+  const [recurring, setRecurring] = useState<RecurringTask[]>([]);
 
   const prettySpace = (s?: string | null) => {
     if (!s) return null;
@@ -90,6 +131,87 @@ const HomePage: React.FC = () => {
     fetchTodos();
   }, []);
 
+  useEffect(() => {
+    const loadScenarios = async () => {
+      try {
+        const response = await fetch(`${SERVER_URL}/budget/scenarios`);
+        if (!response.ok) return;
+        const data = await response.json();
+        setScenarios(data);
+        if (data.length > 0 && selectedScenarioId === null) {
+          const active = data.find((s: BudgetScenario) => s.isActive) || data[0];
+          setSelectedScenarioId(active.id);
+        }
+      } catch (error) {
+        console.error('Error fetching scenarios:', error);
+      }
+    };
+
+    const loadUpgrades = async () => {
+      try {
+        const response = await fetch(`${SERVER_URL}/upgrades`);
+        if (!response.ok) return;
+        const data = await response.json();
+        setUpgrades(data);
+      } catch (error) {
+        console.error('Error fetching upgrades:', error);
+      }
+    };
+
+    const loadRecurring = async () => {
+      try {
+        const response = await fetch(`${SERVER_URL}/recurring`);
+        if (!response.ok) return;
+        const data = await response.json();
+        setRecurring(data);
+      } catch (error) {
+        console.error('Error fetching recurring tasks:', error);
+      }
+    };
+
+    loadScenarios();
+    loadUpgrades();
+    loadRecurring();
+  }, []);
+
+  useEffect(() => {
+    const loadPlannedCosts = async () => {
+      try {
+        let url = `${SERVER_URL}/planned-costs`;
+        if (selectedScenarioId) {
+          url = `${url}?scenarioId=${selectedScenarioId}`;
+        }
+        const response = await fetch(url);
+        if (!response.ok) return;
+        const data = await response.json();
+        setPlannedCosts(data);
+      } catch (error) {
+        console.error('Error fetching planned costs:', error);
+      }
+    };
+
+    loadPlannedCosts();
+  }, [selectedScenarioId]);
+
+  const activeScenario = scenarios.find((s) => s.id === selectedScenarioId) || scenarios[0];
+  const totalPlanned = plannedCosts.reduce((sum, c) => sum + Number(c.amount || 0), 0);
+  const monthlySavings = activeScenario && activeScenario.horizonMonths > 0
+    ? totalPlanned / activeScenario.horizonMonths
+    : 0;
+  const now = new Date();
+  const inNextDays = (dateStr?: string | null, days?: number) => {
+    if (!dateStr) return false;
+    const dt = new Date(dateStr);
+    if (isNaN(dt.getTime())) return false;
+    const diff = dt.getTime() - now.getTime();
+    return diff <= (days || 0) * 24 * 60 * 60 * 1000;
+  };
+  const upcoming30 = plannedCosts
+    .filter((c) => inNextDays(c.costDate, 30) && new Date(c.costDate).getTime() >= now.getTime())
+    .reduce((sum, c) => sum + Number(c.amount || 0), 0);
+  const recurringDue30 = recurring.filter((r) => inNextDays(r.nextDueDate, 30)).length;
+  const upgradesTotal = upgrades.reduce((sum, u) => sum + Number(u.estimatedCost || 0), 0);
+
   const handleAddTodo = async () => {
     const label = prompt('What should go in this item?');
     if (label) {
@@ -127,7 +249,61 @@ const HomePage: React.FC = () => {
   return (
     <Container>
       <MyNavbar />
-      <h4 id='maintext'>To-dos:</h4>
+      <Row className="g-3" style={{ marginTop: '8px' }}>
+        <Col lg={3} md={6}>
+          <Card>
+            <Card.Body>
+              <div style={{ fontSize: '0.9rem', color: '#6c757d' }}>Budget Snapshot</div>
+              <div style={{ fontSize: '1.3rem', fontWeight: 600 }}>${monthlySavings.toFixed(2)}/mo</div>
+              <div style={{ fontSize: '0.85rem' }}>
+                {activeScenario ? `${activeScenario.name} • ${activeScenario.horizonMonths} mo` : 'No scenario'}
+              </div>
+            </Card.Body>
+          </Card>
+        </Col>
+        <Col lg={3} md={6}>
+          <Card>
+            <Card.Body>
+              <div style={{ fontSize: '0.9rem', color: '#6c757d' }}>Upcoming (30 days)</div>
+              <div style={{ fontSize: '1.3rem', fontWeight: 600 }}>${upcoming30.toFixed(2)}</div>
+              <div style={{ fontSize: '0.85rem' }}>{plannedCosts.length} planned items</div>
+            </Card.Body>
+          </Card>
+        </Col>
+        <Col lg={3} md={6}>
+          <Card>
+            <Card.Body>
+              <div style={{ fontSize: '0.9rem', color: '#6c757d' }}>Upgrades</div>
+              <div style={{ fontSize: '1.3rem', fontWeight: 600 }}>{upgrades.length} projects</div>
+              <div style={{ fontSize: '0.85rem' }}>${upgradesTotal.toFixed(2)} planned</div>
+            </Card.Body>
+          </Card>
+        </Col>
+        <Col lg={3} md={6}>
+          <Card>
+            <Card.Body>
+              <div style={{ fontSize: '0.9rem', color: '#6c757d' }}>Recurring Due Soon</div>
+              <div style={{ fontSize: '1.3rem', fontWeight: 600 }}>{recurringDue30} tasks</div>
+              <div style={{ fontSize: '0.85rem' }}>{recurring.length} total</div>
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12 }}>
+        <h4 id='maintext' style={{ marginBottom: 0 }}>To-dos</h4>
+        <Form.Select
+          aria-label="Budget scenario"
+          value={selectedScenarioId ?? ''}
+          onChange={(e) => setSelectedScenarioId(e.target.value ? Number(e.target.value) : null)}
+          style={{ maxWidth: '260px' }}
+        >
+          <option value="">Budget scenario</option>
+          {scenarios.map((s) => (
+            <option key={s.id} value={s.id}>{s.name}</option>
+          ))}
+        </Form.Select>
+      </div>
 
       <div style={{display: 'flex', gap: '8px', marginBottom: '8px'}}>
         <Form.Select aria-label="Sort todos" value={sortOption} onChange={(e) => { setSortOption(e.target.value); try { localStorage.setItem('homelogger_todo_sort', e.target.value); } catch {} }} style={{maxWidth: '220px'}}>
