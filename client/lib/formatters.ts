@@ -20,6 +20,9 @@ export const defaultSettings: RegionalSettings = {
   numberingSystem: "latn",
 };
 
+export const getDatePattern = (settings: RegionalSettings) =>
+  settings.dateFormat?.trim() || "YYYY-MM-DD";
+
 const buildNumberFormatOptions = (settings: RegionalSettings) => {
   const options: Intl.NumberFormatOptions = {};
   if (settings.numberingSystem) {
@@ -111,4 +114,83 @@ export const formatDateTime = (value: string, settings: RegionalSettings) => {
     timeZone: settings.timeZone || "UTC",
   }).format(date);
   return time ? `${datePart} ${time}` : datePart;
+};
+
+const pad2 = (value: number) => String(value).padStart(2, "0");
+
+const toIsoDate = (year: number, month: number, day: number) => {
+  if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) return null;
+  if (month < 1 || month > 12 || day < 1 || day > 31) return null;
+  const test = new Date(Date.UTC(year, month - 1, day));
+  if (
+    test.getUTCFullYear() !== year ||
+    test.getUTCMonth() + 1 !== month ||
+    test.getUTCDate() !== day
+  ) {
+    return null;
+  }
+  return `${year}-${pad2(month)}-${pad2(day)}`;
+};
+
+const parseWithPattern = (value: string, pattern: string) => {
+  const normalized = pattern.toUpperCase();
+  const candidates: Array<{
+    pattern: string;
+    regex: RegExp;
+    map: (match: RegExpExecArray) => { year: number; month: number; day: number };
+  }> = [
+    {
+      pattern: "YYYY-MM-DD",
+      regex: /^(\d{4})-(\d{2})-(\d{2})$/,
+      map: (m) => ({ year: Number(m[1]), month: Number(m[2]), day: Number(m[3]) }),
+    },
+    {
+      pattern: "YYYY/MM/DD",
+      regex: /^(\d{4})\/(\d{2})\/(\d{2})$/,
+      map: (m) => ({ year: Number(m[1]), month: Number(m[2]), day: Number(m[3]) }),
+    },
+    {
+      pattern: "DD/MM/YYYY",
+      regex: /^(\d{2})\/(\d{2})\/(\d{4})$/,
+      map: (m) => ({ year: Number(m[3]), month: Number(m[2]), day: Number(m[1]) }),
+    },
+    {
+      pattern: "MM/DD/YYYY",
+      regex: /^(\d{2})\/(\d{2})\/(\d{4})$/,
+      map: (m) => ({ year: Number(m[3]), month: Number(m[1]), day: Number(m[2]) }),
+    },
+    {
+      pattern: "DD-MM-YYYY",
+      regex: /^(\d{2})-(\d{2})-(\d{4})$/,
+      map: (m) => ({ year: Number(m[3]), month: Number(m[2]), day: Number(m[1]) }),
+    },
+    {
+      pattern: "MM-DD-YYYY",
+      regex: /^(\d{2})-(\d{2})-(\d{4})$/,
+      map: (m) => ({ year: Number(m[3]), month: Number(m[1]), day: Number(m[2]) }),
+    },
+  ];
+
+  const candidate = candidates.find((c) => c.pattern === normalized);
+  if (!candidate) return null;
+  const match = candidate.regex.exec(value);
+  if (!match) return null;
+  const parts = candidate.map(match);
+  return toIsoDate(parts.year, parts.month, parts.day);
+};
+
+export const parseDateInput = (value: string, settings: RegionalSettings) => {
+  if (!value) return null;
+  const trimmed = value.trim();
+  const isoMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(trimmed);
+  if (isoMatch) return trimmed;
+
+  const pattern = getDatePattern(settings);
+  if (!pattern || pattern.toLowerCase() === "auto") {
+    const date = new Date(trimmed);
+    if (Number.isNaN(date.getTime())) return null;
+    return date.toISOString().split("T")[0];
+  }
+
+  return parseWithPattern(trimmed, pattern);
 };
