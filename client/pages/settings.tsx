@@ -84,6 +84,19 @@ const SettingsPage: React.FC = () => {
     };
 
     const currencies = useMemo(() => options?.currencies ?? [settings.currency], [options, settings.currency]);
+    const timeZones = useMemo(() => {
+        if (typeof Intl !== 'undefined' && 'supportedValuesOf' in Intl) {
+            try {
+                // Use browser-provided list when available (full IANA set).
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const supported = (Intl as any).supportedValuesOf('timeZone') as string[];
+                if (supported && supported.length > 0) return supported;
+            } catch {
+                // fall back to server list
+            }
+        }
+        return options?.timeZones ?? [settings.timeZone];
+    }, [options, settings.timeZone]);
 
     return (
         <Container>
@@ -148,7 +161,7 @@ const SettingsPage: React.FC = () => {
                                     value={formState.timeZone}
                                     onChange={(e) => setFormState({...formState, timeZone: e.target.value})}
                                 >
-                                    {(options?.timeZones ?? [settings.timeZone]).map((tz) => (
+                                    {timeZones.map((tz) => (
                                         <option key={tz} value={tz}>{tz}</option>
                                     ))}
                                 </Form.Select>
