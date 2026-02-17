@@ -1050,3 +1050,155 @@ paths:
       responses:
         '200':
           description: Note deleted
+  /settings:
+    get:
+      summary: Get regional settings
+      responses:
+        '200':
+          description: Settings object
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 1
+                  locale:
+                    type: string
+                    example: "en-US"
+                  language:
+                    type: string
+                    example: "en"
+                  currency:
+                    type: string
+                    example: "USD"
+                  timeZone:
+                    type: string
+                    example: "UTC"
+                  measurementSystem:
+                    type: string
+                    example: "imperial"
+                  weekStart:
+                    type: integer
+                    example: 0
+                  dateFormat:
+                    type: string
+                    example: ""
+                  numberingSystem:
+                    type: string
+                    example: "latn"
+    put:
+      summary: Update regional settings (partial update)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                locale:
+                  type: string
+                  example: "en-US"
+                language:
+                  type: string
+                  example: "en"
+                currency:
+                  type: string
+                  example: "USD"
+                timeZone:
+                  type: string
+                  example: "America/New_York"
+                measurementSystem:
+                  type: string
+                  example: "imperial"
+                weekStart:
+                  type: integer
+                  example: 0
+                dateFormat:
+                  type: string
+                  example: "MM/DD/YYYY"
+                numberingSystem:
+                  type: string
+                  example: "latn"
+      responses:
+        '200':
+          description: Updated settings object
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 1
+                  locale:
+                    type: string
+                    example: "en-US"
+                  language:
+                    type: string
+                    example: "en"
+                  currency:
+                    type: string
+                    example: "USD"
+                  timeZone:
+                    type: string
+                    example: "America/New_York"
+                  measurementSystem:
+                    type: string
+                    example: "imperial"
+                  weekStart:
+                    type: integer
+                    example: 0
+                  dateFormat:
+                    type: string
+                    example: "MM/DD/YYYY"
+                  numberingSystem:
+                    type: string
+                    example: "latn"
+  /settings/options:
+    get:
+      summary: Get supported settings options
+      responses:
+        '200':
+          description: Supported option values
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  locales:
+                    type: array
+                    items:
+                      type: string
+                    example: ["en-US"]
+                  languages:
+                    type: array
+                    items:
+                      type: string
+                    example: ["en"]
+                  currencies:
+                    type: array
+                    items:
+                      type: string
+                    example: ["USD", "EUR", "GBP"]
+                  timeZones:
+                    type: array
+                    items:
+                      type: string
+                    example: ["UTC", "America/New_York"]
+                  measurementSystems:
+                    type: array
+                    items:
+                      type: string
+                    example: ["imperial", "metric"]
+                  weekStartOptions:
+                    type: array
+                    items:
+                      type: integer
+                    example: [0, 1, 6]
+                  numberingSystems:
+                    type: array
+                    items:
+                      type: string
+                    example: ["latn"]
