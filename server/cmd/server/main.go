@@ -378,6 +378,266 @@ func main() {
 		return c.SendString("Appliance deleted")
 	})
 
+	// Budget category endpoints
+	app.Get("/budget/categories", func(c *fiber.Ctx) error {
+		db, err := database.ConnectGorm()
+		if err != nil {
+			return c.SendString("Error connecting GORM to db")
+		}
+
+		categories, err := database.GetBudgetCategories(db)
+		if err != nil {
+			return c.SendString("Error getting budget categories:" + err.Error())
+		}
+
+		return c.JSON(categories)
+	})
+
+	app.Post("/budget/categories/add", func(c *fiber.Ctx) error {
+		db, err := database.ConnectGorm()
+		if err != nil {
+			return c.SendString("Error connecting GORM to db")
+		}
+
+		var body struct {
+			Name        string `json:"name"`
+			AssetGroup  string `json:"assetGroup"`
+			Description string `json:"description"`
+			Color       string `json:"color"`
+		}
+		err = c.BodyParser(&body)
+		if err != nil {
+			return c.SendString("Error parsing body")
+		}
+
+		category, err := database.AddBudgetCategory(db, &models.BudgetCategory{
+			Name:        body.Name,
+			AssetGroup:  body.AssetGroup,
+			Description: body.Description,
+			Color:       body.Color,
+		})
+		if err != nil {
+			return c.SendString("Error adding budget category:" + err.Error())
+		}
+
+		return c.JSON(category)
+	})
+
+	app.Put("/budget/categories/update/:id", func(c *fiber.Ctx) error {
+		db, err := database.ConnectGorm()
+		if err != nil {
+			return c.SendString("Error connecting GORM to db")
+		}
+
+		id := c.Params("id")
+		idUint, err := strconv.ParseUint(id, 10, 32)
+		if err != nil {
+			return c.SendString("Invalid ID format")
+		}
+
+		var body struct {
+			Name        string `json:"name"`
+			AssetGroup  string `json:"assetGroup"`
+			Description string `json:"description"`
+			Color       string `json:"color"`
+		}
+		err = c.BodyParser(&body)
+		if err != nil {
+			return c.SendString("Error parsing body")
+		}
+
+		category, err := database.GetBudgetCategory(db, uint(idUint))
+		if err != nil {
+			return c.SendString("Error getting budget category:" + err.Error())
+		}
+
+		category.Name = body.Name
+		category.AssetGroup = body.AssetGroup
+		category.Description = body.Description
+		category.Color = body.Color
+
+		updatedCategory, err := database.UpdateBudgetCategory(db, category)
+		if err != nil {
+			return c.SendString("Error updating budget category:" + err.Error())
+		}
+
+		return c.JSON(updatedCategory)
+	})
+
+	app.Get("/budget/categories/:id", func(c *fiber.Ctx) error {
+		db, err := database.ConnectGorm()
+		if err != nil {
+			return c.SendString("Error connecting GORM to db")
+		}
+
+		id := c.Params("id")
+		idUint, err := strconv.ParseUint(id, 10, 32)
+		if err != nil {
+			return c.SendString("Invalid ID format")
+		}
+
+		category, err := database.GetBudgetCategory(db, uint(idUint))
+		if err != nil {
+			return c.SendString("Error getting budget category:" + err.Error())
+		}
+
+		return c.JSON(category)
+	})
+
+	app.Delete("/budget/categories/delete/:id", func(c *fiber.Ctx) error {
+		db, err := database.ConnectGorm()
+		if err != nil {
+			return c.SendString("Error connecting GORM to db")
+		}
+
+		id := c.Params("id")
+		idUint, err := strconv.ParseUint(id, 10, 32)
+		if err != nil {
+			return c.SendString("Invalid ID format")
+		}
+
+		err = database.DeleteBudgetCategory(db, uint(idUint))
+		if err != nil {
+			return c.SendString("Error deleting budget category:" + err.Error())
+		}
+
+		return c.SendString("Budget category deleted")
+	})
+
+	// Budget scenario endpoints
+	app.Get("/budget/scenarios", func(c *fiber.Ctx) error {
+		db, err := database.ConnectGorm()
+		if err != nil {
+			return c.SendString("Error connecting GORM to db")
+		}
+
+		scenarios, err := database.GetBudgetScenarios(db)
+		if err != nil {
+			return c.SendString("Error getting budget scenarios:" + err.Error())
+		}
+
+		return c.JSON(scenarios)
+	})
+
+	app.Post("/budget/scenarios/add", func(c *fiber.Ctx) error {
+		db, err := database.ConnectGorm()
+		if err != nil {
+			return c.SendString("Error connecting GORM to db")
+		}
+
+		var body struct {
+			Name          string  `json:"name"`
+			StartDate     string  `json:"startDate"`
+			HorizonMonths int     `json:"horizonMonths"`
+			InflationRate float64 `json:"inflationRate"`
+			IsActive      bool    `json:"isActive"`
+			Notes         string  `json:"notes"`
+		}
+		err = c.BodyParser(&body)
+		if err != nil {
+			return c.SendString("Error parsing body")
+		}
+
+		scenario, err := database.AddBudgetScenario(db, &models.BudgetScenario{
+			Name:          body.Name,
+			StartDate:     body.StartDate,
+			HorizonMonths: body.HorizonMonths,
+			InflationRate: body.InflationRate,
+			IsActive:      body.IsActive,
+			Notes:         body.Notes,
+		})
+		if err != nil {
+			return c.SendString("Error adding budget scenario:" + err.Error())
+		}
+
+		return c.JSON(scenario)
+	})
+
+	app.Put("/budget/scenarios/update/:id", func(c *fiber.Ctx) error {
+		db, err := database.ConnectGorm()
+		if err != nil {
+			return c.SendString("Error connecting GORM to db")
+		}
+
+		id := c.Params("id")
+		idUint, err := strconv.ParseUint(id, 10, 32)
+		if err != nil {
+			return c.SendString("Invalid ID format")
+		}
+
+		var body struct {
+			Name          string  `json:"name"`
+			StartDate     string  `json:"startDate"`
+			HorizonMonths int     `json:"horizonMonths"`
+			InflationRate float64 `json:"inflationRate"`
+			IsActive      bool    `json:"isActive"`
+			Notes         string  `json:"notes"`
+		}
+		err = c.BodyParser(&body)
+		if err != nil {
+			return c.SendString("Error parsing body")
+		}
+
+		scenario, err := database.GetBudgetScenario(db, uint(idUint))
+		if err != nil {
+			return c.SendString("Error getting budget scenario:" + err.Error())
+		}
+
+		scenario.Name = body.Name
+		scenario.StartDate = body.StartDate
+		scenario.HorizonMonths = body.HorizonMonths
+		scenario.InflationRate = body.InflationRate
+		scenario.IsActive = body.IsActive
+		scenario.Notes = body.Notes
+
+		updatedScenario, err := database.UpdateBudgetScenario(db, scenario)
+		if err != nil {
+			return c.SendString("Error updating budget scenario:" + err.Error())
+		}
+
+		return c.JSON(updatedScenario)
+	})
+
+	app.Get("/budget/scenarios/:id", func(c *fiber.Ctx) error {
+		db, err := database.ConnectGorm()
+		if err != nil {
+			return c.SendString("Error connecting GORM to db")
+		}
+
+		id := c.Params("id")
+		idUint, err := strconv.ParseUint(id, 10, 32)
+		if err != nil {
+			return c.SendString("Invalid ID format")
+		}
+
+		scenario, err := database.GetBudgetScenario(db, uint(idUint))
+		if err != nil {
+			return c.SendString("Error getting budget scenario:" + err.Error())
+		}
+
+		return c.JSON(scenario)
+	})
+
+	app.Delete("/budget/scenarios/delete/:id", func(c *fiber.Ctx) error {
+		db, err := database.ConnectGorm()
+		if err != nil {
+			return c.SendString("Error connecting GORM to db")
+		}
+
+		id := c.Params("id")
+		idUint, err := strconv.ParseUint(id, 10, 32)
+		if err != nil {
+			return c.SendString("Invalid ID format")
+		}
+
+		err = database.DeleteBudgetScenario(db, uint(idUint))
+		if err != nil {
+			return c.SendString("Error deleting budget scenario:" + err.Error())
+		}
+
+		return c.SendString("Budget scenario deleted")
+	})
+
 	// Maintenance endpoints
 	app.Get("/maintenance", func(c *fiber.Ctx) error {
 		applianceId := c.Query("applianceId")
