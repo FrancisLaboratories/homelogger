@@ -20,6 +20,7 @@ const SettingsPage: React.FC = () => {
         timeZones: string[];
         measurementSystems: string[];
         weekStartOptions: number[];
+        dateFormats: string[];
         numberingSystems: string[];
     } | null>(null);
 
@@ -84,6 +85,13 @@ const SettingsPage: React.FC = () => {
     };
 
     const currencies = useMemo(() => options?.currencies ?? [settings.currency], [options, settings.currency]);
+    const dateFormats = useMemo(
+        () =>
+            options?.dateFormats ?? [
+                settings.dateFormat || 'YYYY-MM-DD',
+            ],
+        [options, settings.dateFormat]
+    );
     const timeZones = useMemo(() => {
         if (typeof Intl !== 'undefined' && 'supportedValuesOf' in Intl) {
             try {
@@ -201,13 +209,15 @@ const SettingsPage: React.FC = () => {
                     <Row>
                         <Col md={6}>
                             <Form.Group controlId="formDateFormat">
-                                <Form.Label>Date Format (optional)</Form.Label>
-                                <Form.Control
-                                    type="text"
-                                    placeholder="e.g. MM/DD/YYYY"
+                                <Form.Label>Date Format</Form.Label>
+                                <Form.Select
                                     value={formState.dateFormat}
                                     onChange={(e) => setFormState({...formState, dateFormat: e.target.value})}
-                                />
+                                >
+                                    {dateFormats.map((df) => (
+                                        <option key={df} value={df}>{df}</option>
+                                    ))}
+                                </Form.Select>
                             </Form.Group>
                         </Col>
                         <Col md={6}>

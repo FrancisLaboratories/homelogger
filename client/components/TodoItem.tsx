@@ -2,6 +2,8 @@ import Form from 'react-bootstrap/Form';
 import ListGroup from 'react-bootstrap/ListGroup';
 import { useState, useEffect } from 'react';
 import { SERVER_URL } from "@/lib/config";
+import { useSettings } from "@/components/SettingsContext";
+import { formatDateTime } from "@/lib/formatters";
 
 interface TodoItemProps {
     id: string;
@@ -16,6 +18,7 @@ interface TodoItemProps {
 }
 
 const TodoItem: React.FC<TodoItemProps> = ({ id, label, checked, onDelete, onToggle, applianceId, spaceType, sourceLabel, createdAt }) => {
+    const { settings } = useSettings();
     const [isChecked, setIsChecked] = useState<boolean>(checked);
 
     useEffect(() => {
@@ -91,15 +94,7 @@ const TodoItem: React.FC<TodoItemProps> = ({ id, label, checked, onDelete, onTog
     }
 
     // Format createdAt if present
-    let createdAtText: string | null = null;
-    if (createdAt) {
-        try {
-            const d = new Date(createdAt);
-            if (!isNaN(d.getTime())) createdAtText = d.toLocaleString();
-        } catch (e) {
-            createdAtText = null;
-        }
-    }
+    const createdAtText = createdAt ? formatDateTime(createdAt, settings) : null;
 
     return (
         <ListGroup.Item className="d-flex justify-content-between align-items-center">

@@ -82,6 +82,7 @@ func registerSettingsRoutes(app *fiber.App, db *gorm.DB) {
 			"timeZones":          []string{"UTC", "America/New_York", "America/Chicago", "America/Denver", "America/Los_Angeles", "Europe/London", "Europe/Berlin", "Asia/Tokyo", "Australia/Sydney"},
 			"measurementSystems": []string{"imperial", "metric"},
 			"weekStartOptions":   []int{0, 1, 6},
+			"dateFormats":        []string{"YYYY-MM-DD", "DD/MM/YYYY", "MM/DD/YYYY", "YYYY/MM/DD", "DD-MM-YYYY", "MM-DD-YYYY"},
 			"numberingSystems":   []string{"latn"},
 		}
 		return c.JSON(options)

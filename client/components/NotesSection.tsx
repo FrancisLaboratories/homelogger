@@ -3,6 +3,8 @@ import {Card, Button, Form, ListGroup, Modal} from 'react-bootstrap';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import {SERVER_URL} from '@/lib/config';
+import {useSettings} from '@/components/SettingsContext';
+import {formatDateTime} from '@/lib/formatters';
 
 interface Props {
     applianceId?: number;
@@ -23,6 +25,7 @@ const storageKey = (applianceId?: number, spaceType?: string) => {
 };
 
 const NotesSection: React.FC<Props> = ({applianceId, spaceType}) => {
+    const {settings} = useSettings();
     const [notes, setNotes] = useState<NoteItem[]>([]);
     const [showModal, setShowModal] = useState(false);
     const [mode, setMode] = useState<'view' | 'edit' | 'add'>('view');
@@ -164,7 +167,7 @@ const NotesSection: React.FC<Props> = ({applianceId, spaceType}) => {
                             return tb - ta;
                         }).map(n => {
                             const created = n.createdAt || (n as any).CreatedAt || (n as any).created_at || '';
-                            const createdLabel = created ? new Date(created).toLocaleString() : '';
+                            const createdLabel = created ? formatDateTime(created, settings) : '';
                             return (
                                 <ListGroup.Item key={n.id} action onClick={() => handleView(n)} style={{cursor: 'pointer'}}>
                                     <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
