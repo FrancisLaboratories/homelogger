@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {Button, Form, Modal} from 'react-bootstrap';
-import {SERVER_URL} from "@/pages/_app";
+import {SERVER_URL} from "@/lib/config";
 
 interface EditApplianceModalProps {
     show: boolean;

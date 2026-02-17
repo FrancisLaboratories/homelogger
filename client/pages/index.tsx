@@ -6,7 +6,7 @@ import "bootstrap-icons/font/bootstrap-icons.css";
 import MyNavbar from '../components/Navbar';
 import ListGroup from 'react-bootstrap/ListGroup';
 import TodoItem from '../components/TodoItem';
-import { SERVER_URL } from "@/pages/_app";
+import { SERVER_URL } from "@/lib/config";
 
 const todoUrl = `${SERVER_URL}/todo`;
 const todoAddUrl = `${SERVER_URL}/todo/add`;

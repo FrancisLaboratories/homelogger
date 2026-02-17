@@ -1,7 +1,9 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {Button, Modal, Form} from 'react-bootstrap';
 import {RepairRecord} from './RepairSection';
-import {SERVER_URL} from "@/pages/_app";
+import {SERVER_URL} from "@/lib/config";
+import {useSettings} from "@/components/SettingsContext";
+import {formatCurrency, formatDate} from "@/lib/formatters";
 
 interface ShowRepairModalProps {
     show: boolean;
@@ -13,6 +15,7 @@ interface ShowRepairModalProps {
 interface AttachmentInfo { id: number; originalName: string }
 
 const ShowRepairModal: React.FC<ShowRepairModalProps> = ({show, handleClose, repairRecord, handleDeleteRepair}) => {
+    const {settings} = useSettings();
     const [attachments, setAttachments] = useState<AttachmentInfo[]>([]);
     const [uploadMessage, setUploadMessage] = useState<string>('');
     const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -99,8 +102,8 @@ const ShowRepairModal: React.FC<ShowRepairModalProps> = ({show, handleClose, rep
             </Modal.Header>
             <Modal.Body>
                 <p><strong>Description:</strong> {repairRecord.description}</p>
-                <p><strong>Date:</strong> {repairRecord.date}</p>
-                <p><strong>Cost:</strong> ${repairRecord.cost}</p>
+                <p><strong>Date:</strong> {formatDate(repairRecord.date, settings)}</p>
+                <p><strong>Cost:</strong> {formatCurrency(repairRecord.cost, settings)}</p>
                 {attachments.length > 0 && (
                     <div>
                         <strong>Attachments:</strong>

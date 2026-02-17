@@ -8,8 +8,10 @@ import DocumentationSection from '@/components/DocumentationSection';
 import TodosSection from '@/components/TodosSection';
 import NotesSection from '@/components/NotesSection';
 import MyNavbar from '@/components/Navbar';
-import {SERVER_URL} from "@/pages/_app";
+import {SERVER_URL} from "@/lib/config";
 import EditApplianceModal from '@/components/EditApplianceModal';
+import {useSettings} from '@/components/SettingsContext';
+import {formatCurrency} from '@/lib/formatters';
 
 interface Appliance {
     id: number;
@@ -24,6 +26,7 @@ interface Appliance {
 }
 
 const AppliancePage: React.FC = () => {
+    const {settings} = useSettings();
     // Get id from query string (works with static export)
     const getIdFromQuery = () => {
         if (typeof window !== 'undefined') {
@@ -91,6 +94,11 @@ const AppliancePage: React.FC = () => {
         return <div>Loading...</div>;
     }
 
+    const purchasePriceValue = parseFloat(appliance.purchasePrice);
+    const purchasePriceLabel = Number.isFinite(purchasePriceValue)
+        ? formatCurrency(purchasePriceValue, settings)
+        : appliance.purchasePrice;
+
     return (
         <Container>
             <MyNavbar/>
@@ -108,7 +116,7 @@ const AppliancePage: React.FC = () => {
                                         <strong>Model Number:</strong> {appliance.modelNumber}<br/>
                                         <strong>Serial Number:</strong> {appliance.serialNumber}<br/>
                                         <strong>Year Purchased:</strong> {appliance.yearPurchased}<br/>
-                                        <strong>Purchase Price:</strong> {appliance.purchasePrice}<br/>
+                                        <strong>Purchase Price:</strong> {purchasePriceLabel}<br/>
                                     </Card.Text>
                                     <Row>
                                         <Col>

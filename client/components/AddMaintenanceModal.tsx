@@ -1,7 +1,8 @@
 import React, {useEffect, useState} from 'react';
 import {Button, Form, Modal} from 'react-bootstrap';
-import {SERVER_URL} from "@/pages/_app";
+import {SERVER_URL} from "@/lib/config";
 import {MaintenanceRecord, MaintenanceReferenceType, MaintenanceSpaceType} from './MaintenanceSection';
+import {useSettings} from "@/components/SettingsContext";
 
 interface AddMaintenanceModalProps {
     show: boolean;
@@ -20,6 +21,7 @@ const AddMaintenanceModal: React.FC<AddMaintenanceModalProps> = ({
                                                                      referenceType,
                                                                      spaceType
                                                                  }) => {
+    const {settings} = useSettings();
     const [description, setDescription] = useState('');
     const [date, setDate] = useState('');
     const [cost, setCost] = useState(0);
@@ -148,10 +150,10 @@ const AddMaintenanceModal: React.FC<AddMaintenanceModalProps> = ({
                         />
                     </Form.Group>
                     <Form.Group controlId="formCost">
-                        <Form.Label>Cost</Form.Label>
+                        <Form.Label>Cost ({settings.currency})</Form.Label>
                         <Form.Control
                             type="number"
-                            placeholder="Enter cost"
+                            placeholder={`Enter cost in ${settings.currency}`}
                             value={cost}
                             onChange={(e) => setCost(parseFloat(e.target.value))}
                         />

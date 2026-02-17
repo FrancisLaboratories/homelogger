@@ -2,7 +2,7 @@ import React, {useEffect, useState} from 'react';
 import {Card, Button, Form, ListGroup, Modal} from 'react-bootstrap';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import {SERVER_URL} from '@/pages/_app';
+import {SERVER_URL} from '@/lib/config';
 
 interface Props {
     applianceId?: number;

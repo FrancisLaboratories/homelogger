@@ -1,7 +1,7 @@
 import Form from 'react-bootstrap/Form';
 import ListGroup from 'react-bootstrap/ListGroup';
 import { useState, useEffect } from 'react';
-import { SERVER_URL } from "@/pages/_app";
+import { SERVER_URL } from "@/lib/config";
 
 interface TodoItemProps {
     id: string;
