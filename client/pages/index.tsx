@@ -33,17 +33,6 @@ type BudgetScenario = {
   notes: string;
 };
 
-type PlannedCost = {
-  id: number;
-  scenarioId?: number | null;
-  categoryId?: number | null;
-  sourceType: string;
-  sourceId?: number | null;
-  costDate: string;
-  amount: number;
-  notes: string;
-};
-
 type UpgradeProject = {
   id: number;
   title: string;
@@ -59,6 +48,21 @@ type RecurringTask = {
   estimatedCost: number;
 };
 
+type DashboardSummary = {
+  scenario?: BudgetScenario | null;
+  horizonMonths: number;
+  monthlySavings: number;
+  plannedCostTotal: number;
+  plannedCostCount: number;
+  upcoming30DaysTotal: number;
+  upgradeCount: number;
+  upgradeTotal: number;
+  recurringCount: number;
+  recurringDue30: number;
+  repairTotal: number;
+  maintenanceTotal: number;
+};
+
 const HomePage: React.FC = () => {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [sortOption, setSortOption] = useState<string>('created_desc');
@@ -66,7 +70,7 @@ const HomePage: React.FC = () => {
   const [groupBySource, setGroupBySource] = useState<boolean>(false);
   const [scenarios, setScenarios] = useState<BudgetScenario[]>([]);
   const [selectedScenarioId, setSelectedScenarioId] = useState<number | null>(null);
-  const [plannedCosts, setPlannedCosts] = useState<PlannedCost[]>([]);
+  const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [upgrades, setUpgrades] = useState<UpgradeProject[]>([]);
   const [recurring, setRecurring] = useState<RecurringTask[]>([]);
 
@@ -175,41 +179,24 @@ const HomePage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const loadPlannedCosts = async () => {
+    const loadSummary = async () => {
       try {
-        let url = `${SERVER_URL}/planned-costs`;
+        let url = `${SERVER_URL}/dashboard/summary`;
         if (selectedScenarioId) {
           url = `${url}?scenarioId=${selectedScenarioId}`;
         }
         const response = await fetch(url);
         if (!response.ok) return;
         const data = await response.json();
-        setPlannedCosts(data);
+        setSummary(data);
       } catch (error) {
-        console.error('Error fetching planned costs:', error);
+        console.error('Error fetching dashboard summary:', error);
       }
     };
 
-    loadPlannedCosts();
+    loadSummary();
   }, [selectedScenarioId]);
 
-  const activeScenario = scenarios.find((s) => s.id === selectedScenarioId) || scenarios[0];
-  const totalPlanned = plannedCosts.reduce((sum, c) => sum + Number(c.amount || 0), 0);
-  const monthlySavings = activeScenario && activeScenario.horizonMonths > 0
-    ? totalPlanned / activeScenario.horizonMonths
-    : 0;
-  const now = new Date();
-  const inNextDays = (dateStr?: string | null, days?: number) => {
-    if (!dateStr) return false;
-    const dt = new Date(dateStr);
-    if (isNaN(dt.getTime())) return false;
-    const diff = dt.getTime() - now.getTime();
-    return diff <= (days || 0) * 24 * 60 * 60 * 1000;
-  };
-  const upcoming30 = plannedCosts
-    .filter((c) => inNextDays(c.costDate, 30) && new Date(c.costDate).getTime() >= now.getTime())
-    .reduce((sum, c) => sum + Number(c.amount || 0), 0);
-  const recurringDue30 = recurring.filter((r) => inNextDays(r.nextDueDate, 30)).length;
   const upgradesTotal = upgrades.reduce((sum, u) => sum + Number(u.estimatedCost || 0), 0);
 
   const handleAddTodo = async () => {
@@ -254,9 +241,9 @@ const HomePage: React.FC = () => {
           <Card>
             <Card.Body>
               <div style={{ fontSize: '0.9rem', color: '#6c757d' }}>Budget Snapshot</div>
-              <div style={{ fontSize: '1.3rem', fontWeight: 600 }}>${monthlySavings.toFixed(2)}/mo</div>
+              <div style={{ fontSize: '1.3rem', fontWeight: 600 }}>${(summary?.monthlySavings || 0).toFixed(2)}/mo</div>
               <div style={{ fontSize: '0.85rem' }}>
-                {activeScenario ? `${activeScenario.name} • ${activeScenario.horizonMonths} mo` : 'No scenario'}
+                {summary?.scenario ? `${summary.scenario.name} • ${summary.horizonMonths || summary.scenario.horizonMonths} mo` : 'No scenario'}
               </div>
             </Card.Body>
           </Card>
@@ -265,8 +252,8 @@ const HomePage: React.FC = () => {
           <Card>
             <Card.Body>
               <div style={{ fontSize: '0.9rem', color: '#6c757d' }}>Upcoming (30 days)</div>
-              <div style={{ fontSize: '1.3rem', fontWeight: 600 }}>${upcoming30.toFixed(2)}</div>
-              <div style={{ fontSize: '0.85rem' }}>{plannedCosts.length} planned items</div>
+              <div style={{ fontSize: '1.3rem', fontWeight: 600 }}>${(summary?.upcoming30DaysTotal || 0).toFixed(2)}</div>
+              <div style={{ fontSize: '0.85rem' }}>{summary?.plannedCostCount || 0} planned items</div>
             </Card.Body>
           </Card>
         </Col>
@@ -274,8 +261,8 @@ const HomePage: React.FC = () => {
           <Card>
             <Card.Body>
               <div style={{ fontSize: '0.9rem', color: '#6c757d' }}>Upgrades</div>
-              <div style={{ fontSize: '1.3rem', fontWeight: 600 }}>{upgrades.length} projects</div>
-              <div style={{ fontSize: '0.85rem' }}>${upgradesTotal.toFixed(2)} planned</div>
+              <div style={{ fontSize: '1.3rem', fontWeight: 600 }}>{summary?.upgradeCount ?? upgrades.length} projects</div>
+              <div style={{ fontSize: '0.85rem' }}>${(summary?.upgradeTotal ?? upgradesTotal).toFixed(2)} planned</div>
             </Card.Body>
           </Card>
         </Col>
@@ -283,8 +270,8 @@ const HomePage: React.FC = () => {
           <Card>
             <Card.Body>
               <div style={{ fontSize: '0.9rem', color: '#6c757d' }}>Recurring Due Soon</div>
-              <div style={{ fontSize: '1.3rem', fontWeight: 600 }}>{recurringDue30} tasks</div>
-              <div style={{ fontSize: '0.85rem' }}>{recurring.length} total</div>
+              <div style={{ fontSize: '1.3rem', fontWeight: 600 }}>{summary?.recurringDue30 ?? 0} tasks</div>
+              <div style={{ fontSize: '0.85rem' }}>{summary?.recurringCount ?? recurring.length} total</div>
             </Card.Body>
           </Card>
         </Col>

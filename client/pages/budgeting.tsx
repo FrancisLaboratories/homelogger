@@ -32,11 +32,22 @@ type PlannedCost = {
   notes: string;
 };
 
+type BudgetSummary = {
+  scenario?: BudgetScenario | null;
+  horizonMonths: number;
+  totalPlanned: number;
+  monthlySavings: number;
+  upcoming30Days: number;
+  upcoming90Days: number;
+  plannedCostCount: number;
+};
+
 const BudgetingPage: React.FC = () => {
   const [scenarios, setScenarios] = useState<BudgetScenario[]>([]);
   const [categories, setCategories] = useState<BudgetCategory[]>([]);
   const [plannedCosts, setPlannedCosts] = useState<PlannedCost[]>([]);
   const [selectedScenarioId, setSelectedScenarioId] = useState<number | null>(null);
+  const [summary, setSummary] = useState<BudgetSummary | null>(null);
 
   const [newScenario, setNewScenario] = useState({
     name: '',
@@ -113,6 +124,25 @@ const BudgetingPage: React.FC = () => {
     loadPlannedCosts(selectedScenarioId);
   }, [selectedScenarioId]);
 
+  useEffect(() => {
+    const loadSummary = async () => {
+      try {
+        let url = `${SERVER_URL}/budget/summary`;
+        if (selectedScenarioId) {
+          url = `${url}?scenarioId=${selectedScenarioId}`;
+        }
+        const resp = await fetch(url);
+        if (!resp.ok) return;
+        const data = await resp.json();
+        setSummary(data);
+      } catch (e) {
+        console.error('Error loading budget summary', e);
+      }
+    };
+
+    loadSummary();
+  }, [selectedScenarioId]);
+
   const handleAddScenario = async () => {
     if (!newScenario.name) return;
     const resp = await fetch(`${SERVER_URL}/budget/scenarios/add`, {
@@ -180,6 +210,36 @@ const BudgetingPage: React.FC = () => {
     <Container style={{ marginTop: '16px' }}>
       <MyNavbar />
       <h3>Budgeting</h3>
+
+      <Row className="g-3" style={{ marginBottom: '12px' }}>
+        <Col md={4}>
+          <Card>
+            <Card.Body>
+              <div style={{ fontSize: '0.9rem', color: '#6c757d' }}>Monthly Savings Target</div>
+              <div style={{ fontSize: '1.3rem', fontWeight: 600 }}>${(summary?.monthlySavings || 0).toFixed(2)}/mo</div>
+              <div style={{ fontSize: '0.85rem' }}>{summary?.plannedCostCount || 0} items in plan</div>
+            </Card.Body>
+          </Card>
+        </Col>
+        <Col md={4}>
+          <Card>
+            <Card.Body>
+              <div style={{ fontSize: '0.9rem', color: '#6c757d' }}>Upcoming (30 days)</div>
+              <div style={{ fontSize: '1.3rem', fontWeight: 600 }}>${(summary?.upcoming30Days || 0).toFixed(2)}</div>
+              <div style={{ fontSize: '0.85rem' }}>Next 90 days: ${(summary?.upcoming90Days || 0).toFixed(2)}</div>
+            </Card.Body>
+          </Card>
+        </Col>
+        <Col md={4}>
+          <Card>
+            <Card.Body>
+              <div style={{ fontSize: '0.9rem', color: '#6c757d' }}>Total Planned</div>
+              <div style={{ fontSize: '1.3rem', fontWeight: 600 }}>${(summary?.totalPlanned || 0).toFixed(2)}</div>
+              <div style={{ fontSize: '0.85rem' }}>{summary?.horizonMonths || 0} month horizon</div>
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
 
       <Row className="g-3">
         <Col lg={6}>
