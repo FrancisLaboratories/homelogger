@@ -1084,6 +1084,205 @@ func main() {
 		return c.SendString("Planned cost deleted")
 	})
 
+	// Budget summary endpoint
+	app.Get("/budget/summary", func(c *fiber.Ctx) error {
+		db, err := database.ConnectGorm()
+		if err != nil {
+			return c.SendString("Error connecting GORM to db")
+		}
+
+		now := time.Now()
+		parseDate := func(dateStr string) (time.Time, bool) {
+			if dateStr == "" {
+				return time.Time{}, false
+			}
+			t, err := time.Parse("2006-01-02", dateStr)
+			if err != nil {
+				return time.Time{}, false
+			}
+			return t, true
+		}
+
+		scenarioIdStr := c.Query("scenarioId")
+		horizonMonthsStr := c.Query("horizonMonths")
+		var scenarioId uint = 0
+		if scenarioIdStr != "" {
+			if idUint, err := strconv.ParseUint(scenarioIdStr, 10, 32); err == nil {
+				scenarioId = uint(idUint)
+			}
+		}
+
+		horizonMonths := 0
+		if horizonMonthsStr != "" {
+			if hm, err := strconv.Atoi(horizonMonthsStr); err == nil {
+				horizonMonths = hm
+			}
+		}
+
+		var scenario *models.BudgetScenario
+		if scenarioId != 0 {
+			s, err := database.GetBudgetScenario(db, scenarioId)
+			if err == nil {
+				scenario = s
+				if horizonMonths == 0 {
+					horizonMonths = s.HorizonMonths
+				}
+			}
+		}
+
+		plannedCosts, err := database.GetPlannedCosts(db, scenarioId)
+		if err != nil {
+			return c.SendString("Error getting planned costs:" + err.Error())
+		}
+
+		totalPlanned := 0.0
+		upcoming30 := 0.0
+		upcoming90 := 0.0
+		for _, cost := range plannedCosts {
+			totalPlanned += cost.Amount
+			if dt, ok := parseDate(cost.CostDate); ok {
+				if dt.After(now) {
+					if dt.Before(now.AddDate(0, 0, 30)) || dt.Equal(now.AddDate(0, 0, 30)) {
+						upcoming30 += cost.Amount
+					}
+					if dt.Before(now.AddDate(0, 0, 90)) || dt.Equal(now.AddDate(0, 0, 90)) {
+						upcoming90 += cost.Amount
+					}
+				}
+			}
+		}
+
+		monthlySavings := 0.0
+		if horizonMonths > 0 {
+			monthlySavings = totalPlanned / float64(horizonMonths)
+		}
+
+		return c.JSON(fiber.Map{
+			"scenario":         scenario,
+			"horizonMonths":    horizonMonths,
+			"totalPlanned":     totalPlanned,
+			"monthlySavings":   monthlySavings,
+			"upcoming30Days":   upcoming30,
+			"upcoming90Days":   upcoming90,
+			"plannedCostCount": len(plannedCosts),
+		})
+	})
+
+	// Dashboard summary endpoint
+	app.Get("/dashboard/summary", func(c *fiber.Ctx) error {
+		db, err := database.ConnectGorm()
+		if err != nil {
+			return c.SendString("Error connecting GORM to db")
+		}
+
+		now := time.Now()
+		parseDate := func(dateStr string) (time.Time, bool) {
+			if dateStr == "" {
+				return time.Time{}, false
+			}
+			t, err := time.Parse("2006-01-02", dateStr)
+			if err != nil {
+				return time.Time{}, false
+			}
+			return t, true
+		}
+
+		scenarioIdStr := c.Query("scenarioId")
+		horizonMonthsStr := c.Query("horizonMonths")
+		var scenarioId uint = 0
+		if scenarioIdStr != "" {
+			if idUint, err := strconv.ParseUint(scenarioIdStr, 10, 32); err == nil {
+				scenarioId = uint(idUint)
+			}
+		}
+
+		horizonMonths := 0
+		if horizonMonthsStr != "" {
+			if hm, err := strconv.Atoi(horizonMonthsStr); err == nil {
+				horizonMonths = hm
+			}
+		}
+
+		var scenario *models.BudgetScenario
+		if scenarioId != 0 {
+			s, err := database.GetBudgetScenario(db, scenarioId)
+			if err == nil {
+				scenario = s
+				if horizonMonths == 0 {
+					horizonMonths = s.HorizonMonths
+				}
+			}
+		}
+
+		plannedCosts, err := database.GetPlannedCosts(db, scenarioId)
+		if err != nil {
+			return c.SendString("Error getting planned costs:" + err.Error())
+		}
+
+		totalPlanned := 0.0
+		upcoming30 := 0.0
+		for _, cost := range plannedCosts {
+			totalPlanned += cost.Amount
+			if dt, ok := parseDate(cost.CostDate); ok {
+				if dt.After(now) && (dt.Before(now.AddDate(0, 0, 30)) || dt.Equal(now.AddDate(0, 0, 30))) {
+					upcoming30 += cost.Amount
+				}
+			}
+		}
+
+		monthlySavings := 0.0
+		if horizonMonths > 0 {
+			monthlySavings = totalPlanned / float64(horizonMonths)
+		}
+
+		var upgrades []models.UpgradeProject
+		_ = db.Find(&upgrades)
+		upgradesTotal := 0.0
+		for _, u := range upgrades {
+			upgradesTotal += u.EstimatedCost
+		}
+
+		var recurring []models.RecurringTask
+		_ = db.Find(&recurring)
+		recurringDue30 := 0
+		for _, r := range recurring {
+			if dt, ok := parseDate(r.NextDueDate); ok {
+				if dt.Before(now.AddDate(0, 0, 30)) || dt.Equal(now.AddDate(0, 0, 30)) {
+					recurringDue30++
+				}
+			}
+		}
+
+		var repairs []models.Repair
+		_ = db.Find(&repairs)
+		repairsTotal := 0.0
+		for _, r := range repairs {
+			repairsTotal += r.Cost
+		}
+
+		var maintenances []models.Maintenance
+		_ = db.Find(&maintenances)
+		maintenanceTotal := 0.0
+		for _, m := range maintenances {
+			maintenanceTotal += m.Cost
+		}
+
+		return c.JSON(fiber.Map{
+			"scenario":            scenario,
+			"horizonMonths":       horizonMonths,
+			"monthlySavings":      monthlySavings,
+			"plannedCostTotal":    totalPlanned,
+			"plannedCostCount":    len(plannedCosts),
+			"upcoming30DaysTotal": upcoming30,
+			"upgradeCount":        len(upgrades),
+			"upgradeTotal":        upgradesTotal,
+			"recurringCount":      len(recurring),
+			"recurringDue30":      recurringDue30,
+			"repairTotal":         repairsTotal,
+			"maintenanceTotal":    maintenanceTotal,
+		})
+	})
+
 	// Maintenance endpoints
 	app.Get("/maintenance", func(c *fiber.Ctx) error {
 		applianceId := c.Query("applianceId")
