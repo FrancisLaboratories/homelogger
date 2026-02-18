@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { Container, Form } from 'react-bootstrap';
+import { Badge, Card, Col, Container, Form, Row } from 'react-bootstrap';
 import "bootstrap-icons/font/bootstrap-icons.css";
 import MyNavbar from '../components/Navbar';
 import ListGroup from 'react-bootstrap/ListGroup';
@@ -23,11 +23,42 @@ type Todo = {
   created_at?: string | null;
 };
 
+type BudgetScenario = {
+  id: number;
+  name: string;
+  startDate: string;
+  horizonMonths: number;
+  inflationRate: number;
+  isActive: boolean;
+  notes: string;
+};
+
+type DashboardSummary = {
+  scenario?: BudgetScenario | null;
+  horizonMonths: number;
+  monthlySavings: number;
+  plannedCostTotal: number;
+  plannedCostCount: number;
+  upcoming30DaysTotal: number;
+  overdueTotal: number;
+  overdueCount: number;
+  upgradeCount: number;
+  upgradeTotal: number;
+  recurringCount: number;
+  recurringDue30: number;
+  repairTotal: number;
+  maintenanceTotal: number;
+};
+
 const HomePage: React.FC = () => {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [sortOption, setSortOption] = useState<string>('created_desc');
   const [filterOption, setFilterOption] = useState<string>('not_completed');
   const [groupBySource, setGroupBySource] = useState<boolean>(false);
+  const [scenarios, setScenarios] = useState<BudgetScenario[]>([]);
+  const [selectedScenarioId, setSelectedScenarioId] = useState<number | null>(null);
+  const [summary, setSummary] = useState<DashboardSummary | null>(null);
+  const highUpcomingMultiplier = 1.5;
 
   const prettySpace = (s?: string | null) => {
     if (!s) return null;
@@ -90,6 +121,48 @@ const HomePage: React.FC = () => {
     fetchTodos();
   }, []);
 
+  useEffect(() => {
+    const loadScenarios = async () => {
+      try {
+        const response = await fetch(`${SERVER_URL}/budget/scenarios`);
+        if (!response.ok) return;
+        const data = await response.json();
+        setScenarios(data);
+        if (data.length > 0 && selectedScenarioId === null) {
+          const active = data.find((s: BudgetScenario) => s.isActive) || data[0];
+          setSelectedScenarioId(active.id);
+        }
+      } catch (error) {
+        console.error('Error fetching scenarios:', error);
+      }
+    };
+
+    loadScenarios();
+  }, []);
+
+  useEffect(() => {
+    const loadSummary = async () => {
+      try {
+        let url = `${SERVER_URL}/dashboard/summary`;
+        if (selectedScenarioId) {
+          url = `${url}?scenarioId=${selectedScenarioId}`;
+        }
+        const response = await fetch(url);
+        if (!response.ok) return;
+        const data = await response.json();
+        setSummary(data);
+      } catch (error) {
+        console.error('Error fetching dashboard summary:', error);
+      }
+    };
+
+    loadSummary();
+  }, [selectedScenarioId]);
+
+  const highUpcoming = summary && summary.monthlySavings > 0
+    ? summary.upcoming30DaysTotal > summary.monthlySavings * highUpcomingMultiplier
+    : false;
+
   const handleAddTodo = async () => {
     const label = prompt('What should go in this item?');
     if (label) {
@@ -127,7 +200,77 @@ const HomePage: React.FC = () => {
   return (
     <Container>
       <MyNavbar />
-      <h4 id='maintext'>To-dos:</h4>
+      <Row className="g-3" style={{ marginTop: '8px' }}>
+        <Col lg={3} md={6}>
+          <Card>
+            <Card.Body>
+              <div style={{ fontSize: '0.9rem', color: '#6c757d' }}>Budget Snapshot</div>
+              <div style={{ fontSize: '1.3rem', fontWeight: 600 }}>${(summary?.monthlySavings || 0).toFixed(2)}/mo</div>
+              <div style={{ fontSize: '0.85rem' }}>
+                {summary?.scenario ? `${summary.scenario.name} • ${summary.horizonMonths || summary.scenario.horizonMonths} mo` : 'No scenario'}
+              </div>
+            </Card.Body>
+          </Card>
+        </Col>
+        <Col lg={3} md={6}>
+          <Card>
+            <Card.Body>
+              <div style={{ fontSize: '0.9rem', color: '#6c757d' }}>Upcoming (30 days)</div>
+              <div style={{ fontSize: '1.3rem', fontWeight: 600 }}>${(summary?.upcoming30DaysTotal || 0).toFixed(2)}</div>
+              <div style={{ fontSize: '0.85rem' }}>
+                {summary?.plannedCostCount || 0} planned items
+                {(summary?.upcoming30DaysTotal || 0) > 0 && (
+                  <Badge bg="warning" text="dark" style={{ marginLeft: 8 }}>Upcoming</Badge>
+                )}
+                {(summary?.overdueCount || 0) > 0 && (
+                  <Badge bg="danger" style={{ marginLeft: 8 }}>Overdue</Badge>
+                )}
+                {highUpcoming && (
+                  <Badge bg="danger" style={{ marginLeft: 8 }}>High 30-day</Badge>
+                )}
+              </div>
+            </Card.Body>
+          </Card>
+        </Col>
+        <Col lg={3} md={6}>
+          <Card>
+            <Card.Body>
+              <div style={{ fontSize: '0.9rem', color: '#6c757d' }}>Upgrades</div>
+              <div style={{ fontSize: '1.3rem', fontWeight: 600 }}>{summary?.upgradeCount ?? 0} projects</div>
+              <div style={{ fontSize: '0.85rem' }}>${(summary?.upgradeTotal ?? 0).toFixed(2)} planned</div>
+            </Card.Body>
+          </Card>
+        </Col>
+        <Col lg={3} md={6}>
+          <Card>
+            <Card.Body>
+              <div style={{ fontSize: '0.9rem', color: '#6c757d' }}>Recurring Due Soon</div>
+              <div style={{ fontSize: '1.3rem', fontWeight: 600 }}>{summary?.recurringDue30 ?? 0} tasks</div>
+              <div style={{ fontSize: '0.85rem' }}>
+                {summary?.recurringCount ?? 0} total
+                {(summary?.recurringDue30 || 0) > 0 && (
+                  <Badge bg="danger" style={{ marginLeft: 8 }}>Due Soon</Badge>
+                )}
+              </div>
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12 }}>
+        <h4 id='maintext' style={{ marginBottom: 0 }}>To-dos</h4>
+        <Form.Select
+          aria-label="Budget scenario"
+          value={selectedScenarioId ?? ''}
+          onChange={(e) => setSelectedScenarioId(e.target.value ? Number(e.target.value) : null)}
+          style={{ maxWidth: '260px' }}
+        >
+          <option value="">Budget scenario</option>
+          {scenarios.map((s) => (
+            <option key={s.id} value={s.id}>{s.name}</option>
+          ))}
+        </Form.Select>
+      </div>
 
       <div style={{display: 'flex', gap: '8px', marginBottom: '8px'}}>
         <Form.Select aria-label="Sort todos" value={sortOption} onChange={(e) => { setSortOption(e.target.value); try { localStorage.setItem('homelogger_todo_sort', e.target.value); } catch {} }} style={{maxWidth: '220px'}}>

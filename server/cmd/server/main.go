@@ -378,6 +378,965 @@ func main() {
 		return c.SendString("Appliance deleted")
 	})
 
+	// Budget category endpoints
+	app.Get("/budget/categories", func(c *fiber.Ctx) error {
+		db, err := database.ConnectGorm()
+		if err != nil {
+			return c.SendString("Error connecting GORM to db")
+		}
+
+		categories, err := database.GetBudgetCategories(db)
+		if err != nil {
+			return c.SendString("Error getting budget categories:" + err.Error())
+		}
+
+		return c.JSON(categories)
+	})
+
+	app.Post("/budget/categories/add", func(c *fiber.Ctx) error {
+		db, err := database.ConnectGorm()
+		if err != nil {
+			return c.SendString("Error connecting GORM to db")
+		}
+
+		var body struct {
+			Name        string `json:"name"`
+			AssetGroup  string `json:"assetGroup"`
+			Description string `json:"description"`
+			Color       string `json:"color"`
+		}
+		err = c.BodyParser(&body)
+		if err != nil {
+			return c.SendString("Error parsing body")
+		}
+
+		category, err := database.AddBudgetCategory(db, &models.BudgetCategory{
+			Name:        body.Name,
+			AssetGroup:  body.AssetGroup,
+			Description: body.Description,
+			Color:       body.Color,
+		})
+		if err != nil {
+			return c.SendString("Error adding budget category:" + err.Error())
+		}
+
+		return c.JSON(category)
+	})
+
+	app.Put("/budget/categories/update/:id", func(c *fiber.Ctx) error {
+		db, err := database.ConnectGorm()
+		if err != nil {
+			return c.SendString("Error connecting GORM to db")
+		}
+
+		id := c.Params("id")
+		idUint, err := strconv.ParseUint(id, 10, 32)
+		if err != nil {
+			return c.SendString("Invalid ID format")
+		}
+
+		var body struct {
+			Name        string `json:"name"`
+			AssetGroup  string `json:"assetGroup"`
+			Description string `json:"description"`
+			Color       string `json:"color"`
+		}
+		err = c.BodyParser(&body)
+		if err != nil {
+			return c.SendString("Error parsing body")
+		}
+
+		category, err := database.GetBudgetCategory(db, uint(idUint))
+		if err != nil {
+			return c.SendString("Error getting budget category:" + err.Error())
+		}
+
+		category.Name = body.Name
+		category.AssetGroup = body.AssetGroup
+		category.Description = body.Description
+		category.Color = body.Color
+
+		updatedCategory, err := database.UpdateBudgetCategory(db, category)
+		if err != nil {
+			return c.SendString("Error updating budget category:" + err.Error())
+		}
+
+		return c.JSON(updatedCategory)
+	})
+
+	app.Get("/budget/categories/:id", func(c *fiber.Ctx) error {
+		db, err := database.ConnectGorm()
+		if err != nil {
+			return c.SendString("Error connecting GORM to db")
+		}
+
+		id := c.Params("id")
+		idUint, err := strconv.ParseUint(id, 10, 32)
+		if err != nil {
+			return c.SendString("Invalid ID format")
+		}
+
+		category, err := database.GetBudgetCategory(db, uint(idUint))
+		if err != nil {
+			return c.SendString("Error getting budget category:" + err.Error())
+		}
+
+		return c.JSON(category)
+	})
+
+	app.Delete("/budget/categories/delete/:id", func(c *fiber.Ctx) error {
+		db, err := database.ConnectGorm()
+		if err != nil {
+			return c.SendString("Error connecting GORM to db")
+		}
+
+		id := c.Params("id")
+		idUint, err := strconv.ParseUint(id, 10, 32)
+		if err != nil {
+			return c.SendString("Invalid ID format")
+		}
+
+		err = database.DeleteBudgetCategory(db, uint(idUint))
+		if err != nil {
+			return c.SendString("Error deleting budget category:" + err.Error())
+		}
+
+		return c.SendString("Budget category deleted")
+	})
+
+	// Budget scenario endpoints
+	app.Get("/budget/scenarios", func(c *fiber.Ctx) error {
+		db, err := database.ConnectGorm()
+		if err != nil {
+			return c.SendString("Error connecting GORM to db")
+		}
+
+		scenarios, err := database.GetBudgetScenarios(db)
+		if err != nil {
+			return c.SendString("Error getting budget scenarios:" + err.Error())
+		}
+
+		return c.JSON(scenarios)
+	})
+
+	app.Post("/budget/scenarios/add", func(c *fiber.Ctx) error {
+		db, err := database.ConnectGorm()
+		if err != nil {
+			return c.SendString("Error connecting GORM to db")
+		}
+
+		var body struct {
+			Name          string  `json:"name"`
+			StartDate     string  `json:"startDate"`
+			HorizonMonths int     `json:"horizonMonths"`
+			InflationRate float64 `json:"inflationRate"`
+			IsActive      bool    `json:"isActive"`
+			Notes         string  `json:"notes"`
+		}
+		err = c.BodyParser(&body)
+		if err != nil {
+			return c.SendString("Error parsing body")
+		}
+
+		scenario, err := database.AddBudgetScenario(db, &models.BudgetScenario{
+			Name:          body.Name,
+			StartDate:     body.StartDate,
+			HorizonMonths: body.HorizonMonths,
+			InflationRate: body.InflationRate,
+			IsActive:      body.IsActive,
+			Notes:         body.Notes,
+		})
+		if err != nil {
+			return c.SendString("Error adding budget scenario:" + err.Error())
+		}
+
+		return c.JSON(scenario)
+	})
+
+	app.Put("/budget/scenarios/update/:id", func(c *fiber.Ctx) error {
+		db, err := database.ConnectGorm()
+		if err != nil {
+			return c.SendString("Error connecting GORM to db")
+		}
+
+		id := c.Params("id")
+		idUint, err := strconv.ParseUint(id, 10, 32)
+		if err != nil {
+			return c.SendString("Invalid ID format")
+		}
+
+		var body struct {
+			Name          string  `json:"name"`
+			StartDate     string  `json:"startDate"`
+			HorizonMonths int     `json:"horizonMonths"`
+			InflationRate float64 `json:"inflationRate"`
+			IsActive      bool    `json:"isActive"`
+			Notes         string  `json:"notes"`
+		}
+		err = c.BodyParser(&body)
+		if err != nil {
+			return c.SendString("Error parsing body")
+		}
+
+		scenario, err := database.GetBudgetScenario(db, uint(idUint))
+		if err != nil {
+			return c.SendString("Error getting budget scenario:" + err.Error())
+		}
+
+		scenario.Name = body.Name
+		scenario.StartDate = body.StartDate
+		scenario.HorizonMonths = body.HorizonMonths
+		scenario.InflationRate = body.InflationRate
+		scenario.IsActive = body.IsActive
+		scenario.Notes = body.Notes
+
+		updatedScenario, err := database.UpdateBudgetScenario(db, scenario)
+		if err != nil {
+			return c.SendString("Error updating budget scenario:" + err.Error())
+		}
+
+		return c.JSON(updatedScenario)
+	})
+
+	app.Get("/budget/scenarios/:id", func(c *fiber.Ctx) error {
+		db, err := database.ConnectGorm()
+		if err != nil {
+			return c.SendString("Error connecting GORM to db")
+		}
+
+		id := c.Params("id")
+		idUint, err := strconv.ParseUint(id, 10, 32)
+		if err != nil {
+			return c.SendString("Invalid ID format")
+		}
+
+		scenario, err := database.GetBudgetScenario(db, uint(idUint))
+		if err != nil {
+			return c.SendString("Error getting budget scenario:" + err.Error())
+		}
+
+		return c.JSON(scenario)
+	})
+
+	app.Delete("/budget/scenarios/delete/:id", func(c *fiber.Ctx) error {
+		db, err := database.ConnectGorm()
+		if err != nil {
+			return c.SendString("Error connecting GORM to db")
+		}
+
+		id := c.Params("id")
+		idUint, err := strconv.ParseUint(id, 10, 32)
+		if err != nil {
+			return c.SendString("Invalid ID format")
+		}
+
+		err = database.DeleteBudgetScenario(db, uint(idUint))
+		if err != nil {
+			return c.SendString("Error deleting budget scenario:" + err.Error())
+		}
+
+		return c.SendString("Budget scenario deleted")
+	})
+
+	// Upgrade project endpoints
+	app.Get("/upgrades", func(c *fiber.Ctx) error {
+		db, err := database.ConnectGorm()
+		if err != nil {
+			return c.SendString("Error connecting GORM to db")
+		}
+
+		projects, err := database.GetUpgradeProjects(db)
+		if err != nil {
+			return c.SendString("Error getting upgrade projects:" + err.Error())
+		}
+
+		return c.JSON(projects)
+	})
+
+	app.Post("/upgrades/add", func(c *fiber.Ctx) error {
+		db, err := database.ConnectGorm()
+		if err != nil {
+			return c.SendString("Error connecting GORM to db")
+		}
+
+		var body struct {
+			Title         string  `json:"title"`
+			Description   string  `json:"description"`
+			Status        string  `json:"status"`
+			Priority      string  `json:"priority"`
+			TargetDate    string  `json:"targetDate"`
+			EstimatedCost float64 `json:"estimatedCost"`
+			Notes         string  `json:"notes"`
+			CategoryID    *uint   `json:"categoryId"`
+		}
+		err = c.BodyParser(&body)
+		if err != nil {
+			return c.SendString("Error parsing body")
+		}
+
+		project, err := database.AddUpgradeProject(db, &models.UpgradeProject{
+			Title:         body.Title,
+			Description:   body.Description,
+			Status:        body.Status,
+			Priority:      body.Priority,
+			TargetDate:    body.TargetDate,
+			EstimatedCost: body.EstimatedCost,
+			Notes:         body.Notes,
+			CategoryID:    body.CategoryID,
+		})
+		if err != nil {
+			return c.SendString("Error adding upgrade project:" + err.Error())
+		}
+
+		return c.JSON(project)
+	})
+
+	app.Put("/upgrades/update/:id", func(c *fiber.Ctx) error {
+		db, err := database.ConnectGorm()
+		if err != nil {
+			return c.SendString("Error connecting GORM to db")
+		}
+
+		id := c.Params("id")
+		idUint, err := strconv.ParseUint(id, 10, 32)
+		if err != nil {
+			return c.SendString("Invalid ID format")
+		}
+
+		var body struct {
+			Title         string  `json:"title"`
+			Description   string  `json:"description"`
+			Status        string  `json:"status"`
+			Priority      string  `json:"priority"`
+			TargetDate    string  `json:"targetDate"`
+			EstimatedCost float64 `json:"estimatedCost"`
+			Notes         string  `json:"notes"`
+			CategoryID    *uint   `json:"categoryId"`
+		}
+		err = c.BodyParser(&body)
+		if err != nil {
+			return c.SendString("Error parsing body")
+		}
+
+		project, err := database.GetUpgradeProject(db, uint(idUint))
+		if err != nil {
+			return c.SendString("Error getting upgrade project:" + err.Error())
+		}
+
+		project.Title = body.Title
+		project.Description = body.Description
+		project.Status = body.Status
+		project.Priority = body.Priority
+		project.TargetDate = body.TargetDate
+		project.EstimatedCost = body.EstimatedCost
+		project.Notes = body.Notes
+		project.CategoryID = body.CategoryID
+
+		updatedProject, err := database.UpdateUpgradeProject(db, project)
+		if err != nil {
+			return c.SendString("Error updating upgrade project:" + err.Error())
+		}
+
+		return c.JSON(updatedProject)
+	})
+
+	app.Get("/upgrades/:id", func(c *fiber.Ctx) error {
+		db, err := database.ConnectGorm()
+		if err != nil {
+			return c.SendString("Error connecting GORM to db")
+		}
+
+		id := c.Params("id")
+		idUint, err := strconv.ParseUint(id, 10, 32)
+		if err != nil {
+			return c.SendString("Invalid ID format")
+		}
+
+		project, err := database.GetUpgradeProject(db, uint(idUint))
+		if err != nil {
+			return c.SendString("Error getting upgrade project:" + err.Error())
+		}
+
+		return c.JSON(project)
+	})
+
+	app.Delete("/upgrades/delete/:id", func(c *fiber.Ctx) error {
+		db, err := database.ConnectGorm()
+		if err != nil {
+			return c.SendString("Error connecting GORM to db")
+		}
+
+		id := c.Params("id")
+		idUint, err := strconv.ParseUint(id, 10, 32)
+		if err != nil {
+			return c.SendString("Invalid ID format")
+		}
+
+		err = database.DeleteUpgradeProject(db, uint(idUint))
+		if err != nil {
+			return c.SendString("Error deleting upgrade project:" + err.Error())
+		}
+
+		return c.SendString("Upgrade project deleted")
+	})
+
+	// Recurring task endpoints
+	app.Get("/recurring", func(c *fiber.Ctx) error {
+		db, err := database.ConnectGorm()
+		if err != nil {
+			return c.SendString("Error connecting GORM to db")
+		}
+
+		tasks, err := database.GetRecurringTasks(db)
+		if err != nil {
+			return c.SendString("Error getting recurring tasks:" + err.Error())
+		}
+
+		return c.JSON(tasks)
+	})
+
+	app.Post("/recurring/add", func(c *fiber.Ctx) error {
+		db, err := database.ConnectGorm()
+		if err != nil {
+			return c.SendString("Error connecting GORM to db")
+		}
+
+		var body struct {
+			Name           string  `json:"name"`
+			Description    string  `json:"description"`
+			IntervalValue  int     `json:"intervalValue"`
+			IntervalUnit   string  `json:"intervalUnit"`
+			NextDueDate    string  `json:"nextDueDate"`
+			EstimatedCost  float64 `json:"estimatedCost"`
+			ReferenceType  string  `json:"referenceType"`
+			SpaceType      string  `json:"spaceType"`
+			ApplianceID    *uint   `json:"applianceId"`
+			CategoryID     *uint   `json:"categoryId"`
+			AutoCreateTodo bool    `json:"autoCreateTodo"`
+			Notes          string  `json:"notes"`
+		}
+		err = c.BodyParser(&body)
+		if err != nil {
+			return c.SendString("Error parsing body")
+		}
+
+		task, err := database.AddRecurringTask(db, &models.RecurringTask{
+			Name:           body.Name,
+			Description:    body.Description,
+			IntervalValue:  body.IntervalValue,
+			IntervalUnit:   body.IntervalUnit,
+			NextDueDate:    body.NextDueDate,
+			EstimatedCost:  body.EstimatedCost,
+			ReferenceType:  body.ReferenceType,
+			SpaceType:      body.SpaceType,
+			ApplianceID:    body.ApplianceID,
+			CategoryID:     body.CategoryID,
+			AutoCreateTodo: body.AutoCreateTodo,
+			Notes:          body.Notes,
+		})
+		if err != nil {
+			return c.SendString("Error adding recurring task:" + err.Error())
+		}
+
+		return c.JSON(task)
+	})
+
+	app.Put("/recurring/update/:id", func(c *fiber.Ctx) error {
+		db, err := database.ConnectGorm()
+		if err != nil {
+			return c.SendString("Error connecting GORM to db")
+		}
+
+		id := c.Params("id")
+		idUint, err := strconv.ParseUint(id, 10, 32)
+		if err != nil {
+			return c.SendString("Invalid ID format")
+		}
+
+		var body struct {
+			Name           string  `json:"name"`
+			Description    string  `json:"description"`
+			IntervalValue  int     `json:"intervalValue"`
+			IntervalUnit   string  `json:"intervalUnit"`
+			NextDueDate    string  `json:"nextDueDate"`
+			EstimatedCost  float64 `json:"estimatedCost"`
+			ReferenceType  string  `json:"referenceType"`
+			SpaceType      string  `json:"spaceType"`
+			ApplianceID    *uint   `json:"applianceId"`
+			CategoryID     *uint   `json:"categoryId"`
+			AutoCreateTodo bool    `json:"autoCreateTodo"`
+			Notes          string  `json:"notes"`
+		}
+		err = c.BodyParser(&body)
+		if err != nil {
+			return c.SendString("Error parsing body")
+		}
+
+		task, err := database.GetRecurringTask(db, uint(idUint))
+		if err != nil {
+			return c.SendString("Error getting recurring task:" + err.Error())
+		}
+
+		task.Name = body.Name
+		task.Description = body.Description
+		task.IntervalValue = body.IntervalValue
+		task.IntervalUnit = body.IntervalUnit
+		task.NextDueDate = body.NextDueDate
+		task.EstimatedCost = body.EstimatedCost
+		task.ReferenceType = body.ReferenceType
+		task.SpaceType = body.SpaceType
+		task.ApplianceID = body.ApplianceID
+		task.CategoryID = body.CategoryID
+		task.AutoCreateTodo = body.AutoCreateTodo
+		task.Notes = body.Notes
+
+		updatedTask, err := database.UpdateRecurringTask(db, task)
+		if err != nil {
+			return c.SendString("Error updating recurring task:" + err.Error())
+		}
+
+		return c.JSON(updatedTask)
+	})
+
+	app.Get("/recurring/:id", func(c *fiber.Ctx) error {
+		db, err := database.ConnectGorm()
+		if err != nil {
+			return c.SendString("Error connecting GORM to db")
+		}
+
+		id := c.Params("id")
+		idUint, err := strconv.ParseUint(id, 10, 32)
+		if err != nil {
+			return c.SendString("Invalid ID format")
+		}
+
+		task, err := database.GetRecurringTask(db, uint(idUint))
+		if err != nil {
+			return c.SendString("Error getting recurring task:" + err.Error())
+		}
+
+		return c.JSON(task)
+	})
+
+	app.Delete("/recurring/delete/:id", func(c *fiber.Ctx) error {
+		db, err := database.ConnectGorm()
+		if err != nil {
+			return c.SendString("Error connecting GORM to db")
+		}
+
+		id := c.Params("id")
+		idUint, err := strconv.ParseUint(id, 10, 32)
+		if err != nil {
+			return c.SendString("Invalid ID format")
+		}
+
+		err = database.DeleteRecurringTask(db, uint(idUint))
+		if err != nil {
+			return c.SendString("Error deleting recurring task:" + err.Error())
+		}
+
+		return c.SendString("Recurring task deleted")
+	})
+
+	// Planned cost endpoints
+	app.Get("/planned-costs", func(c *fiber.Ctx) error {
+		db, err := database.ConnectGorm()
+		if err != nil {
+			return c.SendString("Error connecting GORM to db")
+		}
+
+		scenarioIdStr := c.Query("scenarioId")
+		var scenarioId uint = 0
+		if scenarioIdStr != "" {
+			if idUint, err := strconv.ParseUint(scenarioIdStr, 10, 32); err == nil {
+				scenarioId = uint(idUint)
+			}
+		}
+
+		costs, err := database.GetPlannedCosts(db, scenarioId)
+		if err != nil {
+			return c.SendString("Error getting planned costs:" + err.Error())
+		}
+
+		return c.JSON(costs)
+	})
+
+	app.Post("/planned-costs/add", func(c *fiber.Ctx) error {
+		db, err := database.ConnectGorm()
+		if err != nil {
+			return c.SendString("Error connecting GORM to db")
+		}
+
+		var body struct {
+			ScenarioID *uint   `json:"scenarioId"`
+			CategoryID *uint   `json:"categoryId"`
+			SourceType string  `json:"sourceType"`
+			SourceID   *uint   `json:"sourceId"`
+			CostDate   string  `json:"costDate"`
+			Amount     float64 `json:"amount"`
+			Notes      string  `json:"notes"`
+		}
+		err = c.BodyParser(&body)
+		if err != nil {
+			return c.SendString("Error parsing body")
+		}
+
+		cost, err := database.AddPlannedCost(db, &models.PlannedCost{
+			ScenarioID: body.ScenarioID,
+			CategoryID: body.CategoryID,
+			SourceType: body.SourceType,
+			SourceID:   body.SourceID,
+			CostDate:   body.CostDate,
+			Amount:     body.Amount,
+			Notes:      body.Notes,
+		})
+		if err != nil {
+			return c.SendString("Error adding planned cost:" + err.Error())
+		}
+
+		return c.JSON(cost)
+	})
+
+	app.Put("/planned-costs/update/:id", func(c *fiber.Ctx) error {
+		db, err := database.ConnectGorm()
+		if err != nil {
+			return c.SendString("Error connecting GORM to db")
+		}
+
+		id := c.Params("id")
+		idUint, err := strconv.ParseUint(id, 10, 32)
+		if err != nil {
+			return c.SendString("Invalid ID format")
+		}
+
+		var body struct {
+			ScenarioID *uint   `json:"scenarioId"`
+			CategoryID *uint   `json:"categoryId"`
+			SourceType string  `json:"sourceType"`
+			SourceID   *uint   `json:"sourceId"`
+			CostDate   string  `json:"costDate"`
+			Amount     float64 `json:"amount"`
+			Notes      string  `json:"notes"`
+		}
+		err = c.BodyParser(&body)
+		if err != nil {
+			return c.SendString("Error parsing body")
+		}
+
+		cost, err := database.GetPlannedCost(db, uint(idUint))
+		if err != nil {
+			return c.SendString("Error getting planned cost:" + err.Error())
+		}
+
+		cost.ScenarioID = body.ScenarioID
+		cost.CategoryID = body.CategoryID
+		cost.SourceType = body.SourceType
+		cost.SourceID = body.SourceID
+		cost.CostDate = body.CostDate
+		cost.Amount = body.Amount
+		cost.Notes = body.Notes
+
+		updatedCost, err := database.UpdatePlannedCost(db, cost)
+		if err != nil {
+			return c.SendString("Error updating planned cost:" + err.Error())
+		}
+
+		return c.JSON(updatedCost)
+	})
+
+	app.Get("/planned-costs/:id", func(c *fiber.Ctx) error {
+		db, err := database.ConnectGorm()
+		if err != nil {
+			return c.SendString("Error connecting GORM to db")
+		}
+
+		id := c.Params("id")
+		idUint, err := strconv.ParseUint(id, 10, 32)
+		if err != nil {
+			return c.SendString("Invalid ID format")
+		}
+
+		cost, err := database.GetPlannedCost(db, uint(idUint))
+		if err != nil {
+			return c.SendString("Error getting planned cost:" + err.Error())
+		}
+
+		return c.JSON(cost)
+	})
+
+	app.Delete("/planned-costs/delete/:id", func(c *fiber.Ctx) error {
+		db, err := database.ConnectGorm()
+		if err != nil {
+			return c.SendString("Error connecting GORM to db")
+		}
+
+		id := c.Params("id")
+		idUint, err := strconv.ParseUint(id, 10, 32)
+		if err != nil {
+			return c.SendString("Invalid ID format")
+		}
+
+		err = database.DeletePlannedCost(db, uint(idUint))
+		if err != nil {
+			return c.SendString("Error deleting planned cost:" + err.Error())
+		}
+
+		return c.SendString("Planned cost deleted")
+	})
+
+	// Budget summary endpoint
+	app.Get("/budget/summary", func(c *fiber.Ctx) error {
+		db, err := database.ConnectGorm()
+		if err != nil {
+			return c.SendString("Error connecting GORM to db")
+		}
+
+		now := time.Now()
+		parseDate := func(dateStr string) (time.Time, bool) {
+			if dateStr == "" {
+				return time.Time{}, false
+			}
+			t, err := time.Parse("2006-01-02", dateStr)
+			if err != nil {
+				return time.Time{}, false
+			}
+			return t, true
+		}
+
+		scenarioIdStr := c.Query("scenarioId")
+		horizonMonthsStr := c.Query("horizonMonths")
+		var scenarioId uint = 0
+		if scenarioIdStr != "" {
+			if idUint, err := strconv.ParseUint(scenarioIdStr, 10, 32); err == nil {
+				scenarioId = uint(idUint)
+			}
+		}
+
+		horizonMonths := 0
+		if horizonMonthsStr != "" {
+			if hm, err := strconv.Atoi(horizonMonthsStr); err == nil {
+				horizonMonths = hm
+			}
+		}
+
+		var scenario *models.BudgetScenario
+		if scenarioId != 0 {
+			s, err := database.GetBudgetScenario(db, scenarioId)
+			if err == nil {
+				scenario = s
+				if horizonMonths == 0 {
+					horizonMonths = s.HorizonMonths
+				}
+			}
+		}
+
+		plannedCosts, err := database.GetPlannedCosts(db, scenarioId)
+		if err != nil {
+			return c.SendString("Error getting planned costs:" + err.Error())
+		}
+
+		categories, _ := database.GetBudgetCategories(db)
+		categoryNameByID := map[uint]string{}
+		for _, cat := range categories {
+			categoryNameByID[cat.ID] = cat.Name
+		}
+
+		startDate := now
+		if scenario != nil && scenario.StartDate != "" {
+			if sd, ok := parseDate(scenario.StartDate); ok {
+				startDate = sd
+			}
+		}
+
+		totalPlanned := 0.0
+		upcoming30 := 0.0
+		upcoming90 := 0.0
+		categoryTotals := map[string]float64{}
+		monthlyBuckets := map[string]float64{}
+		for _, cost := range plannedCosts {
+			totalPlanned += cost.Amount
+			if cost.CategoryID != nil {
+				if name, ok := categoryNameByID[*cost.CategoryID]; ok && name != "" {
+					categoryTotals[name] += cost.Amount
+				} else {
+					categoryTotals["Uncategorized"] += cost.Amount
+				}
+			} else {
+				categoryTotals["Uncategorized"] += cost.Amount
+			}
+			if dt, ok := parseDate(cost.CostDate); ok {
+				monthKey := dt.Format("2006-01")
+				monthlyBuckets[monthKey] += cost.Amount
+				if dt.After(now) {
+					if dt.Before(now.AddDate(0, 0, 30)) || dt.Equal(now.AddDate(0, 0, 30)) {
+						upcoming30 += cost.Amount
+					}
+					if dt.Before(now.AddDate(0, 0, 90)) || dt.Equal(now.AddDate(0, 0, 90)) {
+						upcoming90 += cost.Amount
+					}
+				}
+			}
+		}
+
+		monthlySavings := 0.0
+		if horizonMonths > 0 {
+			monthlySavings = totalPlanned / float64(horizonMonths)
+		}
+
+		monthlySeries := []fiber.Map{}
+		if horizonMonths > 0 {
+			for i := 0; i < horizonMonths; i++ {
+				key := startDate.AddDate(0, i, 0).Format("2006-01")
+				monthlySeries = append(monthlySeries, fiber.Map{
+					"month": key,
+					"total": monthlyBuckets[key],
+				})
+			}
+		}
+
+		return c.JSON(fiber.Map{
+			"scenario":         scenario,
+			"horizonMonths":    horizonMonths,
+			"totalPlanned":     totalPlanned,
+			"monthlySavings":   monthlySavings,
+			"upcoming30Days":   upcoming30,
+			"upcoming90Days":   upcoming90,
+			"plannedCostCount": len(plannedCosts),
+			"categoryTotals":   categoryTotals,
+			"monthlyBuckets":   monthlySeries,
+		})
+	})
+
+	// Dashboard summary endpoint
+	app.Get("/dashboard/summary", func(c *fiber.Ctx) error {
+		db, err := database.ConnectGorm()
+		if err != nil {
+			return c.SendString("Error connecting GORM to db")
+		}
+
+		now := time.Now()
+		parseDate := func(dateStr string) (time.Time, bool) {
+			if dateStr == "" {
+				return time.Time{}, false
+			}
+			t, err := time.Parse("2006-01-02", dateStr)
+			if err != nil {
+				return time.Time{}, false
+			}
+			return t, true
+		}
+
+		scenarioIdStr := c.Query("scenarioId")
+		horizonMonthsStr := c.Query("horizonMonths")
+		var scenarioId uint = 0
+		if scenarioIdStr != "" {
+			if idUint, err := strconv.ParseUint(scenarioIdStr, 10, 32); err == nil {
+				scenarioId = uint(idUint)
+			}
+		}
+
+		horizonMonths := 0
+		if horizonMonthsStr != "" {
+			if hm, err := strconv.Atoi(horizonMonthsStr); err == nil {
+				horizonMonths = hm
+			}
+		}
+
+		var scenario *models.BudgetScenario
+		if scenarioId != 0 {
+			s, err := database.GetBudgetScenario(db, scenarioId)
+			if err == nil {
+				scenario = s
+				if horizonMonths == 0 {
+					horizonMonths = s.HorizonMonths
+				}
+			}
+		}
+
+		startDate := now
+		if scenario != nil && scenario.StartDate != "" {
+			if sd, ok := parseDate(scenario.StartDate); ok {
+				startDate = sd
+			}
+		}
+
+		plannedCosts, err := database.GetPlannedCosts(db, scenarioId)
+		if err != nil {
+			return c.SendString("Error getting planned costs:" + err.Error())
+		}
+
+		totalPlanned := 0.0
+		upcoming30 := 0.0
+		overdueTotal := 0.0
+		overdueCount := 0
+		for _, cost := range plannedCosts {
+			totalPlanned += cost.Amount
+			if dt, ok := parseDate(cost.CostDate); ok {
+				if dt.Before(now) {
+					overdueTotal += cost.Amount
+					overdueCount++
+				} else if dt.Before(now.AddDate(0, 0, 30)) || dt.Equal(now.AddDate(0, 0, 30)) {
+					upcoming30 += cost.Amount
+				}
+			}
+		}
+
+		monthlySavings := 0.0
+		if horizonMonths > 0 {
+			monthlySavings = totalPlanned / float64(horizonMonths)
+		}
+
+		var upgrades []models.UpgradeProject
+		_ = db.Find(&upgrades)
+		upgradesTotal := 0.0
+		for _, u := range upgrades {
+			upgradesTotal += u.EstimatedCost
+		}
+
+		var recurring []models.RecurringTask
+		_ = db.Find(&recurring)
+		recurringDue30 := 0
+		for _, r := range recurring {
+			if dt, ok := parseDate(r.NextDueDate); ok {
+				if dt.Before(now.AddDate(0, 0, 30)) || dt.Equal(now.AddDate(0, 0, 30)) {
+					recurringDue30++
+				}
+			}
+		}
+
+		var repairs []models.Repair
+		_ = db.Find(&repairs)
+		repairsTotal := 0.0
+		for _, r := range repairs {
+			repairsTotal += r.Cost
+		}
+
+		var maintenances []models.Maintenance
+		_ = db.Find(&maintenances)
+		maintenanceTotal := 0.0
+		for _, m := range maintenances {
+			maintenanceTotal += m.Cost
+		}
+
+		return c.JSON(fiber.Map{
+			"scenario":            scenario,
+			"horizonMonths":       horizonMonths,
+			"startDate":           startDate.Format("2006-01-02"),
+			"monthlySavings":      monthlySavings,
+			"plannedCostTotal":    totalPlanned,
+			"plannedCostCount":    len(plannedCosts),
+			"upcoming30DaysTotal": upcoming30,
+			"overdueTotal":        overdueTotal,
+			"overdueCount":        overdueCount,
+			"upgradeCount":        len(upgrades),
+			"upgradeTotal":        upgradesTotal,
+			"recurringCount":      len(recurring),
+			"recurringDue30":      recurringDue30,
+			"repairTotal":         repairsTotal,
+			"maintenanceTotal":    maintenanceTotal,
+		})
+	})
+
 	// Maintenance endpoints
 	app.Get("/maintenance", func(c *fiber.Ctx) error {
 		applianceId := c.Query("applianceId")
