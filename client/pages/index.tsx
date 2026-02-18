@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { Card, Col, Container, Form, Row } from 'react-bootstrap';
+import { Badge, Card, Col, Container, Form, Row } from 'react-bootstrap';
 import "bootstrap-icons/font/bootstrap-icons.css";
 import MyNavbar from '../components/Navbar';
 import ListGroup from 'react-bootstrap/ListGroup';
@@ -253,7 +253,12 @@ const HomePage: React.FC = () => {
             <Card.Body>
               <div style={{ fontSize: '0.9rem', color: '#6c757d' }}>Upcoming (30 days)</div>
               <div style={{ fontSize: '1.3rem', fontWeight: 600 }}>${(summary?.upcoming30DaysTotal || 0).toFixed(2)}</div>
-              <div style={{ fontSize: '0.85rem' }}>{summary?.plannedCostCount || 0} planned items</div>
+              <div style={{ fontSize: '0.85rem' }}>
+                {summary?.plannedCostCount || 0} planned items
+                {(summary?.upcoming30DaysTotal || 0) > 0 && (
+                  <Badge bg="warning" text="dark" style={{ marginLeft: 8 }}>Upcoming</Badge>
+                )}
+              </div>
             </Card.Body>
           </Card>
         </Col>
@@ -271,7 +276,12 @@ const HomePage: React.FC = () => {
             <Card.Body>
               <div style={{ fontSize: '0.9rem', color: '#6c757d' }}>Recurring Due Soon</div>
               <div style={{ fontSize: '1.3rem', fontWeight: 600 }}>{summary?.recurringDue30 ?? 0} tasks</div>
-              <div style={{ fontSize: '0.85rem' }}>{summary?.recurringCount ?? recurring.length} total</div>
+              <div style={{ fontSize: '0.85rem' }}>
+                {summary?.recurringCount ?? recurring.length} total
+                {(summary?.recurringDue30 || 0) > 0 && (
+                  <Badge bg="danger" style={{ marginLeft: 8 }}>Due Soon</Badge>
+                )}
+              </div>
             </Card.Body>
           </Card>
         </Col>

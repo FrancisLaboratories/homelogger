@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Card, Col, Container, Form, Row, Table } from 'react-bootstrap';
+import { Alert, Button, Card, Col, Container, Form, Row, Table } from 'react-bootstrap';
 import MyNavbar from '../components/Navbar';
 import { SERVER_URL } from '@/pages/_app';
 
@@ -84,6 +84,7 @@ const BudgetingPage: React.FC = () => {
     notes: '',
   });
   const [costError, setCostError] = useState<string>('');
+  const [notice, setNotice] = useState<{ variant: 'success' | 'danger'; message: string } | null>(null);
 
   const loadScenarios = async () => {
     try {
@@ -175,11 +176,15 @@ const BudgetingPage: React.FC = () => {
         notes: newScenario.notes,
       }),
     });
-    if (!resp.ok) return;
+    if (!resp.ok) {
+      setNotice({ variant: 'danger', message: 'Failed to add scenario.' });
+      return;
+    }
     const created = await resp.json();
     setScenarios((prev) => [...prev, created]);
     if (selectedScenarioId === null) setSelectedScenarioId(created.id);
     setNewScenario({ name: '', startDate: '', horizonMonths: 12, inflationRate: 0, isActive: false, notes: '' });
+    setNotice({ variant: 'success', message: 'Scenario added.' });
   };
 
   const handleStartScenarioEdit = (scenario: BudgetScenario) => {
@@ -210,11 +215,15 @@ const BudgetingPage: React.FC = () => {
         notes: editScenario.notes,
       }),
     });
-    if (!resp.ok) return;
+    if (!resp.ok) {
+      setNotice({ variant: 'danger', message: 'Failed to update scenario.' });
+      return;
+    }
     const updated = await resp.json();
     setScenarios((prev) => prev.map((s) => (s.id === editScenarioId ? updated : s)));
     setEditScenarioId(null);
     setEditScenario(null);
+    setNotice({ variant: 'success', message: 'Scenario updated.' });
   };
 
   const handleAddCategory = async () => {
@@ -228,10 +237,14 @@ const BudgetingPage: React.FC = () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(newCategory),
     });
-    if (!resp.ok) return;
+    if (!resp.ok) {
+      setNotice({ variant: 'danger', message: 'Failed to add category.' });
+      return;
+    }
     const created = await resp.json();
     setCategories((prev) => [...prev, created]);
     setNewCategory({ name: '', assetGroup: '', description: '', color: '' });
+    setNotice({ variant: 'success', message: 'Category added.' });
   };
 
   const handleStartCategoryEdit = (category: BudgetCategory) => {
@@ -260,11 +273,15 @@ const BudgetingPage: React.FC = () => {
         color: editCategory.color,
       }),
     });
-    if (!resp.ok) return;
+    if (!resp.ok) {
+      setNotice({ variant: 'danger', message: 'Failed to update category.' });
+      return;
+    }
     const updated = await resp.json();
     setCategories((prev) => prev.map((c) => (c.id === editCategoryId ? updated : c)));
     setEditCategoryId(null);
     setEditCategory(null);
+    setNotice({ variant: 'success', message: 'Category updated.' });
   };
 
   const handleAddCost = async () => {
@@ -289,10 +306,14 @@ const BudgetingPage: React.FC = () => {
         notes: newCost.notes,
       }),
     });
-    if (!resp.ok) return;
+    if (!resp.ok) {
+      setNotice({ variant: 'danger', message: 'Failed to add planned cost.' });
+      return;
+    }
     const created = await resp.json();
     setPlannedCosts((prev) => [...prev, created]);
     setNewCost({ scenarioId: '', categoryId: '', sourceType: 'upgrade', costDate: '', amount: '', notes: '' });
+    setNotice({ variant: 'success', message: 'Planned cost added.' });
   };
 
   const handleStartCostEdit = (cost: PlannedCost) => {
@@ -325,19 +346,52 @@ const BudgetingPage: React.FC = () => {
         notes: editCost.notes,
       }),
     });
-    if (!resp.ok) return;
+    if (!resp.ok) {
+      setNotice({ variant: 'danger', message: 'Failed to update planned cost.' });
+      return;
+    }
     const updated = await resp.json();
     setPlannedCosts((prev) => prev.map((c) => (c.id === editCostId ? updated : c)));
     setEditCostId(null);
     setEditCost(null);
+    setNotice({ variant: 'success', message: 'Planned cost updated.' });
   };
 
   const handleDeleteCost = async (id: number) => {
     const target = plannedCosts.find((c) => c.id === id);
     if (!window.confirm(`Delete planned cost on ${target?.costDate || 'unknown date'}?`)) return;
     const resp = await fetch(`${SERVER_URL}/planned-costs/delete/${id}`, { method: 'DELETE' });
-    if (!resp.ok) return;
+    if (!resp.ok) {
+      setNotice({ variant: 'danger', message: 'Failed to delete planned cost.' });
+      return;
+    }
     setPlannedCosts((prev) => prev.filter((c) => c.id !== id));
+    setNotice({ variant: 'success', message: 'Planned cost deleted.' });
+  };
+
+  const handleDeleteScenario = async (id: number) => {
+    const target = scenarios.find((s) => s.id === id);
+    if (!window.confirm(`Delete scenario "${target?.name || 'Untitled'}"?`)) return;
+    const resp = await fetch(`${SERVER_URL}/budget/scenarios/delete/${id}`, { method: 'DELETE' });
+    if (!resp.ok) {
+      setNotice({ variant: 'danger', message: 'Failed to delete scenario.' });
+      return;
+    }
+    setScenarios((prev) => prev.filter((s) => s.id !== id));
+    if (selectedScenarioId === id) setSelectedScenarioId(null);
+    setNotice({ variant: 'success', message: 'Scenario deleted.' });
+  };
+
+  const handleDeleteCategory = async (id: number) => {
+    const target = categories.find((c) => c.id === id);
+    if (!window.confirm(`Delete category "${target?.name || 'Untitled'}"?`)) return;
+    const resp = await fetch(`${SERVER_URL}/budget/categories/delete/${id}`, { method: 'DELETE' });
+    if (!resp.ok) {
+      setNotice({ variant: 'danger', message: 'Failed to delete category.' });
+      return;
+    }
+    setCategories((prev) => prev.filter((c) => c.id !== id));
+    setNotice({ variant: 'success', message: 'Category deleted.' });
   };
 
   const categoryName = (id?: number | null) =>
@@ -347,6 +401,12 @@ const BudgetingPage: React.FC = () => {
     <Container style={{ marginTop: '16px' }}>
       <MyNavbar />
       <h3>Budgeting</h3>
+
+      {notice && (
+        <Alert variant={notice.variant} onClose={() => setNotice(null)} dismissible>
+          {notice.message}
+        </Alert>
+      )}
 
       {!selectedScenarioId && (
         <Card style={{ marginBottom: '12px' }}>
@@ -414,6 +474,7 @@ const BudgetingPage: React.FC = () => {
                         <td style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                           <span>{s.isActive ? 'Yes' : 'No'}</span>
                           <Button variant="outline-secondary" size="sm" onClick={(e) => { e.stopPropagation(); handleStartScenarioEdit(s); }}>Edit</Button>
+                          <Button variant="outline-danger" size="sm" onClick={(e) => { e.stopPropagation(); handleDeleteScenario(s.id); }}>Delete</Button>
                         </td>
                       </tr>
                     ))
@@ -512,6 +573,7 @@ const BudgetingPage: React.FC = () => {
                         <td style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                           <span>{c.color || '-'}</span>
                           <Button variant="outline-secondary" size="sm" onClick={() => handleStartCategoryEdit(c)}>Edit</Button>
+                          <Button variant="outline-danger" size="sm" onClick={() => handleDeleteCategory(c.id)}>Delete</Button>
                         </td>
                       </tr>
                     ))

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Card, Col, Container, Form, Row, Table } from 'react-bootstrap';
+import { Alert, Button, Card, Col, Container, Form, Row, Table } from 'react-bootstrap';
 import MyNavbar from '../components/Navbar';
 import { SERVER_URL } from '@/pages/_app';
 
@@ -44,6 +44,7 @@ const RecurringPage: React.FC = () => {
   const [editTaskId, setEditTaskId] = useState<number | null>(null);
   const [editTask, setEditTask] = useState<RecurringTask | null>(null);
   const [taskError, setTaskError] = useState<string>('');
+  const [notice, setNotice] = useState<{ variant: 'success' | 'danger'; message: string } | null>(null);
 
   const loadTasks = async () => {
     try {
@@ -96,7 +97,10 @@ const RecurringPage: React.FC = () => {
         notes: newTask.notes,
       }),
     });
-    if (!resp.ok) return;
+    if (!resp.ok) {
+      setNotice({ variant: 'danger', message: 'Failed to add task.' });
+      return;
+    }
     const created = await resp.json();
     setTasks((prev) => [...prev, created]);
     setNewTask({
@@ -113,6 +117,7 @@ const RecurringPage: React.FC = () => {
       autoCreateTodo: false,
       notes: '',
     });
+    setNotice({ variant: 'success', message: 'Task added.' });
   };
 
   const handleStartEdit = (task: RecurringTask) => {
@@ -149,19 +154,27 @@ const RecurringPage: React.FC = () => {
         notes: editTask.notes,
       }),
     });
-    if (!resp.ok) return;
+    if (!resp.ok) {
+      setNotice({ variant: 'danger', message: 'Failed to update task.' });
+      return;
+    }
     const updated = await resp.json();
     setTasks((prev) => prev.map((t) => (t.id === editTaskId ? updated : t)));
     setEditTaskId(null);
     setEditTask(null);
+    setNotice({ variant: 'success', message: 'Task updated.' });
   };
 
   const handleDeleteTask = async (id: number) => {
     const target = tasks.find((t) => t.id === id);
     if (!window.confirm(`Delete recurring task "${target?.name || 'Untitled'}"?`)) return;
     const resp = await fetch(`${SERVER_URL}/recurring/delete/${id}`, { method: 'DELETE' });
-    if (!resp.ok) return;
+    if (!resp.ok) {
+      setNotice({ variant: 'danger', message: 'Failed to delete task.' });
+      return;
+    }
     setTasks((prev) => prev.filter((t) => t.id !== id));
+    setNotice({ variant: 'success', message: 'Task deleted.' });
   };
 
   const categoryName = (id?: number | null) =>
@@ -171,6 +184,12 @@ const RecurringPage: React.FC = () => {
     <Container style={{ marginTop: '16px' }}>
       <MyNavbar />
       <h3>Recurring Maintenance</h3>
+
+      {notice && (
+        <Alert variant={notice.variant} onClose={() => setNotice(null)} dismissible>
+          {notice.message}
+        </Alert>
+      )}
 
       <Row className="g-3">
         <Col lg={12}>
