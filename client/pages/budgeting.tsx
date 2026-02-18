@@ -333,6 +333,8 @@ const BudgetingPage: React.FC = () => {
   };
 
   const handleDeleteCost = async (id: number) => {
+    const target = plannedCosts.find((c) => c.id === id);
+    if (!window.confirm(`Delete planned cost on ${target?.costDate || 'unknown date'}?`)) return;
     const resp = await fetch(`${SERVER_URL}/planned-costs/delete/${id}`, { method: 'DELETE' });
     if (!resp.ok) return;
     setPlannedCosts((prev) => prev.filter((c) => c.id !== id));

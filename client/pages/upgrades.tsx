@@ -137,6 +137,8 @@ const UpgradesPage: React.FC = () => {
   };
 
   const handleDeleteProject = async (id: number) => {
+    const target = projects.find((p) => p.id === id);
+    if (!window.confirm(`Delete upgrade project "${target?.title || 'Untitled'}"?`)) return;
     const resp = await fetch(`${SERVER_URL}/upgrades/delete/${id}`, { method: 'DELETE' });
     if (!resp.ok) return;
     setProjects((prev) => prev.filter((p) => p.id !== id));

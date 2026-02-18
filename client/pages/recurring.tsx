@@ -157,6 +157,8 @@ const RecurringPage: React.FC = () => {
   };
 
   const handleDeleteTask = async (id: number) => {
+    const target = tasks.find((t) => t.id === id);
+    if (!window.confirm(`Delete recurring task "${target?.name || 'Untitled'}"?`)) return;
     const resp = await fetch(`${SERVER_URL}/recurring/delete/${id}`, { method: 'DELETE' });
     if (!resp.ok) return;
     setTasks((prev) => prev.filter((t) => t.id !== id));
