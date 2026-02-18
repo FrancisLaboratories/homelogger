@@ -1135,12 +1135,31 @@ func main() {
 			return c.SendString("Error getting planned costs:" + err.Error())
 		}
 
+		categories, _ := database.GetBudgetCategories(db)
+		categoryNameByID := map[uint]string{}
+		for _, cat := range categories {
+			categoryNameByID[cat.ID] = cat.Name
+		}
+
 		totalPlanned := 0.0
 		upcoming30 := 0.0
 		upcoming90 := 0.0
+		categoryTotals := map[string]float64{}
+		monthlyBuckets := map[string]float64{}
 		for _, cost := range plannedCosts {
 			totalPlanned += cost.Amount
+			if cost.CategoryID != nil {
+				if name, ok := categoryNameByID[*cost.CategoryID]; ok && name != "" {
+					categoryTotals[name] += cost.Amount
+				} else {
+					categoryTotals["Uncategorized"] += cost.Amount
+				}
+			} else {
+				categoryTotals["Uncategorized"] += cost.Amount
+			}
 			if dt, ok := parseDate(cost.CostDate); ok {
+				monthKey := dt.Format("2006-01")
+				monthlyBuckets[monthKey] += cost.Amount
 				if dt.After(now) {
 					if dt.Before(now.AddDate(0, 0, 30)) || dt.Equal(now.AddDate(0, 0, 30)) {
 						upcoming30 += cost.Amount
@@ -1157,6 +1176,17 @@ func main() {
 			monthlySavings = totalPlanned / float64(horizonMonths)
 		}
 
+		monthlySeries := []fiber.Map{}
+		if horizonMonths > 0 {
+			for i := 0; i < horizonMonths; i++ {
+				key := now.AddDate(0, i, 0).Format("2006-01")
+				monthlySeries = append(monthlySeries, fiber.Map{
+					"month": key,
+					"total": monthlyBuckets[key],
+				})
+			}
+		}
+
 		return c.JSON(fiber.Map{
 			"scenario":         scenario,
 			"horizonMonths":    horizonMonths,
@@ -1165,6 +1195,8 @@ func main() {
 			"upcoming30Days":   upcoming30,
 			"upcoming90Days":   upcoming90,
 			"plannedCostCount": len(plannedCosts),
+			"categoryTotals":   categoryTotals,
+			"monthlyBuckets":   monthlySeries,
 		})
 	})
 

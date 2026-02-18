@@ -40,6 +40,8 @@ type BudgetSummary = {
   upcoming30Days: number;
   upcoming90Days: number;
   plannedCostCount: number;
+  categoryTotals: Record<string, number>;
+  monthlyBuckets: Array<{ month: string; total: number }>;
 };
 
 const BudgetingPage: React.FC = () => {
@@ -350,6 +352,68 @@ const BudgetingPage: React.FC = () => {
                   </Col>
                 </Row>
               </Form>
+            </Card.Body>
+          </Card>
+        </Col>
+
+        <Col lg={6}>
+          <Card>
+            <Card.Body>
+              <h5>Category Breakdown</h5>
+              <Table striped bordered hover size="sm">
+                <thead>
+                  <tr>
+                    <th>Category</th>
+                    <th>Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {!summary || Object.keys(summary.categoryTotals || {}).length === 0 ? (
+                    <tr>
+                      <td colSpan={2} style={{ textAlign: 'center' }}>No category data</td>
+                    </tr>
+                  ) : (
+                    Object.entries(summary.categoryTotals)
+                      .sort((a, b) => b[1] - a[1])
+                      .map(([name, total]) => (
+                        <tr key={name}>
+                          <td>{name}</td>
+                          <td>${Number(total || 0).toFixed(2)}</td>
+                        </tr>
+                      ))
+                  )}
+                </tbody>
+              </Table>
+            </Card.Body>
+          </Card>
+        </Col>
+
+        <Col lg={6}>
+          <Card>
+            <Card.Body>
+              <h5>Monthly Buckets</h5>
+              <Table striped bordered hover size="sm">
+                <thead>
+                  <tr>
+                    <th>Month</th>
+                    <th>Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {!summary || (summary.monthlyBuckets || []).length === 0 ? (
+                    <tr>
+                      <td colSpan={2} style={{ textAlign: 'center' }}>No monthly data</td>
+                    </tr>
+                  ) : (
+                    summary.monthlyBuckets.map((m) => (
+                      <tr key={m.month}>
+                        <td>{m.month}</td>
+                        <td>${Number(m.total || 0).toFixed(2)}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </Table>
             </Card.Body>
           </Card>
         </Col>
