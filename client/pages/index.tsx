@@ -33,21 +33,6 @@ type BudgetScenario = {
   notes: string;
 };
 
-type UpgradeProject = {
-  id: number;
-  title: string;
-  status: string;
-  targetDate: string;
-  estimatedCost: number;
-};
-
-type RecurringTask = {
-  id: number;
-  name: string;
-  nextDueDate: string;
-  estimatedCost: number;
-};
-
 type DashboardSummary = {
   scenario?: BudgetScenario | null;
   horizonMonths: number;
@@ -73,8 +58,7 @@ const HomePage: React.FC = () => {
   const [scenarios, setScenarios] = useState<BudgetScenario[]>([]);
   const [selectedScenarioId, setSelectedScenarioId] = useState<number | null>(null);
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
-  const [upgrades, setUpgrades] = useState<UpgradeProject[]>([]);
-  const [recurring, setRecurring] = useState<RecurringTask[]>([]);
+  const highUpcomingMultiplier = 1.5;
 
   const prettySpace = (s?: string | null) => {
     if (!s) return null;
@@ -153,31 +137,7 @@ const HomePage: React.FC = () => {
       }
     };
 
-    const loadUpgrades = async () => {
-      try {
-        const response = await fetch(`${SERVER_URL}/upgrades`);
-        if (!response.ok) return;
-        const data = await response.json();
-        setUpgrades(data);
-      } catch (error) {
-        console.error('Error fetching upgrades:', error);
-      }
-    };
-
-    const loadRecurring = async () => {
-      try {
-        const response = await fetch(`${SERVER_URL}/recurring`);
-        if (!response.ok) return;
-        const data = await response.json();
-        setRecurring(data);
-      } catch (error) {
-        console.error('Error fetching recurring tasks:', error);
-      }
-    };
-
     loadScenarios();
-    loadUpgrades();
-    loadRecurring();
   }, []);
 
   useEffect(() => {
@@ -199,9 +159,8 @@ const HomePage: React.FC = () => {
     loadSummary();
   }, [selectedScenarioId]);
 
-  const upgradesTotal = upgrades.reduce((sum, u) => sum + Number(u.estimatedCost || 0), 0);
   const highUpcoming = summary && summary.monthlySavings > 0
-    ? summary.upcoming30DaysTotal > summary.monthlySavings * 1.5
+    ? summary.upcoming30DaysTotal > summary.monthlySavings * highUpcomingMultiplier
     : false;
 
   const handleAddTodo = async () => {
@@ -267,7 +226,7 @@ const HomePage: React.FC = () => {
                   <Badge bg="danger" style={{ marginLeft: 8 }}>Overdue</Badge>
                 )}
                 {highUpcoming && (
-                  <Badge bg="danger" style={{ marginLeft: 8 }}>High 30‑day</Badge>
+                  <Badge bg="danger" style={{ marginLeft: 8 }}>High 30-day</Badge>
                 )}
               </div>
             </Card.Body>
@@ -278,7 +237,7 @@ const HomePage: React.FC = () => {
             <Card.Body>
               <div style={{ fontSize: '0.9rem', color: '#6c757d' }}>Upgrades</div>
               <div style={{ fontSize: '1.3rem', fontWeight: 600 }}>{summary?.upgradeCount ?? upgrades.length} projects</div>
-              <div style={{ fontSize: '0.85rem' }}>${(summary?.upgradeTotal ?? upgradesTotal).toFixed(2)} planned</div>
+              <div style={{ fontSize: '0.85rem' }}>${(summary?.upgradeTotal ?? 0).toFixed(2)} planned</div>
             </Card.Body>
           </Card>
         </Col>
@@ -288,7 +247,7 @@ const HomePage: React.FC = () => {
               <div style={{ fontSize: '0.9rem', color: '#6c757d' }}>Recurring Due Soon</div>
               <div style={{ fontSize: '1.3rem', fontWeight: 600 }}>{summary?.recurringDue30 ?? 0} tasks</div>
               <div style={{ fontSize: '0.85rem' }}>
-                {summary?.recurringCount ?? recurring.length} total
+                {summary?.recurringCount ?? 0} total
                 {(summary?.recurringDue30 || 0) > 0 && (
                   <Badge bg="danger" style={{ marginLeft: 8 }}>Due Soon</Badge>
                 )}

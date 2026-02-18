@@ -86,6 +86,10 @@ const BudgetingPage: React.FC = () => {
   const [costError, setCostError] = useState<string>('');
   const [notice, setNotice] = useState<{ variant: 'success' | 'danger'; message: string } | null>(null);
   const showNotice = (variant: 'success' | 'danger', message: string) => setNotice({ variant, message });
+  const normalizeHorizonMonths = (value: number | string) => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 12;
+  };
 
   const loadScenarios = async () => {
     try {
@@ -161,9 +165,7 @@ const BudgetingPage: React.FC = () => {
       setScenarioError('Scenario name is required.');
       return;
     }
-    if (!newScenario.horizonMonths || newScenario.horizonMonths <= 0) {
-      setNewScenario({ ...newScenario, horizonMonths: 12 });
-    }
+    const horizonMonths = normalizeHorizonMonths(newScenario.horizonMonths);
     setScenarioError('');
     const resp = await fetch(`${SERVER_URL}/budget/scenarios/add`, {
       method: 'POST',
@@ -171,7 +173,7 @@ const BudgetingPage: React.FC = () => {
       body: JSON.stringify({
         name: newScenario.name,
         startDate: newScenario.startDate,
-        horizonMonths: Number(newScenario.horizonMonths || 12),
+        horizonMonths,
         inflationRate: Number(newScenario.inflationRate),
         isActive: !!newScenario.isActive,
         notes: newScenario.notes,
@@ -204,13 +206,14 @@ const BudgetingPage: React.FC = () => {
       setScenarioError('Scenario name is required.');
       return;
     }
+    const horizonMonths = normalizeHorizonMonths(editScenario.horizonMonths);
     const resp = await fetch(`${SERVER_URL}/budget/scenarios/update/${editScenarioId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         name: editScenario.name,
         startDate: editScenario.startDate,
-        horizonMonths: Number(editScenario.horizonMonths || 12),
+        horizonMonths,
         inflationRate: Number(editScenario.inflationRate || 0),
         isActive: !!editScenario.isActive,
         notes: editScenario.notes,
