@@ -126,15 +126,11 @@ Development tips
 Contributing
 ------------
 
-Contributions are welcome. Suggested workflow:
+Contributions are welcome. Please read the following guidelines before submitting a PR:
 
-1. Fork the repo
-2. Create a feature branch
-3. Open a PR with a clear description of changes
-
-Please be sure to comply with this project's [AI Policy](AI_POLICY.md) when contributing code generated or assisted by AI tools.
-
-If you plan to add larger features (new API endpoints, DB schema changes) open an issue first to discuss the design. 
+- Contributors Policy [CONTRIBUTORS.md](CONTRIBUTORS.md)
+- AI Policy [AI_POLICY.md](AI_POLICY.md)
+- Code of Conduct [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
 
 License
 -------
