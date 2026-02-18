@@ -41,6 +41,9 @@ const RecurringPage: React.FC = () => {
     autoCreateTodo: false,
     notes: '',
   });
+  const [editTaskId, setEditTaskId] = useState<number | null>(null);
+  const [editTask, setEditTask] = useState<RecurringTask | null>(null);
+  const [taskError, setTaskError] = useState<string>('');
 
   const loadTasks = async () => {
     try {
@@ -70,7 +73,11 @@ const RecurringPage: React.FC = () => {
   }, []);
 
   const handleAddTask = async () => {
-    if (!newTask.name) return;
+    if (!newTask.name) {
+      setTaskError('Task name is required.');
+      return;
+    }
+    setTaskError('');
     const resp = await fetch(`${SERVER_URL}/recurring/add`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -106,6 +113,47 @@ const RecurringPage: React.FC = () => {
       autoCreateTodo: false,
       notes: '',
     });
+  };
+
+  const handleStartEdit = (task: RecurringTask) => {
+    setEditTaskId(task.id);
+    setEditTask({ ...task });
+  };
+
+  const handleCancelEdit = () => {
+    setEditTaskId(null);
+    setEditTask(null);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editTask || !editTaskId) return;
+    if (!editTask.name) {
+      setTaskError('Task name is required.');
+      return;
+    }
+    const resp = await fetch(`${SERVER_URL}/recurring/update/${editTaskId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: editTask.name,
+        description: editTask.description,
+        intervalValue: Number(editTask.intervalValue || 1),
+        intervalUnit: editTask.intervalUnit,
+        nextDueDate: editTask.nextDueDate,
+        estimatedCost: Number(editTask.estimatedCost || 0),
+        referenceType: editTask.referenceType,
+        spaceType: editTask.spaceType,
+        applianceId: editTask.applianceId || undefined,
+        categoryId: editTask.categoryId || undefined,
+        autoCreateTodo: !!editTask.autoCreateTodo,
+        notes: editTask.notes,
+      }),
+    });
+    if (!resp.ok) return;
+    const updated = await resp.json();
+    setTasks((prev) => prev.map((t) => (t.id === editTaskId ? updated : t)));
+    setEditTaskId(null);
+    setEditTask(null);
   };
 
   const handleDeleteTask = async (id: number) => {
@@ -153,7 +201,10 @@ const RecurringPage: React.FC = () => {
                         <td>{categoryName(t.categoryId)}</td>
                         <td>{t.autoCreateTodo ? 'Yes' : 'No'}</td>
                         <td style={{ width: 70 }}>
-                          <Button variant="outline-danger" size="sm" onClick={() => handleDeleteTask(t.id)}>Delete</Button>
+                          <div style={{ display: 'flex', gap: 6 }}>
+                            <Button variant="outline-secondary" size="sm" onClick={() => handleStartEdit(t)}>Edit</Button>
+                            <Button variant="outline-danger" size="sm" onClick={() => handleDeleteTask(t.id)}>Delete</Button>
+                          </div>
                         </td>
                       </tr>
                     ))
@@ -161,8 +212,64 @@ const RecurringPage: React.FC = () => {
                 </tbody>
               </Table>
 
+              {editTaskId && editTask && (
+                <Card style={{ marginTop: 12 }}>
+                  <Card.Body>
+                    <h6>Edit Recurring Task</h6>
+                    <Row className="g-2">
+                      <Col md={4}>
+                        <Form.Control placeholder="Task name" value={editTask.name} onChange={(e) => setEditTask({ ...editTask, name: e.target.value })} />
+                      </Col>
+                      <Col md={2}>
+                        <Form.Control type="number" min={1} value={editTask.intervalValue} onChange={(e) => setEditTask({ ...editTask, intervalValue: Number(e.target.value) })} />
+                      </Col>
+                      <Col md={2}>
+                        <Form.Select value={editTask.intervalUnit} onChange={(e) => setEditTask({ ...editTask, intervalUnit: e.target.value })}>
+                          <option value="day">Day</option>
+                          <option value="week">Week</option>
+                          <option value="month">Month</option>
+                          <option value="year">Year</option>
+                        </Form.Select>
+                      </Col>
+                      <Col md={2}>
+                        <Form.Control type="date" value={editTask.nextDueDate || ''} onChange={(e) => setEditTask({ ...editTask, nextDueDate: e.target.value })} />
+                      </Col>
+                      <Col md={2}>
+                        <Form.Control type="number" step="0.01" placeholder="Estimate" value={editTask.estimatedCost} onChange={(e) => setEditTask({ ...editTask, estimatedCost: Number(e.target.value) })} />
+                      </Col>
+                      <Col md={3}>
+                        <Form.Select value={editTask.categoryId || ''} onChange={(e) => setEditTask({ ...editTask, categoryId: e.target.value ? Number(e.target.value) : undefined })}>
+                          <option value="">Category</option>
+                          {categories.map((c) => (
+                            <option key={c.id} value={c.id}>{c.name}</option>
+                          ))}
+                        </Form.Select>
+                      </Col>
+                      <Col md={3}>
+                        <Form.Check type="checkbox" label="Auto-create todo" checked={!!editTask.autoCreateTodo} onChange={(e) => setEditTask({ ...editTask, autoCreateTodo: e.target.checked })} />
+                      </Col>
+                      <Col md={6}>
+                        <Form.Control placeholder="Description" value={editTask.description || ''} onChange={(e) => setEditTask({ ...editTask, description: e.target.value })} />
+                      </Col>
+                      <Col md={6}>
+                        <Form.Control placeholder="Notes" value={editTask.notes || ''} onChange={(e) => setEditTask({ ...editTask, notes: e.target.value })} />
+                      </Col>
+                      <Col md={12} style={{ display: 'flex', gap: 8 }}>
+                        <Button variant="primary" onClick={handleSaveEdit}>Save</Button>
+                        <Button variant="outline-secondary" onClick={handleCancelEdit}>Cancel</Button>
+                      </Col>
+                    </Row>
+                  </Card.Body>
+                </Card>
+              )}
+
               <Form className="mt-3">
                 <Row className="g-2">
+                  {taskError && (
+                    <Col md={12} style={{ color: '#b02a37' }}>
+                      {taskError}
+                    </Col>
+                  )}
                   <Col md={4}>
                     <Form.Control placeholder="Task name" value={newTask.name} onChange={(e) => setNewTask({ ...newTask, name: e.target.value })} />
                   </Col>

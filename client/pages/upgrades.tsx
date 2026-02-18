@@ -33,6 +33,9 @@ const UpgradesPage: React.FC = () => {
     notes: '',
     categoryId: '',
   });
+  const [editProjectId, setEditProjectId] = useState<number | null>(null);
+  const [editProject, setEditProject] = useState<UpgradeProject | null>(null);
+  const [projectError, setProjectError] = useState<string>('');
 
   const loadProjects = async () => {
     try {
@@ -62,7 +65,11 @@ const UpgradesPage: React.FC = () => {
   }, []);
 
   const handleAddProject = async () => {
-    if (!newProject.title) return;
+    if (!newProject.title) {
+      setProjectError('Project title is required.');
+      return;
+    }
+    setProjectError('');
     const resp = await fetch(`${SERVER_URL}/upgrades/add`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -90,6 +97,43 @@ const UpgradesPage: React.FC = () => {
       notes: '',
       categoryId: '',
     });
+  };
+
+  const handleStartEdit = (project: UpgradeProject) => {
+    setEditProjectId(project.id);
+    setEditProject({ ...project });
+  };
+
+  const handleCancelEdit = () => {
+    setEditProjectId(null);
+    setEditProject(null);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editProject || !editProjectId) return;
+    if (!editProject.title) {
+      setProjectError('Project title is required.');
+      return;
+    }
+    const resp = await fetch(`${SERVER_URL}/upgrades/update/${editProjectId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: editProject.title,
+        description: editProject.description,
+        status: editProject.status,
+        priority: editProject.priority,
+        targetDate: editProject.targetDate,
+        estimatedCost: Number(editProject.estimatedCost || 0),
+        notes: editProject.notes,
+        categoryId: editProject.categoryId || undefined,
+      }),
+    });
+    if (!resp.ok) return;
+    const updated = await resp.json();
+    setProjects((prev) => prev.map((p) => (p.id === editProjectId ? updated : p)));
+    setEditProjectId(null);
+    setEditProject(null);
   };
 
   const handleDeleteProject = async (id: number) => {
@@ -137,7 +181,10 @@ const UpgradesPage: React.FC = () => {
                         <td>${Number(p.estimatedCost || 0).toFixed(2)}</td>
                         <td>{categoryName(p.categoryId)}</td>
                         <td style={{ width: 70 }}>
-                          <Button variant="outline-danger" size="sm" onClick={() => handleDeleteProject(p.id)}>Delete</Button>
+                          <div style={{ display: 'flex', gap: 6 }}>
+                            <Button variant="outline-secondary" size="sm" onClick={() => handleStartEdit(p)}>Edit</Button>
+                            <Button variant="outline-danger" size="sm" onClick={() => handleDeleteProject(p.id)}>Delete</Button>
+                          </div>
                         </td>
                       </tr>
                     ))
@@ -145,8 +192,65 @@ const UpgradesPage: React.FC = () => {
                 </tbody>
               </Table>
 
+              {editProjectId && editProject && (
+                <Card style={{ marginTop: 12 }}>
+                  <Card.Body>
+                    <h6>Edit Project</h6>
+                    <Row className="g-2">
+                      <Col md={4}>
+                        <Form.Control placeholder="Project title" value={editProject.title} onChange={(e) => setEditProject({ ...editProject, title: e.target.value })} />
+                      </Col>
+                      <Col md={3}>
+                        <Form.Select value={editProject.status} onChange={(e) => setEditProject({ ...editProject, status: e.target.value })}>
+                          <option value="planned">Planned</option>
+                          <option value="in-progress">In Progress</option>
+                          <option value="completed">Completed</option>
+                          <option value="on-hold">On Hold</option>
+                        </Form.Select>
+                      </Col>
+                      <Col md={3}>
+                        <Form.Select value={editProject.priority} onChange={(e) => setEditProject({ ...editProject, priority: e.target.value })}>
+                          <option value="low">Low</option>
+                          <option value="medium">Medium</option>
+                          <option value="high">High</option>
+                        </Form.Select>
+                      </Col>
+                      <Col md={2}>
+                        <Form.Control type="date" value={editProject.targetDate || ''} onChange={(e) => setEditProject({ ...editProject, targetDate: e.target.value })} />
+                      </Col>
+                      <Col md={2}>
+                        <Form.Control type="number" step="0.01" placeholder="Estimate" value={editProject.estimatedCost} onChange={(e) => setEditProject({ ...editProject, estimatedCost: Number(e.target.value) })} />
+                      </Col>
+                      <Col md={4}>
+                        <Form.Select value={editProject.categoryId || ''} onChange={(e) => setEditProject({ ...editProject, categoryId: e.target.value ? Number(e.target.value) : undefined })}>
+                          <option value="">Category</option>
+                          {categories.map((c) => (
+                            <option key={c.id} value={c.id}>{c.name}</option>
+                          ))}
+                        </Form.Select>
+                      </Col>
+                      <Col md={6}>
+                        <Form.Control placeholder="Description" value={editProject.description || ''} onChange={(e) => setEditProject({ ...editProject, description: e.target.value })} />
+                      </Col>
+                      <Col md={6}>
+                        <Form.Control placeholder="Notes" value={editProject.notes || ''} onChange={(e) => setEditProject({ ...editProject, notes: e.target.value })} />
+                      </Col>
+                      <Col md={12} style={{ display: 'flex', gap: 8 }}>
+                        <Button variant="primary" onClick={handleSaveEdit}>Save</Button>
+                        <Button variant="outline-secondary" onClick={handleCancelEdit}>Cancel</Button>
+                      </Col>
+                    </Row>
+                  </Card.Body>
+                </Card>
+              )}
+
               <Form className="mt-3">
                 <Row className="g-2">
+                  {projectError && (
+                    <Col md={12} style={{ color: '#b02a37' }}>
+                      {projectError}
+                    </Col>
+                  )}
                   <Col md={4}>
                     <Form.Control placeholder="Project title" value={newProject.title} onChange={(e) => setNewProject({ ...newProject, title: e.target.value })} />
                   </Col>
