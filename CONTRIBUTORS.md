@@ -49,6 +49,8 @@ We value human oversight. If you use AI tools (GitHub Copilot, ChatGPT, Claude C
 
 Please make sure your code includes or updates any tests. We are shooting for 80% test coverage.
 
+Note: Building tests into the project is currently a work in progress. There is a lot of code that doesn't have tests at this time. With that said, I will be implementing tests soon and will require updated tests for new code and any code that is being modified.
+
 ---
 
 **Note:** Quality is prioritized over quantity. I would much rather see one well-documented bug fix than five unrequested features!
