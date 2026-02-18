@@ -1,4 +1,4 @@
-# Contributing to [Project Name]
+# Contributing to HomeLogger
 
 Thank you for your interest in contributing! To ensure a productive environment and to save you from doing work that might not be merged, please review these guidelines before starting.
 
@@ -24,7 +24,7 @@ To keep the project focused and maintainable, we have specific rules regarding P
 
 ## 🤖 AI-Generated Code Policy
 
-We value human oversight. If you use AI tools (GitHub Copilot, ChatGPT, etc.), you must follow these rules:
+We value human oversight. If you use AI tools (GitHub Copilot, ChatGPT, Claude Code, etc.), you must follow these rules:
 
 1.  **Verification:** You must read and understand every line of the code you submit. Do not submit code you cannot explain.
 2.  **Disclosure:** You must explicitly identify AI-generated code in your Pull Request. 
