@@ -55,6 +55,8 @@ type DashboardSummary = {
   plannedCostTotal: number;
   plannedCostCount: number;
   upcoming30DaysTotal: number;
+  overdueTotal: number;
+  overdueCount: number;
   upgradeCount: number;
   upgradeTotal: number;
   recurringCount: number;
@@ -198,6 +200,9 @@ const HomePage: React.FC = () => {
   }, [selectedScenarioId]);
 
   const upgradesTotal = upgrades.reduce((sum, u) => sum + Number(u.estimatedCost || 0), 0);
+  const highUpcoming = summary && summary.monthlySavings > 0
+    ? summary.upcoming30DaysTotal > summary.monthlySavings * 1.5
+    : false;
 
   const handleAddTodo = async () => {
     const label = prompt('What should go in this item?');
@@ -257,6 +262,12 @@ const HomePage: React.FC = () => {
                 {summary?.plannedCostCount || 0} planned items
                 {(summary?.upcoming30DaysTotal || 0) > 0 && (
                   <Badge bg="warning" text="dark" style={{ marginLeft: 8 }}>Upcoming</Badge>
+                )}
+                {(summary?.overdueCount || 0) > 0 && (
+                  <Badge bg="danger" style={{ marginLeft: 8 }}>Overdue</Badge>
+                )}
+                {highUpcoming && (
+                  <Badge bg="danger" style={{ marginLeft: 8 }}>High 30‑day</Badge>
                 )}
               </div>
             </Card.Body>

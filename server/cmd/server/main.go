@@ -1267,10 +1267,15 @@ func main() {
 
 		totalPlanned := 0.0
 		upcoming30 := 0.0
+		overdueTotal := 0.0
+		overdueCount := 0
 		for _, cost := range plannedCosts {
 			totalPlanned += cost.Amount
 			if dt, ok := parseDate(cost.CostDate); ok {
-				if dt.After(now) && (dt.Before(now.AddDate(0, 0, 30)) || dt.Equal(now.AddDate(0, 0, 30))) {
+				if dt.Before(now) {
+					overdueTotal += cost.Amount
+					overdueCount++
+				} else if dt.Before(now.AddDate(0, 0, 30)) || dt.Equal(now.AddDate(0, 0, 30)) {
 					upcoming30 += cost.Amount
 				}
 			}
@@ -1321,6 +1326,8 @@ func main() {
 			"plannedCostTotal":    totalPlanned,
 			"plannedCostCount":    len(plannedCosts),
 			"upcoming30DaysTotal": upcoming30,
+			"overdueTotal":        overdueTotal,
+			"overdueCount":        overdueCount,
 			"upgradeCount":        len(upgrades),
 			"upgradeTotal":        upgradesTotal,
 			"recurringCount":      len(recurring),

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Alert, Button, Card, Col, Container, Form, Row, Table } from 'react-bootstrap';
+import { Button, Card, Col, Container, Form, Row, Table, Toast, ToastContainer } from 'react-bootstrap';
 import MyNavbar from '../components/Navbar';
 import { SERVER_URL } from '@/pages/_app';
 
@@ -37,6 +37,7 @@ const UpgradesPage: React.FC = () => {
   const [editProject, setEditProject] = useState<UpgradeProject | null>(null);
   const [projectError, setProjectError] = useState<string>('');
   const [notice, setNotice] = useState<{ variant: 'success' | 'danger'; message: string } | null>(null);
+  const showNotice = (variant: 'success' | 'danger', message: string) => setNotice({ variant, message });
 
   const loadProjects = async () => {
     try {
@@ -86,7 +87,7 @@ const UpgradesPage: React.FC = () => {
       }),
     });
     if (!resp.ok) {
-      setNotice({ variant: 'danger', message: 'Failed to add project.' });
+      showNotice('danger', 'Failed to add project.');
       return;
     }
     const created = await resp.json();
@@ -101,7 +102,7 @@ const UpgradesPage: React.FC = () => {
       notes: '',
       categoryId: '',
     });
-    setNotice({ variant: 'success', message: 'Project added.' });
+    showNotice('success', 'Project added.');
   };
 
   const handleStartEdit = (project: UpgradeProject) => {
@@ -135,14 +136,14 @@ const UpgradesPage: React.FC = () => {
       }),
     });
     if (!resp.ok) {
-      setNotice({ variant: 'danger', message: 'Failed to update project.' });
+      showNotice('danger', 'Failed to update project.');
       return;
     }
     const updated = await resp.json();
     setProjects((prev) => prev.map((p) => (p.id === editProjectId ? updated : p)));
     setEditProjectId(null);
     setEditProject(null);
-    setNotice({ variant: 'success', message: 'Project updated.' });
+    showNotice('success', 'Project updated.');
   };
 
   const handleDeleteProject = async (id: number) => {
@@ -150,11 +151,11 @@ const UpgradesPage: React.FC = () => {
     if (!window.confirm(`Delete upgrade project "${target?.title || 'Untitled'}"?`)) return;
     const resp = await fetch(`${SERVER_URL}/upgrades/delete/${id}`, { method: 'DELETE' });
     if (!resp.ok) {
-      setNotice({ variant: 'danger', message: 'Failed to delete project.' });
+      showNotice('danger', 'Failed to delete project.');
       return;
     }
     setProjects((prev) => prev.filter((p) => p.id !== id));
-    setNotice({ variant: 'success', message: 'Project deleted.' });
+    showNotice('success', 'Project deleted.');
   };
 
   const categoryName = (id?: number | null) =>
@@ -165,11 +166,11 @@ const UpgradesPage: React.FC = () => {
       <MyNavbar />
       <h3>Upgrade Planning</h3>
 
-      {notice && (
-        <Alert variant={notice.variant} onClose={() => setNotice(null)} dismissible>
-          {notice.message}
-        </Alert>
-      )}
+      <ToastContainer position="top-end" className="p-3">
+        <Toast bg={notice?.variant} onClose={() => setNotice(null)} show={!!notice} delay={2500} autohide>
+          <Toast.Body style={{ color: '#fff' }}>{notice?.message}</Toast.Body>
+        </Toast>
+      </ToastContainer>
 
       <Row className="g-3">
         <Col lg={12}>
