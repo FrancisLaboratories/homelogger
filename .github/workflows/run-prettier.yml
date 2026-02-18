@@ -1,4 +1,4 @@
-name: Run Prettier
+name: autofix.ci
 on:
   pull_request:
   push:
