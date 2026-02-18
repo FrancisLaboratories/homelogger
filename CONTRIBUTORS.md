@@ -30,7 +30,7 @@ We value human oversight. If you use AI tools (GitHub Copilot, ChatGPT, Claude C
 
 ## Pull Request Process
 
-1.  **Check for an Issue:** Ensure there is an existing Issue or Discussion for your work.
+1.  **Check for an Issue:** Ensure there is an existing Issue or Discussion for your work. Ensure you have notified the maintainer that you plan to work on this issue.
 2.  **Fork & Branch:** Create a branch from `main`.
 3.  **Tests:** Ensure all existing tests pass and add new ones if applicable.
 4.  **Describe:** Clearly explain what your PR does and link to the relevant Issue.
