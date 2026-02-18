@@ -148,7 +148,7 @@ Further work / Roadmap
 ----------------------
 Development is ongoing. Planned features include:
 
-- Planning tools for seasonal maintenance and repairs
-- Enhanced reporting and export options
+- Planning tools for regular/upcoming tasks
+- Report creation and export options
 
 See [plan.md](plan.md) for tentative feature plans and priorities.
