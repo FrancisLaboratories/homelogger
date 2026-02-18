@@ -50,6 +50,12 @@ const BudgetingPage: React.FC = () => {
   const [plannedCosts, setPlannedCosts] = useState<PlannedCost[]>([]);
   const [selectedScenarioId, setSelectedScenarioId] = useState<number | null>(null);
   const [summary, setSummary] = useState<BudgetSummary | null>(null);
+  const [editScenarioId, setEditScenarioId] = useState<number | null>(null);
+  const [editScenario, setEditScenario] = useState<BudgetScenario | null>(null);
+  const [editCategoryId, setEditCategoryId] = useState<number | null>(null);
+  const [editCategory, setEditCategory] = useState<BudgetCategory | null>(null);
+  const [editCostId, setEditCostId] = useState<number | null>(null);
+  const [editCost, setEditCost] = useState<PlannedCost | null>(null);
 
   const [newScenario, setNewScenario] = useState({
     name: '',
@@ -59,6 +65,7 @@ const BudgetingPage: React.FC = () => {
     isActive: false,
     notes: '',
   });
+  const [scenarioError, setScenarioError] = useState<string>('');
 
   const [newCategory, setNewCategory] = useState({
     name: '',
@@ -66,6 +73,7 @@ const BudgetingPage: React.FC = () => {
     description: '',
     color: '',
   });
+  const [categoryError, setCategoryError] = useState<string>('');
 
   const [newCost, setNewCost] = useState({
     scenarioId: '',
@@ -75,6 +83,7 @@ const BudgetingPage: React.FC = () => {
     amount: '',
     notes: '',
   });
+  const [costError, setCostError] = useState<string>('');
 
   const loadScenarios = async () => {
     try {
@@ -146,10 +155,14 @@ const BudgetingPage: React.FC = () => {
   }, [selectedScenarioId]);
 
   const handleAddScenario = async () => {
-    if (!newScenario.name) return;
+    if (!newScenario.name) {
+      setScenarioError('Scenario name is required.');
+      return;
+    }
     if (!newScenario.horizonMonths || newScenario.horizonMonths <= 0) {
       setNewScenario({ ...newScenario, horizonMonths: 12 });
     }
+    setScenarioError('');
     const resp = await fetch(`${SERVER_URL}/budget/scenarios/add`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -169,8 +182,47 @@ const BudgetingPage: React.FC = () => {
     setNewScenario({ name: '', startDate: '', horizonMonths: 12, inflationRate: 0, isActive: false, notes: '' });
   };
 
+  const handleStartScenarioEdit = (scenario: BudgetScenario) => {
+    setEditScenarioId(scenario.id);
+    setEditScenario({ ...scenario });
+  };
+
+  const handleCancelScenarioEdit = () => {
+    setEditScenarioId(null);
+    setEditScenario(null);
+  };
+
+  const handleSaveScenario = async () => {
+    if (!editScenario || !editScenarioId) return;
+    if (!editScenario.name) {
+      setScenarioError('Scenario name is required.');
+      return;
+    }
+    const resp = await fetch(`${SERVER_URL}/budget/scenarios/update/${editScenarioId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: editScenario.name,
+        startDate: editScenario.startDate,
+        horizonMonths: Number(editScenario.horizonMonths || 12),
+        inflationRate: Number(editScenario.inflationRate || 0),
+        isActive: !!editScenario.isActive,
+        notes: editScenario.notes,
+      }),
+    });
+    if (!resp.ok) return;
+    const updated = await resp.json();
+    setScenarios((prev) => prev.map((s) => (s.id === editScenarioId ? updated : s)));
+    setEditScenarioId(null);
+    setEditScenario(null);
+  };
+
   const handleAddCategory = async () => {
-    if (!newCategory.name) return;
+    if (!newCategory.name) {
+      setCategoryError('Category name is required.');
+      return;
+    }
+    setCategoryError('');
     const resp = await fetch(`${SERVER_URL}/budget/categories/add`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -182,8 +234,49 @@ const BudgetingPage: React.FC = () => {
     setNewCategory({ name: '', assetGroup: '', description: '', color: '' });
   };
 
+  const handleStartCategoryEdit = (category: BudgetCategory) => {
+    setEditCategoryId(category.id);
+    setEditCategory({ ...category });
+  };
+
+  const handleCancelCategoryEdit = () => {
+    setEditCategoryId(null);
+    setEditCategory(null);
+  };
+
+  const handleSaveCategory = async () => {
+    if (!editCategory || !editCategoryId) return;
+    if (!editCategory.name) {
+      setCategoryError('Category name is required.');
+      return;
+    }
+    const resp = await fetch(`${SERVER_URL}/budget/categories/update/${editCategoryId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: editCategory.name,
+        assetGroup: editCategory.assetGroup,
+        description: editCategory.description,
+        color: editCategory.color,
+      }),
+    });
+    if (!resp.ok) return;
+    const updated = await resp.json();
+    setCategories((prev) => prev.map((c) => (c.id === editCategoryId ? updated : c)));
+    setEditCategoryId(null);
+    setEditCategory(null);
+  };
+
   const handleAddCost = async () => {
-    if (!newCost.costDate || !newCost.amount) return;
+    if (!newCost.costDate || !newCost.amount) {
+      setCostError('Cost date and amount are required.');
+      return;
+    }
+    if (Number(newCost.amount) <= 0) {
+      setCostError('Amount must be greater than zero.');
+      return;
+    }
+    setCostError('');
     const resp = await fetch(`${SERVER_URL}/planned-costs/add`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -200,6 +293,43 @@ const BudgetingPage: React.FC = () => {
     const created = await resp.json();
     setPlannedCosts((prev) => [...prev, created]);
     setNewCost({ scenarioId: '', categoryId: '', sourceType: 'upgrade', costDate: '', amount: '', notes: '' });
+  };
+
+  const handleStartCostEdit = (cost: PlannedCost) => {
+    setEditCostId(cost.id);
+    setEditCost({ ...cost });
+  };
+
+  const handleCancelCostEdit = () => {
+    setEditCostId(null);
+    setEditCost(null);
+  };
+
+  const handleSaveCost = async () => {
+    if (!editCost || !editCostId) return;
+    if (!editCost.costDate || !editCost.amount || Number(editCost.amount) <= 0) {
+      setCostError('Cost date and positive amount are required.');
+      return;
+    }
+    setCostError('');
+    const resp = await fetch(`${SERVER_URL}/planned-costs/update/${editCostId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        scenarioId: editCost.scenarioId || undefined,
+        categoryId: editCost.categoryId || undefined,
+        sourceType: editCost.sourceType,
+        sourceId: editCost.sourceId || undefined,
+        costDate: editCost.costDate,
+        amount: Number(editCost.amount || 0),
+        notes: editCost.notes,
+      }),
+    });
+    if (!resp.ok) return;
+    const updated = await resp.json();
+    setPlannedCosts((prev) => prev.map((c) => (c.id === editCostId ? updated : c)));
+    setEditCostId(null);
+    setEditCost(null);
   };
 
   const handleDeleteCost = async (id: number) => {
@@ -279,15 +409,55 @@ const BudgetingPage: React.FC = () => {
                         <td>{s.name}</td>
                         <td>{s.startDate || '-'}</td>
                         <td>{s.horizonMonths} mo</td>
-                        <td>{s.isActive ? 'Yes' : 'No'}</td>
+                        <td style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span>{s.isActive ? 'Yes' : 'No'}</span>
+                          <Button variant="outline-secondary" size="sm" onClick={(e) => { e.stopPropagation(); handleStartScenarioEdit(s); }}>Edit</Button>
+                        </td>
                       </tr>
                     ))
                   )}
                 </tbody>
               </Table>
 
+              {editScenarioId && editScenario && (
+                <Card style={{ marginTop: 12 }}>
+                  <Card.Body>
+                    <h6>Edit Scenario</h6>
+                    <Row className="g-2">
+                      <Col md={6}>
+                        <Form.Control placeholder="Scenario name" value={editScenario.name} onChange={(e) => setEditScenario({ ...editScenario, name: e.target.value })} />
+                      </Col>
+                      <Col md={6}>
+                        <Form.Control type="date" value={editScenario.startDate || ''} onChange={(e) => setEditScenario({ ...editScenario, startDate: e.target.value })} />
+                      </Col>
+                      <Col md={4}>
+                        <Form.Control type="number" min={1} placeholder="Horizon (months)" value={editScenario.horizonMonths} onChange={(e) => setEditScenario({ ...editScenario, horizonMonths: Number(e.target.value) })} />
+                      </Col>
+                      <Col md={4}>
+                        <Form.Control type="number" step="0.1" placeholder="Inflation %" value={editScenario.inflationRate} onChange={(e) => setEditScenario({ ...editScenario, inflationRate: Number(e.target.value) })} />
+                      </Col>
+                      <Col md={4}>
+                        <Form.Check type="checkbox" label="Active" checked={!!editScenario.isActive} onChange={(e) => setEditScenario({ ...editScenario, isActive: e.target.checked })} />
+                      </Col>
+                      <Col md={12}>
+                        <Form.Control placeholder="Notes" value={editScenario.notes || ''} onChange={(e) => setEditScenario({ ...editScenario, notes: e.target.value })} />
+                      </Col>
+                      <Col md={12} style={{ display: 'flex', gap: 8 }}>
+                        <Button variant="primary" onClick={handleSaveScenario}>Save</Button>
+                        <Button variant="outline-secondary" onClick={handleCancelScenarioEdit}>Cancel</Button>
+                      </Col>
+                    </Row>
+                  </Card.Body>
+                </Card>
+              )}
+
               <Form className="mt-3">
                 <Row className="g-2">
+                  {scenarioError && (
+                    <Col md={12} style={{ color: '#b02a37' }}>
+                      {scenarioError}
+                    </Col>
+                  )}
                   <Col md={6}>
                     <Form.Control placeholder="Scenario name" value={newScenario.name} onChange={(e) => setNewScenario({ ...newScenario, name: e.target.value })} />
                   </Col>
@@ -337,15 +507,49 @@ const BudgetingPage: React.FC = () => {
                       <tr key={c.id}>
                         <td>{c.name}</td>
                         <td>{c.assetGroup || '-'}</td>
-                        <td>{c.color || '-'}</td>
+                        <td style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span>{c.color || '-'}</span>
+                          <Button variant="outline-secondary" size="sm" onClick={() => handleStartCategoryEdit(c)}>Edit</Button>
+                        </td>
                       </tr>
                     ))
                   )}
                 </tbody>
               </Table>
 
+              {editCategoryId && editCategory && (
+                <Card style={{ marginTop: 12 }}>
+                  <Card.Body>
+                    <h6>Edit Category</h6>
+                    <Row className="g-2">
+                      <Col md={6}>
+                        <Form.Control placeholder="Category name" value={editCategory.name} onChange={(e) => setEditCategory({ ...editCategory, name: e.target.value })} />
+                      </Col>
+                      <Col md={6}>
+                        <Form.Control placeholder="Asset group" value={editCategory.assetGroup || ''} onChange={(e) => setEditCategory({ ...editCategory, assetGroup: e.target.value })} />
+                      </Col>
+                      <Col md={6}>
+                        <Form.Control placeholder="Color" value={editCategory.color || ''} onChange={(e) => setEditCategory({ ...editCategory, color: e.target.value })} />
+                      </Col>
+                      <Col md={6}>
+                        <Form.Control placeholder="Description" value={editCategory.description || ''} onChange={(e) => setEditCategory({ ...editCategory, description: e.target.value })} />
+                      </Col>
+                      <Col md={12} style={{ display: 'flex', gap: 8 }}>
+                        <Button variant="primary" onClick={handleSaveCategory}>Save</Button>
+                        <Button variant="outline-secondary" onClick={handleCancelCategoryEdit}>Cancel</Button>
+                      </Col>
+                    </Row>
+                  </Card.Body>
+                </Card>
+              )}
+
               <Form className="mt-3">
                 <Row className="g-2">
+                  {categoryError && (
+                    <Col md={12} style={{ color: '#b02a37' }}>
+                      {categoryError}
+                    </Col>
+                  )}
                   <Col md={6}>
                     <Form.Control placeholder="Category name" value={newCategory.name} onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })} />
                   </Col>
@@ -466,7 +670,10 @@ const BudgetingPage: React.FC = () => {
                         <td>{c.sourceType || '-'}</td>
                         <td>{c.notes || '-'}</td>
                         <td style={{ width: 70 }}>
-                          <Button variant="outline-danger" size="sm" onClick={() => handleDeleteCost(c.id)}>Delete</Button>
+                          <div style={{ display: 'flex', gap: 6 }}>
+                            <Button variant="outline-secondary" size="sm" onClick={() => handleStartCostEdit(c)}>Edit</Button>
+                            <Button variant="outline-danger" size="sm" onClick={() => handleDeleteCost(c.id)}>Delete</Button>
+                          </div>
                         </td>
                       </tr>
                     ))
@@ -474,8 +681,61 @@ const BudgetingPage: React.FC = () => {
                 </tbody>
               </Table>
 
+              {editCostId && editCost && (
+                <Card style={{ marginTop: 12 }}>
+                  <Card.Body>
+                    <h6>Edit Planned Cost</h6>
+                    <Row className="g-2">
+                      <Col md={3}>
+                        <Form.Select value={editCost.scenarioId || ''} onChange={(e) => setEditCost({ ...editCost, scenarioId: e.target.value ? Number(e.target.value) : null })}>
+                          <option value="">Scenario</option>
+                          {scenarios.map((s) => (
+                            <option key={s.id} value={s.id}>{s.name}</option>
+                          ))}
+                        </Form.Select>
+                      </Col>
+                      <Col md={3}>
+                        <Form.Select value={editCost.categoryId || ''} onChange={(e) => setEditCost({ ...editCost, categoryId: e.target.value ? Number(e.target.value) : null })}>
+                          <option value="">Category</option>
+                          {categories.map((c) => (
+                            <option key={c.id} value={c.id}>{c.name}</option>
+                          ))}
+                        </Form.Select>
+                      </Col>
+                      <Col md={2}>
+                        <Form.Select value={editCost.sourceType || 'upgrade'} onChange={(e) => setEditCost({ ...editCost, sourceType: e.target.value })}>
+                          <option value="upgrade">Upgrade</option>
+                          <option value="repair">Repair</option>
+                          <option value="maintenance">Maintenance</option>
+                          <option value="recurring">Recurring</option>
+                          <option value="other">Other</option>
+                        </Form.Select>
+                      </Col>
+                      <Col md={2}>
+                        <Form.Control type="date" value={editCost.costDate || ''} onChange={(e) => setEditCost({ ...editCost, costDate: e.target.value })} />
+                      </Col>
+                      <Col md={2}>
+                        <Form.Control type="number" step="0.01" placeholder="Amount" value={editCost.amount} onChange={(e) => setEditCost({ ...editCost, amount: Number(e.target.value) })} />
+                      </Col>
+                      <Col md={12}>
+                        <Form.Control placeholder="Notes" value={editCost.notes || ''} onChange={(e) => setEditCost({ ...editCost, notes: e.target.value })} />
+                      </Col>
+                      <Col md={12} style={{ display: 'flex', gap: 8 }}>
+                        <Button variant="primary" onClick={handleSaveCost}>Save</Button>
+                        <Button variant="outline-secondary" onClick={handleCancelCostEdit}>Cancel</Button>
+                      </Col>
+                    </Row>
+                  </Card.Body>
+                </Card>
+              )}
+
               <Form className="mt-3">
                 <Row className="g-2">
+                  {costError && (
+                    <Col md={12} style={{ color: '#b02a37' }}>
+                      {costError}
+                    </Col>
+                  )}
                   <Col md={3}>
                     <Form.Select value={newCost.scenarioId} onChange={(e) => setNewCost({ ...newCost, scenarioId: e.target.value })}>
                       <option value="">Scenario</option>
