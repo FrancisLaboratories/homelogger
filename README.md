@@ -5,7 +5,9 @@
 
 # HomeLogger
 
-HomeLogger is a simple home maintenance and asset tracker for homeowners. It centralizes appliances, repairs, and maintenance tasks so you can record work, receipts, and schedules for things around your home.
+HomeLogger is a simple home maintenance and asset tracker for homeowners, inspired by the similarly-named [LubeLogger](https://github.com/hargata/lubelog). It centralizes appliances, repairs, and maintenance tasks so you can record work, receipts, and schedules for things around your home.
+
+This project is in it's early stages. Expect changes. You are encouraged to [contribute](#Contributing) as well.
 
 This repository contains a Next.js React client and a Go (Fiber + GORM) server with an SQLite database. The project is early-stage but includes a working client and server and a small REST API defined in [server/openapi.yaml](server/openapi.yaml).
 
