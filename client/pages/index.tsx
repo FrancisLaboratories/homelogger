@@ -236,7 +236,7 @@ const HomePage: React.FC = () => {
           <Card>
             <Card.Body>
               <div style={{ fontSize: '0.9rem', color: '#6c757d' }}>Upgrades</div>
-              <div style={{ fontSize: '1.3rem', fontWeight: 600 }}>{summary?.upgradeCount ?? upgrades.length} projects</div>
+              <div style={{ fontSize: '1.3rem', fontWeight: 600 }}>{summary?.upgradeCount ?? 0} projects</div>
               <div style={{ fontSize: '0.85rem' }}>${(summary?.upgradeTotal ?? 0).toFixed(2)} planned</div>
             </Card.Body>
           </Card>
