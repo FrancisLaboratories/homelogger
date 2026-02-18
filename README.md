@@ -142,7 +142,7 @@ This project is available under the terms of the MIT license, as shown in the [L
 Contact
 -------
 
-For questions or feedback, open an issue or discussion post in this repo. 
+For questions or feedback, open an issue or discussion post in this repo. To privately report security vulnerabilities, please follow the guidelines in the [SECURITY.md](SECURITY.md) document.
 
 Further work / Roadmap
 ----------------------
