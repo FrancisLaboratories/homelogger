@@ -147,13 +147,16 @@ const BudgetingPage: React.FC = () => {
 
   const handleAddScenario = async () => {
     if (!newScenario.name) return;
+    if (!newScenario.horizonMonths || newScenario.horizonMonths <= 0) {
+      setNewScenario({ ...newScenario, horizonMonths: 12 });
+    }
     const resp = await fetch(`${SERVER_URL}/budget/scenarios/add`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         name: newScenario.name,
         startDate: newScenario.startDate,
-        horizonMonths: Number(newScenario.horizonMonths),
+        horizonMonths: Number(newScenario.horizonMonths || 12),
         inflationRate: Number(newScenario.inflationRate),
         isActive: !!newScenario.isActive,
         notes: newScenario.notes,
@@ -212,6 +215,14 @@ const BudgetingPage: React.FC = () => {
     <Container style={{ marginTop: '16px' }}>
       <MyNavbar />
       <h3>Budgeting</h3>
+
+      {!selectedScenarioId && (
+        <Card style={{ marginBottom: '12px' }}>
+          <Card.Body>
+            Create a scenario to enable budgeting summaries and horizon-based views.
+          </Card.Body>
+        </Card>
+      )}
 
       <Row className="g-3" style={{ marginBottom: '12px' }}>
         <Col md={4}>

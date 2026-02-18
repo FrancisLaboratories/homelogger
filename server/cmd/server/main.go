@@ -1253,6 +1253,13 @@ func main() {
 			}
 		}
 
+		startDate := now
+		if scenario != nil && scenario.StartDate != "" {
+			if sd, ok := parseDate(scenario.StartDate); ok {
+				startDate = sd
+			}
+		}
+
 		plannedCosts, err := database.GetPlannedCosts(db, scenarioId)
 		if err != nil {
 			return c.SendString("Error getting planned costs:" + err.Error())
@@ -1309,6 +1316,7 @@ func main() {
 		return c.JSON(fiber.Map{
 			"scenario":            scenario,
 			"horizonMonths":       horizonMonths,
+			"startDate":           startDate.Format("2006-01-02"),
 			"monthlySavings":      monthlySavings,
 			"plannedCostTotal":    totalPlanned,
 			"plannedCostCount":    len(plannedCosts),
