@@ -151,7 +151,7 @@ Further work / Roadmap
 Development is ongoing. Planned features include:
 
 - Planning/scheduling tools for seasonal maintenance and repairs
-- Enhanced reporting and export options
+- Report creation and export functionality
 - Much more to come. Also open to suggestions and contributions!
   - Please don't submit a PR for a major feature without discussing it first via an issue or discussion post.
 
