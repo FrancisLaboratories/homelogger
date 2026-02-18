@@ -132,7 +132,9 @@ Contributions are welcome. Suggested workflow:
 2. Create a feature branch
 3. Open a PR with a clear description of changes
 
-If you plan to add larger features (new API endpoints, DB schema changes) open an issue first to discuss the design.
+Please be sure to comply with this project's [AI Policy](AI_POLICY.md) when contributing code generated or assisted by AI tools.
+
+If you plan to add larger features (new API endpoints, DB schema changes) open an issue first to discuss the design. 
 
 License
 -------
@@ -148,7 +150,8 @@ Further work / Roadmap
 ----------------------
 Development is ongoing. Planned features include:
 
-- Planning tools for regular/upcoming tasks
-- Report creation and export options
+- Planning/scheduling tools for seasonal maintenance and repairs
+- Report creation and export functionality
+- Much more to come. Also open to suggestions and contributions!
+  - Please don't submit a PR for a major feature without discussing it first via an issue or discussion post.
 
-See [plan.md](plan.md) for tentative feature plans and priorities.
