@@ -1,7 +1,9 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {Button, Modal, Form} from 'react-bootstrap';
 import {MaintenanceRecord} from './MaintenanceSection';
-import {SERVER_URL} from "@/pages/_app";
+import {SERVER_URL} from "@/lib/config";
+import {useSettings} from "@/components/SettingsContext";
+import {formatCurrency, formatDate} from "@/lib/formatters";
 
 interface ShowMaintenanceModalProps {
     show: boolean;
@@ -13,6 +15,7 @@ interface ShowMaintenanceModalProps {
 interface AttachmentInfo { id: number; originalName: string }
 
 const ShowMaintenanceModal: React.FC<ShowMaintenanceModalProps> = ({show, handleClose, maintenanceRecord, handleDeleteMaintenance}) => {
+    const {settings} = useSettings();
     const [attachments, setAttachments] = useState<AttachmentInfo[]>([]);
     const [uploadMessage, setUploadMessage] = useState<string>('');
     const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -99,8 +102,8 @@ const ShowMaintenanceModal: React.FC<ShowMaintenanceModalProps> = ({show, handle
             </Modal.Header>
             <Modal.Body>
                 <p><strong>Description:</strong> {maintenanceRecord.description}</p>
-                <p><strong>Date:</strong> {maintenanceRecord.date}</p>
-                <p><strong>Cost:</strong> ${maintenanceRecord.cost}</p>
+                <p><strong>Date:</strong> {formatDate(maintenanceRecord.date, settings)}</p>
+                <p><strong>Cost:</strong> {formatCurrency(maintenanceRecord.cost, settings)}</p>
                 {attachments.length > 0 && (
                     <div>
                         <strong>Attachments:</strong>

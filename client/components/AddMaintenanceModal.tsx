@@ -1,7 +1,10 @@
 import React, {useEffect, useState} from 'react';
 import {Button, Form, Modal} from 'react-bootstrap';
-import {SERVER_URL} from "@/pages/_app";
+import {SERVER_URL} from "@/lib/config";
 import {MaintenanceRecord, MaintenanceReferenceType, MaintenanceSpaceType} from './MaintenanceSection';
+import {useSettings} from "@/components/SettingsContext";
+import {getDatePattern, parseDateInput} from "@/lib/formatters";
+import DateInput from "@/components/DateInput";
 
 interface AddMaintenanceModalProps {
     show: boolean;
@@ -20,6 +23,7 @@ const AddMaintenanceModal: React.FC<AddMaintenanceModalProps> = ({
                                                                      referenceType,
                                                                      spaceType
                                                                  }) => {
+    const {settings} = useSettings();
     const [description, setDescription] = useState('');
     const [date, setDate] = useState('');
     const [cost, setCost] = useState(0);
@@ -27,6 +31,7 @@ const AddMaintenanceModal: React.FC<AddMaintenanceModalProps> = ({
     const [files, setFiles] = useState<File[]>([]);
     const [errors, setErrors] = useState<string[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const datePattern = getDatePattern(settings);
 
     useEffect(() => {
         if (!show) {
@@ -42,15 +47,20 @@ const AddMaintenanceModal: React.FC<AddMaintenanceModalProps> = ({
         setErrors([]);
         const errs: string[] = [];
         if (!description || description.trim() === '') errs.push('Description is required');
-        if (!date) errs.push('Date is required');
+        if (!date) {
+            errs.push('Date is required');
+        }
         if (isNaN(cost) || cost < 0) errs.push('Cost must be a positive number');
         if (errs.length > 0) {
             setErrors(errs);
             return;
         }
 
-        // safe date conversion (date is non-empty string from input[type=date])
-        const standardizedDate = new Date(date).toISOString().split('T')[0];
+        const standardizedDate = parseDateInput(date, settings);
+        if (!standardizedDate) {
+            setErrors([`Date must match ${datePattern}`]);
+            return;
+        }
         setIsSubmitting(true);
 
         const attachmentIds: number[] = [];
@@ -141,17 +151,18 @@ const AddMaintenanceModal: React.FC<AddMaintenanceModalProps> = ({
                     </Form.Group>
                     <Form.Group controlId="formDate">
                         <Form.Label>Date</Form.Label>
-                        <Form.Control
-                            type="date"
+                        <DateInput
+                            id="formDate"
                             value={date}
-                            onChange={(e) => setDate(e.target.value)}
+                            onChange={setDate}
+                            settings={settings}
                         />
                     </Form.Group>
                     <Form.Group controlId="formCost">
-                        <Form.Label>Cost</Form.Label>
+                        <Form.Label>Cost ({settings.currency})</Form.Label>
                         <Form.Control
                             type="number"
-                            placeholder="Enter cost"
+                            placeholder={`Enter cost in ${settings.currency}`}
                             value={cost}
                             onChange={(e) => setCost(parseFloat(e.target.value))}
                         />

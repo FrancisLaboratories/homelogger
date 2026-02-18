@@ -6,7 +6,7 @@ import MyNavbar from '../components/Navbar';
 import BlankCard from '../components/BlankCard';
 import AddApplianceModal from '../components/AddApplianceModal';
 import ApplianceCard from '../components/ApplianceCard';
-import {SERVER_URL} from "@/pages/_app";
+import {SERVER_URL} from "@/lib/config";
 
 const appliancesUrl = `${SERVER_URL}/appliances`;
 const appliancesAddUrl = `${SERVER_URL}/appliances/add`;

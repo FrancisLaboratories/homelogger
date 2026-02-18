@@ -1,6 +1,6 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {Card, Button, Form} from 'react-bootstrap';
-import {SERVER_URL} from '@/pages/_app';
+import {SERVER_URL} from '@/lib/config';
 
 interface Props {
     applianceId?: number;

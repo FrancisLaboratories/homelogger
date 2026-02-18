@@ -1,9 +1,11 @@
 import React, {useEffect, useState} from 'react';
 import {Card, Table} from 'react-bootstrap';
 import "bootstrap-icons/font/bootstrap-icons.css";
-import {SERVER_URL} from "@/pages/_app";
+import {SERVER_URL} from "@/lib/config";
 import AddMaintenanceModal from '@/components/AddMaintenanceModal';
 import ShowMaintenanceModal from "@/components/ShowMaintenanceModal";
+import {useSettings} from "@/components/SettingsContext";
+import {formatCurrency, formatDate} from "@/lib/formatters";
 
 export enum MaintenanceReferenceType {
     Appliance = 'Appliance',
@@ -39,6 +41,7 @@ interface MaintenanceProps {
 }
 
 const MaintenanceSection: React.FC<MaintenanceProps> = ({applianceId, referenceType, spaceType}) => {
+    const {settings} = useSettings();
     const [maintenanceRecords, setMaintenanceRecords] = useState<MaintenanceRecord[]>([]);
     const [showAddModal, setShowAddModal] = useState(false);
     const [showViewModal, setShowViewModal] = useState(false);
@@ -82,6 +85,7 @@ const MaintenanceSection: React.FC<MaintenanceProps> = ({applianceId, referenceT
     };
 
     const totalCost = maintenanceRecords.reduce((sum, record) => sum + record.cost, 0);
+    const totalCostLabel = formatCurrency(totalCost, settings);
 
     return (
         <Card>
@@ -103,8 +107,8 @@ const MaintenanceSection: React.FC<MaintenanceProps> = ({applianceId, referenceT
                         maintenanceRecords.map(record => (
                             <tr key={record.id} onClick={() => handleRowClick(record)} style={{cursor: 'pointer'}}>
                                 <td>{record.description}</td>
-                                <td>{record.cost}</td>
-                                <td>{record.date}</td>
+                                <td>{formatCurrency(record.cost, settings)}</td>
+                                <td>{formatDate(record.date, settings)}</td>
                             </tr>
                         ))
                     )}
@@ -119,7 +123,7 @@ const MaintenanceSection: React.FC<MaintenanceProps> = ({applianceId, referenceT
                 }}>
                     <i className="bi bi-plus-square-fill" style={{fontSize: '2rem', cursor: "pointer"}}
                        onClick={handleShowAddModal}></i>
-                    <div>Total Maintenance Cost: ${totalCost}</div>
+                    <div>Total Maintenance Cost: {totalCostLabel}</div>
                 </div>
             </Card.Body>
             <AddMaintenanceModal

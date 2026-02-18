@@ -42,6 +42,9 @@ func main() {
 	if err != nil {
 		panic("Error migrating GORM")
 	}
+	if _, err := database.EnsureSettings(db); err != nil {
+		panic("Error ensuring settings")
+	}
 
 	// Create new fiber server
 	app := fiber.New(fiber.Config{
@@ -83,6 +86,8 @@ func main() {
 
 		return c.Status(fiber.StatusOK).JSON(status)
 	})
+
+	registerSettingsRoutes(app, db)
 
 	app.Get("/todo", func(c *fiber.Ctx) error {
 		// Connect to gorm
