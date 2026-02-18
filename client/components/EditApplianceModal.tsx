@@ -1,46 +1,61 @@
-import React, {useEffect, useState} from 'react';
-import {Button, Form, Modal} from 'react-bootstrap';
-import {SERVER_URL} from "@/pages/_app";
+import React, { useEffect, useState } from 'react'
+import { Button, Form, Modal } from 'react-bootstrap'
+import { SERVER_URL } from '@/pages/_app'
 
 interface EditApplianceModalProps {
-    show: boolean;
-    handleClose: () => void;
-    handleSave: (id: number, applianceName: string, manufacturer: string, modelNumber: string, serialNumber: string, yearPurchased: string, purchasePrice: string, location: string, type: string) => void;
+    show: boolean
+    handleClose: () => void
+    handleSave: (
+        id: number,
+        applianceName: string,
+        manufacturer: string,
+        modelNumber: string,
+        serialNumber: string,
+        yearPurchased: string,
+        purchasePrice: string,
+        location: string,
+        type: string
+    ) => void
     appliance: {
-        id: number;
-        applianceName: string;
-        manufacturer: string;
-        modelNumber: string;
-        serialNumber: string;
-        yearPurchased: string;
-        purchasePrice: string;
-        location: string;
-        type: string;
-    };
+        id: number
+        applianceName: string
+        manufacturer: string
+        modelNumber: string
+        serialNumber: string
+        yearPurchased: string
+        purchasePrice: string
+        location: string
+        type: string
+    }
 }
 
-const EditApplianceModal: React.FC<EditApplianceModalProps> = ({show, handleClose, handleSave, appliance}) => {
-    const [applianceName, setApplianceName] = useState(appliance.applianceName);
-    const [manufacturer, setManufacturer] = useState(appliance.manufacturer);
-    const [modelNumber, setModelNumber] = useState(appliance.modelNumber);
-    const [serialNumber, setSerialNumber] = useState(appliance.serialNumber);
-    const [yearPurchased, setYearPurchased] = useState(appliance.yearPurchased);
-    const [purchasePrice, setPurchasePrice] = useState(appliance.purchasePrice);
-    const [location, setLocation] = useState(appliance.location);
-    const [type, setType] = useState(appliance.type);
+const EditApplianceModal: React.FC<EditApplianceModalProps> = ({
+    show,
+    handleClose,
+    handleSave,
+    appliance,
+}) => {
+    const [applianceName, setApplianceName] = useState(appliance.applianceName)
+    const [manufacturer, setManufacturer] = useState(appliance.manufacturer)
+    const [modelNumber, setModelNumber] = useState(appliance.modelNumber)
+    const [serialNumber, setSerialNumber] = useState(appliance.serialNumber)
+    const [yearPurchased, setYearPurchased] = useState(appliance.yearPurchased)
+    const [purchasePrice, setPurchasePrice] = useState(appliance.purchasePrice)
+    const [location, setLocation] = useState(appliance.location)
+    const [type, setType] = useState(appliance.type)
 
     useEffect(() => {
         if (show) {
-            setApplianceName(appliance.applianceName);
-            setManufacturer(appliance.manufacturer);
-            setModelNumber(appliance.modelNumber);
-            setSerialNumber(appliance.serialNumber);
-            setYearPurchased(appliance.yearPurchased);
-            setPurchasePrice(appliance.purchasePrice);
-            setLocation(appliance.location);
-            setType(appliance.type);
+            setApplianceName(appliance.applianceName)
+            setManufacturer(appliance.manufacturer)
+            setModelNumber(appliance.modelNumber)
+            setSerialNumber(appliance.serialNumber)
+            setYearPurchased(appliance.yearPurchased)
+            setPurchasePrice(appliance.purchasePrice)
+            setLocation(appliance.location)
+            setType(appliance.type)
         }
-    }, [show, appliance]);
+    }, [show, appliance])
 
     const handleSubmit = async () => {
         const updatedAppliance = {
@@ -52,8 +67,8 @@ const EditApplianceModal: React.FC<EditApplianceModalProps> = ({show, handleClos
             yearPurchased,
             purchasePrice,
             location,
-            type
-        };
+            type,
+        }
 
         try {
             const response = await fetch(`${SERVER_URL}/appliances/update/${appliance.id}`, {
@@ -62,19 +77,29 @@ const EditApplianceModal: React.FC<EditApplianceModalProps> = ({show, handleClos
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify(updatedAppliance),
-            });
+            })
 
             if (!response.ok) {
-                throw new Error('Failed to update appliance');
+                throw new Error('Failed to update appliance')
             }
 
-            const savedAppliance = await response.json();
-            handleSave(savedAppliance.id, savedAppliance.applianceName, savedAppliance.manufacturer, savedAppliance.modelNumber, savedAppliance.serialNumber, savedAppliance.yearPurchased, savedAppliance.purchasePrice, savedAppliance.location, savedAppliance.type);
-            handleClose();
+            const savedAppliance = await response.json()
+            handleSave(
+                savedAppliance.id,
+                savedAppliance.applianceName,
+                savedAppliance.manufacturer,
+                savedAppliance.modelNumber,
+                savedAppliance.serialNumber,
+                savedAppliance.yearPurchased,
+                savedAppliance.purchasePrice,
+                savedAppliance.location,
+                savedAppliance.type
+            )
+            handleClose()
         } catch (error) {
-            console.error('Error updating appliance:', error);
+            console.error('Error updating appliance:', error)
         }
-    };
+    }
 
     return (
         <Modal show={show} onHide={handleClose}>
@@ -166,7 +191,7 @@ const EditApplianceModal: React.FC<EditApplianceModalProps> = ({show, handleClos
                 </Button>
             </Modal.Footer>
         </Modal>
-    );
-};
+    )
+}
 
-export default EditApplianceModal;
+export default EditApplianceModal

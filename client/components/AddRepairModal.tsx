@@ -1,15 +1,15 @@
-import React, {useEffect, useState} from 'react';
-import {Button, Form, Modal} from 'react-bootstrap';
-import {SERVER_URL} from "@/pages/_app";
-import {RepairRecord, RepairReferenceType, RepairSpaceType} from './RepairSection';
+import React, { useEffect, useState } from 'react'
+import { Button, Form, Modal } from 'react-bootstrap'
+import { SERVER_URL } from '@/pages/_app'
+import { RepairRecord, RepairReferenceType, RepairSpaceType } from './RepairSection'
 
 interface AddRepairModalProps {
-    show: boolean;
-    handleClose: () => void;
-    handleSave: (repair: RepairRecord) => void;
-    applianceId?: number;
-    referenceType: RepairReferenceType;
-    spaceType: RepairSpaceType;
+    show: boolean
+    handleClose: () => void
+    handleSave: (repair: RepairRecord) => void
+    applianceId?: number
+    referenceType: RepairReferenceType
+    spaceType: RepairSpaceType
 }
 
 const AddRepairModal: React.FC<AddRepairModalProps> = ({
@@ -18,76 +18,76 @@ const AddRepairModal: React.FC<AddRepairModalProps> = ({
     handleSave,
     applianceId,
     referenceType,
-    spaceType
+    spaceType,
 }) => {
-    const [description, setDescription] = useState('');
-    const [date, setDate] = useState('');
-    const [cost, setCost] = useState(0);
-    const [notes, setNotes] = useState('');
-    const [files, setFiles] = useState<File[]>([]);
-    const [errors, setErrors] = useState<string[]>([]);
-    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [description, setDescription] = useState('')
+    const [date, setDate] = useState('')
+    const [cost, setCost] = useState(0)
+    const [notes, setNotes] = useState('')
+    const [files, setFiles] = useState<File[]>([])
+    const [errors, setErrors] = useState<string[]>([])
+    const [isSubmitting, setIsSubmitting] = useState(false)
 
     useEffect(() => {
         if (!show) {
-            setDescription('');
-            setDate('');
-            setCost(0);
-            setNotes('');
-            setFiles([]);
+            setDescription('')
+            setDate('')
+            setCost(0)
+            setNotes('')
+            setFiles([])
         }
-    }, [show]);
+    }, [show])
 
     const handleSubmit = async () => {
-        setErrors([]);
-        const errs: string[] = [];
-        if (!description || description.trim() === '') errs.push('Description is required');
-        if (!date) errs.push('Date is required');
-        if (isNaN(cost) || cost < 0) errs.push('Cost must be a positive number');
+        setErrors([])
+        const errs: string[] = []
+        if (!description || description.trim() === '') errs.push('Description is required')
+        if (!date) errs.push('Date is required')
+        if (isNaN(cost) || cost < 0) errs.push('Cost must be a positive number')
         if (errs.length > 0) {
-            setErrors(errs);
-            return;
+            setErrors(errs)
+            return
         }
 
-        const standardizedDate = new Date(date).toISOString().split('T')[0];
-        setIsSubmitting(true);
+        const standardizedDate = new Date(date).toISOString().split('T')[0]
+        setIsSubmitting(true)
 
-        const attachmentIds: number[] = [];
+        const attachmentIds: number[] = []
 
         for (const file of files) {
             try {
-                const formData = new FormData();
-                formData.append('file', file);
-                formData.append('userID', '1');
+                const formData = new FormData()
+                formData.append('file', file)
+                formData.append('userID', '1')
 
                 const uploadResp = await fetch(`${SERVER_URL}/files/upload`, {
                     method: 'POST',
                     body: formData,
-                });
+                })
 
                 if (!uploadResp.ok) {
-                    console.error('Failed to upload attachment', file.name);
-                    continue;
+                    console.error('Failed to upload attachment', file.name)
+                    continue
                 }
 
-                const uploadData: { id: number; originalName?: string } = await uploadResp.json();
+                const uploadData: { id: number; originalName?: string } = await uploadResp.json()
                 if (uploadData && uploadData.id) {
-                    attachmentIds.push(uploadData.id);
+                    attachmentIds.push(uploadData.id)
                 }
             } catch (err) {
-                console.error('Error uploading file:', err);
+                console.error('Error uploading file:', err)
             }
         }
 
         const newRepair: {
-            description: string;
-            date: string;
-            cost: number;
-            notes: string;
-            spaceType: RepairSpaceType;
-            referenceType: RepairReferenceType;
-            applianceId: number;
-            attachmentIds: number[];
+            description: string
+            date: string
+            cost: number
+            notes: string
+            spaceType: RepairSpaceType
+            referenceType: RepairReferenceType
+            applianceId: number
+            attachmentIds: number[]
         } = {
             description,
             date: standardizedDate,
@@ -97,7 +97,7 @@ const AddRepairModal: React.FC<AddRepairModalProps> = ({
             referenceType,
             applianceId: applianceId || 0,
             attachmentIds,
-        };
+        }
 
         try {
             const response = await fetch(`${SERVER_URL}/repair/add`, {
@@ -106,21 +106,21 @@ const AddRepairModal: React.FC<AddRepairModalProps> = ({
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify(newRepair),
-            });
+            })
 
             if (!response.ok) {
-                throw new Error('Failed to add repair record');
+                throw new Error('Failed to add repair record')
             }
 
-            const addedRepair = await response.json();
-            handleSave(addedRepair);
-            handleClose();
+            const addedRepair = await response.json()
+            handleSave(addedRepair)
+            handleClose()
         } catch (error) {
-            console.error('Error adding repair record:', error);
+            console.error('Error adding repair record:', error)
         } finally {
-            setIsSubmitting(false);
+            setIsSubmitting(false)
         }
-    };
+    }
 
     return (
         <Modal show={show} onHide={handleClose}>
@@ -164,31 +164,35 @@ const AddRepairModal: React.FC<AddRepairModalProps> = ({
                             onChange={(e) => setNotes(e.target.value)}
                         />
                     </Form.Group>
-                        <Form.Group controlId="formFile">
-                            <Form.Label>Attachment</Form.Label>
-                            <Form.Control
-                                type="file"
-                                multiple
-                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFiles(e.target.files ? Array.from(e.target.files) : [])}
-                            />
-                        </Form.Group>
-                        {errors.length > 0 && (
-                            <div style={{color: 'red', marginTop: '8px'}}>
-                                {errors.map((e, idx) => <div key={idx}>{e}</div>)}
-                            </div>
-                        )}
+                    <Form.Group controlId="formFile">
+                        <Form.Label>Attachment</Form.Label>
+                        <Form.Control
+                            type="file"
+                            multiple
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                                setFiles(e.target.files ? Array.from(e.target.files) : [])
+                            }
+                        />
+                    </Form.Group>
+                    {errors.length > 0 && (
+                        <div style={{ color: 'red', marginTop: '8px' }}>
+                            {errors.map((e, idx) => (
+                                <div key={idx}>{e}</div>
+                            ))}
+                        </div>
+                    )}
                 </Form>
             </Modal.Body>
             <Modal.Footer>
                 <Button variant="secondary" onClick={handleClose}>
                     Close
                 </Button>
-                        <Button variant="primary" onClick={handleSubmit} disabled={isSubmitting}>
-                            {isSubmitting ? 'Saving...' : 'Save Changes'}
-                        </Button>
+                <Button variant="primary" onClick={handleSubmit} disabled={isSubmitting}>
+                    {isSubmitting ? 'Saving...' : 'Save Changes'}
+                </Button>
             </Modal.Footer>
         </Modal>
-    );
-};
+    )
+}
 
-export default AddRepairModal;
+export default AddRepairModal
