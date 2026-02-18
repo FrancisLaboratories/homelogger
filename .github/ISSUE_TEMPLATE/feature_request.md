@@ -7,6 +7,9 @@ assignees: ''
 
 ---
 
+Agreements (required):
+
+[ ] I have read, agree to, and am in compliance with the Developer Certificate of Origin (DCO) as outlined in the [DCO file](DCO.md).
 [ ] I have read the contributing guidelines and understand that my feature request may be closed if it does not follow them.
 [ ] I have read the AI guidelines and understand that my feature request may be closed if it does not follow them.
 [ ] I understand that my PR may be removed or ignored if it has not been discussed with the maintainer prior to submission.

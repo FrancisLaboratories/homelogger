@@ -20,6 +20,10 @@ To keep the project focused and maintainable, we have specific rules regarding P
 ### General Feedback & Questions
 * All general feedback, "How-to" questions, or non-technical ideas should be kept in **GitHub Discussions**.
 
+
+### Developer Certificate of Origin (DCO)
+All contributions must comply with the [Developer Certificate of Origin (DCO)](DCO.md). By contributing, you certify that you have the right to submit the work under the project's open source license and that you agree to the terms outlined in the DCO.
+
 ---
 
 ## AI-Generated Code Policy
