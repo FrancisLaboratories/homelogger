@@ -1141,6 +1141,13 @@ func main() {
 			categoryNameByID[cat.ID] = cat.Name
 		}
 
+		startDate := now
+		if scenario != nil && scenario.StartDate != "" {
+			if sd, ok := parseDate(scenario.StartDate); ok {
+				startDate = sd
+			}
+		}
+
 		totalPlanned := 0.0
 		upcoming30 := 0.0
 		upcoming90 := 0.0
@@ -1179,7 +1186,7 @@ func main() {
 		monthlySeries := []fiber.Map{}
 		if horizonMonths > 0 {
 			for i := 0; i < horizonMonths; i++ {
-				key := now.AddDate(0, i, 0).Format("2006-01")
+				key := startDate.AddDate(0, i, 0).Format("2006-01")
 				monthlySeries = append(monthlySeries, fiber.Map{
 					"month": key,
 					"total": monthlyBuckets[key],
