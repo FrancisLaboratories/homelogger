@@ -1,31 +1,41 @@
-import Form from 'react-bootstrap/Form';
-import ListGroup from 'react-bootstrap/ListGroup';
-import { useState, useEffect } from 'react';
-import { SERVER_URL } from "@/pages/_app";
+import Form from 'react-bootstrap/Form'
+import ListGroup from 'react-bootstrap/ListGroup'
+import { useState, useEffect } from 'react'
+import { SERVER_URL } from '@/pages/_app'
 
 interface TodoItemProps {
-    id: string;
-    label: string;
-    checked: boolean;
-    onDelete: (id: string) => void;
-    onToggle?: (id: string, checked: boolean) => void;
-    applianceId?: number;
-    spaceType?: string;
-    sourceLabel?: string;
-    createdAt?: string;
+    id: string
+    label: string
+    checked: boolean
+    onDelete: (id: string) => void
+    onToggle?: (id: string, checked: boolean) => void
+    applianceId?: number
+    spaceType?: string
+    sourceLabel?: string
+    createdAt?: string
 }
 
-const TodoItem: React.FC<TodoItemProps> = ({ id, label, checked, onDelete, onToggle, applianceId, spaceType, sourceLabel, createdAt }) => {
-    const [isChecked, setIsChecked] = useState<boolean>(checked);
+const TodoItem: React.FC<TodoItemProps> = ({
+    id,
+    label,
+    checked,
+    onDelete,
+    onToggle,
+    applianceId,
+    spaceType,
+    sourceLabel,
+    createdAt,
+}) => {
+    const [isChecked, setIsChecked] = useState<boolean>(checked)
 
     useEffect(() => {
-        setIsChecked(checked);
-    }, [checked]);
+        setIsChecked(checked)
+    }, [checked])
 
     const handleCheckboxChange = async () => {
-        const newChecked = !isChecked;
-        setIsChecked(newChecked);
-        if (onToggle) onToggle(id, newChecked);
+        const newChecked = !isChecked
+        setIsChecked(newChecked)
+        if (onToggle) onToggle(id, newChecked)
 
         try {
             const response = await fetch(SERVER_URL + `/todo/update/${id}`, {
@@ -34,70 +44,76 @@ const TodoItem: React.FC<TodoItemProps> = ({ id, label, checked, onDelete, onTog
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({ checked: newChecked }),
-            });
+            })
 
             if (!response.ok) {
-                throw new Error('Failed to update todo');
+                throw new Error('Failed to update todo')
             }
         } catch (error) {
-            console.error('Error updating todo:', error);
+            console.error('Error updating todo:', error)
         }
-    };
+    }
 
     const handleDelete = async () => {
-        const confirmDelete = confirm('Are you sure you want to delete this?');
+        const confirmDelete = confirm('Are you sure you want to delete this?')
         if (confirmDelete) {
             try {
                 const response = await fetch(SERVER_URL + `/todo/delete/${id}`, {
                     method: 'DELETE',
-                });
+                })
 
                 if (!response.ok) {
-                    throw new Error('Failed to delete todo');
+                    throw new Error('Failed to delete todo')
                 }
 
-                onDelete(id);
+                onDelete(id)
             } catch (error) {
-                console.error('Error deleting todo:', error);
+                console.error('Error deleting todo:', error)
             }
         }
-    };
+    }
 
     const prettySpace = (s?: string | null) => {
-        if (!s) return null;
+        if (!s) return null
         switch (s) {
-            case 'BuildingExterior': return 'Building Exterior';
-            case 'BuildingInterior': return 'Building Interior';
-            case 'Electrical': return 'Electrical';
-            case 'HVAC': return 'HVAC';
-            case 'Plumbing': return 'Plumbing';
-            case 'Yard': return 'Yard';
+            case 'BuildingExterior':
+                return 'Building Exterior'
+            case 'BuildingInterior':
+                return 'Building Interior'
+            case 'Electrical':
+                return 'Electrical'
+            case 'HVAC':
+                return 'HVAC'
+            case 'Plumbing':
+                return 'Plumbing'
+            case 'Yard':
+                return 'Yard'
             default:
                 // Fallback: split camel case or return raw
-                return s.replace(/([a-z])([A-Z])/g, '$1 $2');
+                return s.replace(/([a-z])([A-Z])/g, '$1 $2')
         }
-    };
+    }
 
-    let sourceText: string;
+    let sourceText: string
     if (applianceId) {
-        sourceText = `Appliance: ${sourceLabel || `Appliance ${applianceId}`}`;
+        sourceText = `Appliance: ${sourceLabel || `Appliance ${applianceId}`}`
     } else if (spaceType) {
-        const pretty = prettySpace(spaceType);
-        sourceText = pretty ? `${pretty}` : `${spaceType}`;
+        const pretty = prettySpace(spaceType)
+        sourceText = pretty ? `${pretty}` : `${spaceType}`
     } else if (sourceLabel) {
-        sourceText = sourceLabel;
+        sourceText = sourceLabel
     } else {
-        sourceText = 'General';
+        sourceText = 'General'
     }
 
     // Format createdAt if present
-    let createdAtText: string | null = null;
+    let createdAtText: string | null = null
     if (createdAt) {
         try {
-            const d = new Date(createdAt);
-            if (!isNaN(d.getTime())) createdAtText = d.toLocaleString();
+            const d = new Date(createdAt)
+            if (!isNaN(d.getTime())) createdAtText = d.toLocaleString()
         } catch (e) {
-            createdAtText = null;
+            createdAtText = null
         }
     }
 
@@ -105,13 +121,17 @@ const TodoItem: React.FC<TodoItemProps> = ({ id, label, checked, onDelete, onTog
         <ListGroup.Item className="d-flex justify-content-between align-items-center">
             <div style={{ flex: 1 }}>
                 <Form.Check
-                    type='checkbox'
+                    type="checkbox"
                     label={
                         <>
                             <div>{label}</div>
-                            <div className="text-muted" style={{ fontSize: '0.75rem' }}>{sourceText}</div>
+                            <div className="text-muted" style={{ fontSize: '0.75rem' }}>
+                                {sourceText}
+                            </div>
                             {createdAtText && (
-                                <div className="text-muted" style={{ fontSize: '0.7rem' }}>{createdAtText}</div>
+                                <div className="text-muted" style={{ fontSize: '0.7rem' }}>
+                                    {createdAtText}
+                                </div>
                             )}
                         </>
                     }
@@ -123,7 +143,7 @@ const TodoItem: React.FC<TodoItemProps> = ({ id, label, checked, onDelete, onTog
                 <i className="bi bi-trash" onClick={handleDelete}></i>
             </span>
         </ListGroup.Item>
-    );
-};
+    )
+}
 
-export default TodoItem;
+export default TodoItem
