@@ -31,7 +31,7 @@ const TodosSection: React.FC<Props> = ({ applianceId, spaceType }) => {
             case 'Yard':
                 return 'Yard'
             default:
-                return s.replace(/([a-z])([A-Z])/g, '$1 $2')
+                return s.replaceAll(/([a-z])([A-Z])/g, '$1 $2')
         }
     }
 
@@ -235,7 +235,7 @@ const TodosSection: React.FC<Props> = ({ applianceId, spaceType }) => {
                                     groups[key].push(t)
                                 })
 
-                                const keys = Object.keys(groups).sort()
+                                const keys = Object.keys(groups).sort((a, b) => a.localeCompare(b))
                                 return keys.map((k) => (
                                     <React.Fragment key={k}>
                                         <ListGroup.Item className="fw-bold">{k}</ListGroup.Item>
