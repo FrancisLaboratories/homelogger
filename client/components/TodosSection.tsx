@@ -45,6 +45,7 @@ const TodosSection: React.FC<Props> = ({ applianceId, spaceType }) => {
             if (savedGroup) setGroupBySource(savedGroup === 'true')
         } catch (e) {
             // ignore (server-side or privacy settings)
+            console.log('Could not load todo preferences', e)
         }
     }, [])
 
