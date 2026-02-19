@@ -59,6 +59,7 @@ const HomePage: React.FC = () => {
             if (savedGroup) setGroupBySource(savedGroup === 'true')
         } catch (e) {
             // ignore
+            console.log('Could not load todo preferences', e)
         }
     }, [])
 
