@@ -1,16 +1,6 @@
 {
   "appliances": [
     {
-      "applianceName": "Furnace",
-      "manufacturer": "GenericCo",
-      "modelNumber": "F-1000",
-      "serialNumber": "SN-001",
-      "yearPurchased": "2018",
-      "purchasePrice": "1200",
-      "location": "Basement",
-      "type": "HVAC"
-    },
-    {
       "applianceName": "Refrigerator",
       "manufacturer": "ColdTech",
       "modelNumber": "CT-500",
@@ -19,41 +9,287 @@
       "purchasePrice": "800",
       "location": "Kitchen",
       "type": "Appliance"
+    },
+    {
+      "applianceName": "Water Heater",
+      "manufacturer": "HeatWell",
+      "modelNumber": "WH-250",
+      "serialNumber": "SN-003",
+      "yearPurchased": "2016",
+      "purchasePrice": "600",
+      "location": "Basement",
+      "type": "Appliance"
+    },
+    {
+      "applianceName": "Washer",
+      "manufacturer": "SpinTech",
+      "modelNumber": "ST-900",
+      "serialNumber": "SN-004",
+      "yearPurchased": "2019",
+      "purchasePrice": "700",
+      "location": "Laundry Room",
+      "type": "Appliance"
     }
   ],
   "todos": [
+    {"label": "Clean refrigerator coils", "checked": false, "userID": "1", "applianceIndex": 0},
+    {"label": "Check refrigerator temperature", "checked": false, "userID": "1", "applianceIndex": 0},
+
+    {"label": "Inspect water heater pressure relief valve", "checked": false, "userID": "1", "applianceIndex": 1},
+    {"label": "Drain a quarter tank from water heater to remove sediment", "checked": false, "userID": "1", "applianceIndex": 1},
+
+    {"label": "Clean washer lint trap and door seal", "checked": false, "userID": "1", "applianceIndex": 2},
+    {"label": "Run maintenance wash cycle with cleaning solution", "checked": false, "userID": "1", "applianceIndex": 2},
+
+    {"label": "Check HVAC vents for blockages", "checked": false, "userID": "1", "spaceType": "HVAC"},
+    {"label": "Replace central HVAC filter", "checked": false, "userID": "1", "spaceType": "HVAC"},
+
+    {"label": "Trim front yard hedges", "checked": false, "userID": "1", "spaceType": "Yard"},
+    {"label": "Inspect sprinkler heads for clogs", "checked": false, "userID": "1", "spaceType": "Yard"},
+
+    {"label": "Test all smoke and CO detectors", "checked": false, "userID": "1", "spaceType": "Interior"},
+    {"label": "Replace interior lightbulbs as needed", "checked": false, "userID": "1", "spaceType": "Interior"},
+
+    {"label": "Clear gutters and downspouts", "checked": false, "userID": "1", "spaceType": "Exterior"},
+    {"label": "Inspect exterior trim and caulking", "checked": false, "userID": "1", "spaceType": "Exterior"},
+
+    {"label": "Test GFCI outlets around exterior", "checked": false, "userID": "1", "spaceType": "Electrical"},
+    {"label": "Verify breaker labels in panel", "checked": false, "userID": "1", "spaceType": "Electrical"},
+
+    {"label": "Inspect visible plumbing for leaks", "checked": false, "userID": "1", "spaceType": "Plumbing"},
+    {"label": "Test main water shutoff valve", "checked": false, "userID": "1", "spaceType": "Plumbing"}
+  ],
+  "notes": [
+    {"title": "Refrigerator energy rating", "body": "EnergyStar rated; estimated annual energy cost $45.", "applianceIndex": 0},
+    {"title": "Fridge maintenance tips", "body": "Keep coils clean and door seals free of debris for optimal efficiency.", "applianceIndex": 0},
+
+    {"title": "Water heater capacity and setting", "body": "40-gallon tank; keep thermostat at 120°F to prevent scalding.", "applianceIndex": 1},
+    {"title": "Water heater placement", "body": "Installed on concrete pad in basement; allow 6in clearance for servicing.", "applianceIndex": 1},
+
+    {"title": "Washer detergent guidance", "body": "Use HE detergent and avoid overloading to extend life of the motor.", "applianceIndex": 2},
+    {"title": "Washer installation notes", "body": "Flexible hose connections installed; drain height 36in from floor.", "applianceIndex": 2},
+
+    {"title": "Ductwork layout", "body": "Main return in hallway; two supply branches to living room and bedrooms. Map in basement utility panel.", "spaceType": "HVAC"},
+    {"title": "HVAC filter schedule suggestion", "body": "Replace pleated filters every 90 days or monthly if heavy use.", "spaceType": "HVAC"},
+
+    {"title": "Sprinkler zone map", "body": "Front yard zones 1-3, backyard zones 4-6; controller in shed.", "spaceType": "Yard"},
+    {"title": "Lawn care note", "body": "Soil is clay-loam; aerate in spring and overseed in fall.", "spaceType": "Yard"},
+
+    {"title": "Smoke detector locations", "body": "Detectors installed in hallway, living room, and each bedroom. Test monthly.", "spaceType": "Interior"},
+    {"title": "Interior paint info", "body": "Living room: Sherwin-Williams Alabaster (SW 7008). Trim is semi-gloss.", "spaceType": "Interior"},
+
+    {"title": "Roof replacement note", "body": "Asphalt shingles replaced in 2019; warranty paperwork in garage cabinet.", "spaceType": "Exterior"},
+    {"title": "Exterior siding care", "body": "White vinyl siding; pressure-wash on low power to avoid damage.", "spaceType": "Exterior"},
+
+    {"title": "Main electrical panel specs", "body": "200A main; spare 2-pole breakers available; panel in garage.", "spaceType": "Electrical"},
+    {"title": "Outlet labeling", "body": "Breaker-room map taped inside panel door and a copy in the garage binder.", "spaceType": "Electrical"},
+
+    {"title": "Main water meter location", "body": "Meter at curb; interior shutoff in utility room next to washer.", "spaceType": "Plumbing"},
+    {"title": "Sump pump info", "body": "Zoeller model X; recommend monthly visual checks and yearly manual test.", "spaceType": "Plumbing"}
+  ],
+  "maintenances": [
+    {"description": "Refrigerator seal check", "date": "2025-06-15", "cost": 0.0, "notes": "Door seals intact", "referenceType": "Appliance", "applianceIndex": 0},
+    {"description": "Refrigerator coolant check", "date": "2024-06-10", "cost": 65.0, "notes": "Coolant topped up", "referenceType": "Appliance", "applianceIndex": 0},
+
+    {"description": "Washer belt replacement", "date": "2023-11-20", "cost": 120.0, "notes": "Drive belt replaced", "referenceType": "Appliance", "applianceIndex": 2},
+    {"description": "Washer drum balance check", "date": "2024-03-03", "cost": 30.0, "notes": "Drum balanced", "referenceType": "Appliance", "applianceIndex": 2},
+
+    {"description": "HVAC duct cleaning", "date": "2024-05-10", "cost": 200.0, "notes": "Ducts cleaned and sanitized", "referenceType": "Space", "spaceType": "HVAC"},
+    {"description": "HVAC thermostat calibration", "date": "2025-01-12", "cost": 60.0, "notes": "Thermostat calibrated", "referenceType": "Space", "spaceType": "HVAC"},
+
+    {"description": "Lawn aeration", "date": "2024-04-20", "cost": 90.0, "notes": "Aerated front yard", "referenceType": "Space", "spaceType": "Yard"},
+    {"description": "Tree trimming", "date": "2024-09-01", "cost": 150.0, "notes": "Trimmed oaks", "referenceType": "Space", "spaceType": "Yard"},
+
+    {"description": "Interior deep clean", "date": "2024-12-01", "cost": 250.0, "notes": "Carpets cleaned", "referenceType": "Space", "spaceType": "Interior"},
+    {"description": "Interior vent cleaning", "date": "2025-02-15", "cost": 80.0, "notes": "Vents cleaned", "referenceType": "Space", "spaceType": "Interior"},
+
+    {"description": "Gutter cleaning", "date": "2024-11-10", "cost": 120.0, "notes": "Debris removed from gutters", "referenceType": "Space", "spaceType": "Exterior"},
+    {"description": "Siding inspection", "date": "2025-03-20", "cost": 0.0, "notes": "Minor caulking scheduled", "referenceType": "Space", "spaceType": "Exterior"},
+
+    {"description": "Electrical panel inspection", "date": "2024-06-30", "cost": 95.0, "notes": "No issues found", "referenceType": "Space", "spaceType": "Electrical"},
+    {"description": "Outlet testing", "date": "2025-01-05", "cost": 40.0, "notes": "Replaced one faulty GFCI", "referenceType": "Space", "spaceType": "Electrical"},
+
+    {"description": "Plumbing inspection", "date": "2024-10-01", "cost": 85.0, "notes": "No visible leaks", "referenceType": "Space", "spaceType": "Plumbing"},
+    {"description": "Sump pump service", "date": "2025-04-10", "cost": 110.0, "notes": "Replaced discharge hose", "referenceType": "Space", "spaceType": "Plumbing"}
+  ],
+  "repairs": [
+    {"description": "Refrigerator compressor tune", "date": "2022-08-20", "cost": 300.0, "notes": "Compressor serviced", "referenceType": "Appliance", "applianceIndex": 0},
+    {"description": "Washer motor repair", "date": "2020-07-22", "cost": 250.0, "notes": "Motor replaced", "referenceType": "Appliance", "applianceIndex": 2},
+
+    {"description": "HVAC motor replacement (blower)", "date": "2024-02-14", "cost": 400.0, "notes": "Blower motor replaced on central unit", "referenceType": "Space", "spaceType": "HVAC"},
+    {"description": "Yard fence repair", "date": "2023-09-10", "cost": 150.0, "notes": "Repaired gate hinge", "referenceType": "Space", "spaceType": "Yard"},
+    {"description": "Interior drywall repair", "date": "2024-01-18", "cost": 120.0, "notes": "Patched hole in hallway", "referenceType": "Space", "spaceType": "Interior"},
+    {"description": "Exterior deck board replacement", "date": "2022-06-11", "cost": 95.0, "notes": "Replaced rotten board on deck", "referenceType": "Space", "spaceType": "Exterior"},
+    {"description": "Electrical outlet replacement", "date": "2024-03-03", "cost": 60.0, "notes": "Replaced faulty outlet on kitchen counter", "referenceType": "Space", "spaceType": "Electrical"},
+    {"description": "Plumbing line repair", "date": "2023-05-25", "cost": 320.0, "notes": "Repaired leaking supply line under sink", "referenceType": "Space", "spaceType": "Plumbing"}
+  ],
+  "files": []
+}
+          {"description": "Water heater flush", "date": "2024-07-12", "cost": 50.0, "notes": "Sediment removed", "referenceType": "Appliance", "applianceIndex": 2},
+          {"description": "Water heater element check", "date": "2023-08-05", "cost": 40.0, "notes": "Element OK", "referenceType": "Appliance", "applianceIndex": 2},
+
+          {"description": "Washer belt replacement", "date": "2023-11-20", "cost": 120.0, "notes": "Belt replaced", "referenceType": "Appliance", "applianceIndex": 3},
+          {"description": "Washer drum balance check", "date": "2024-03-03", "cost": 30.0, "notes": "Balanced", "referenceType": "Appliance", "applianceIndex": 3},
+
+          {"description": "HVAC duct cleaning", "date": "2024-05-10", "cost": 200.0, "notes": "Cleaned ducts", "referenceType": "Space", "spaceType": "HVAC"},
+          {"description": "HVAC thermostat calibration", "date": "2025-01-12", "cost": 60.0, "notes": "Calibrated", "referenceType": "Space", "spaceType": "HVAC"},
+
+          {"description": "Lawn aeration", "date": "2024-04-20", "cost": 90.0, "notes": "Aerated front yard", "referenceType": "Space", "spaceType": "Yard"},
+          {"description": "Tree trimming", "date": "2024-09-01", "cost": 150.0, "notes": "Trimmed oaks", "referenceType": "Space", "spaceType": "Yard"},
+
+          {"description": "Interior deep clean", "date": "2024-12-01", "cost": 250.0, "notes": "Carpets cleaned", "referenceType": "Space", "spaceType": "Interior"},
+          {"description": "Interior HVAC vent cleaning", "date": "2025-02-15", "cost": 80.0, "notes": "Vents cleaned", "referenceType": "Space", "spaceType": "Interior"},
+
+          {"description": "Gutter cleaning", "date": "2024-11-10", "cost": 120.0, "notes": "Debris removed", "referenceType": "Space", "spaceType": "Exterior"},
+          {"description": "Siding inspection", "date": "2025-03-20", "cost": 0.0, "notes": "Minor touchups needed", "referenceType": "Space", "spaceType": "Exterior"},
+
+          {"description": "Electrical panel inspection", "date": "2024-06-30", "cost": 95.0, "notes": "No issues", "referenceType": "Space", "spaceType": "Electrical"},
+          {"description": "Outlet testing", "date": "2025-01-05", "cost": 40.0, "notes": "GFCI replaced", "referenceType": "Space", "spaceType": "Electrical"},
+
+          {"description": "Plumbing inspection", "date": "2024-10-01", "cost": 85.0, "notes": "No leaks", "referenceType": "Space", "spaceType": "Plumbing"},
+          {"description": "Sump pump service", "date": "2025-04-10", "cost": 110.0, "notes": "Replaced hoses", "referenceType": "Space", "spaceType": "Plumbing"}
+        ],
+        "repairs": [
+          {"description": "Furnace ignition repair", "date": "2023-12-15", "cost": 220.0, "notes": "Replaced igniter", "referenceType": "Appliance", "applianceIndex": 0},
+          {"description": "Refrigerator compressor tune", "date": "2022-08-20", "cost": 300.0, "notes": "Compressor serviced", "referenceType": "Appliance", "applianceIndex": 1},
+          {"description": "Water heater thermostat replaced", "date": "2021-05-05", "cost": 180.0, "notes": "Thermostat replaced", "referenceType": "Appliance", "applianceIndex": 2},
+          {"description": "Washer motor repair", "date": "2020-07-22", "cost": 250.0, "notes": "Motor replaced", "referenceType": "Appliance", "applianceIndex": 3},
+
+          {"description": "HVAC motor replacement", "date": "2024-02-14", "cost": 400.0, "notes": "Blower motor replaced", "referenceType": "Space", "spaceType": "HVAC"},
+          {"description": "Yard fence repair", "date": "2023-09-10", "cost": 150.0, "notes": "Fixed gate", "referenceType": "Space", "spaceType": "Yard"},
+          {"description": "Interior drywall repair", "date": "2024-01-18", "cost": 120.0, "notes": "Patched wall", "referenceType": "Space", "spaceType": "Interior"},
+          {"description": "Exterior deck board replacement", "date": "2022-06-11", "cost": 95.0, "notes": "Replaced rotten board", "referenceType": "Space", "spaceType": "Exterior"},
+          {"description": "Electrical outlet replacement", "date": "2024-03-03", "cost": 60.0, "notes": "Replaced faulty outlet", "referenceType": "Space", "spaceType": "Electrical"},
+          {"description": "Plumbing line repair", "date": "2023-05-25", "cost": 320.0, "notes": "Repaired leaking line", "referenceType": "Space", "spaceType": "Plumbing"}
+        ],
+        "files": []
+      }
+    },
+
     {
-      "label": "Replace furnace filter",
+      "label": "Plumbing: inspect under-sink P-traps",
       "checked": false,
       "userID": "1",
-      "applianceIndex": 0
+      "spaceType": "Plumbing"
     },
     {
-      "label": "Clean refrigerator coils",
+      "label": "Plumbing: test main shutoff valve",
       "checked": false,
       "userID": "1",
-      "applianceIndex": 1
-    },
-    {
-      "label": "Inspect roof",
-      "checked": false,
-      "userID": "1",
-      "spaceType": "Exterior"
+      "spaceType": "Plumbing"
     }
   ],
   "notes": [
+    // Appliance-specific notes (2 each)
     {
       "title": "Furnace manual location",
       "body": "In basement closet.",
       "applianceIndex": 0
     },
     {
-      "title": "Paint color",
-      "body": "Kitchen is SW 7006.",
-      "spaceType": "Kitchen"
+      "title": "Furnace last service",
+      "body": "Serviced 2025-10-01 by Local HVAC.",
+      "applianceIndex": 0
+    },
+
+    {
+      "title": "Refrigerator model info",
+      "body": "EnergyStar certified.",
+      "applianceIndex": 1
+    },
+    {
+      "title": "Refrigerator warranty",
+      "body": "Warranty until 2026-05-01.",
+      "applianceIndex": 1
+    },
+
+    {
+      "title": "Water heater notes",
+      "body": "Temperature set to 120F.",
+      "applianceIndex": 2
+    },
+    {
+      "title": "Water heater maintenance",
+      "body": "Sediment flushed 2024-07-12.",
+      "applianceIndex": 2
+    },
+
+    {
+      "title": "Washer notes",
+      "body": "Use gentle cycle for delicates.",
+      "applianceIndex": 3
+    },
+    {
+      "title": "Washer service",
+      "body": "Drive belt replaced 2023-11-20.",
+      "applianceIndex": 3
+    },
+
+    // Space-specific notes (2 each section)
+    {
+      "title": "HVAC note",
+      "body": "Ductwork inspected in 2024.",
+      "spaceType": "HVAC"
+    },
+    { "title": "HVAC filter size", "body": "20x25x1", "spaceType": "HVAC" },
+
+    {
+      "title": "Sprinkler note",
+      "body": "Sprinkler zones map in shed.",
+      "spaceType": "Yard"
+    },
+    {
+      "title": "Yard fertilizer",
+      "body": "Fertilized in Spring.",
+      "spaceType": "Yard"
+    },
+
+    {
+      "title": "Interior paint",
+      "body": "Living room Sherwin-Williams 7006.",
+      "spaceType": "Interior"
+    },
+    {
+      "title": "Interior flooring",
+      "body": "Hardwood in hallway.",
+      "spaceType": "Interior"
+    },
+
+    {
+      "title": "Exterior note",
+      "body": "Roof replaced 2019.",
+      "spaceType": "Exterior"
+    },
+    {
+      "title": "Exterior siding",
+      "body": "Vinyl siding notes.",
+      "spaceType": "Exterior"
+    },
+
+    {
+      "title": "Electrical panel",
+      "body": "Main breaker 200A.",
+      "spaceType": "Electrical"
+    },
+    {
+      "title": "Electrical note 2",
+      "body": "Label map in garage.",
+      "spaceType": "Electrical"
+    },
+
+    {
+      "title": "Plumbing note",
+      "body": "Main water meter in front yard.",
+      "spaceType": "Plumbing"
+    },
+    {
+      "title": "Plumbing note 2",
+      "body": "Sump pump tested 2024-10-01.",
+      "spaceType": "Plumbing"
     }
   ],
   "maintenances": [
+    // Appliance maintenance: 2 each
     {
       "description": "Annual furnace service",
       "date": "2025-10-01",
@@ -63,22 +299,251 @@
       "applianceIndex": 0
     },
     {
-      "description": "Refrigerator door seal check",
+      "description": "Furnace safety check",
+      "date": "2024-10-01",
+      "cost": 80.0,
+      "notes": "All good",
+      "referenceType": "Appliance",
+      "applianceIndex": 0
+    },
+
+    {
+      "description": "Refrigerator seal check",
       "date": "2025-06-15",
       "cost": 0.0,
       "notes": "OK",
       "referenceType": "Appliance",
       "applianceIndex": 1
+    },
+    {
+      "description": "Refrigerator coolant check",
+      "date": "2024-06-10",
+      "cost": 65.0,
+      "notes": "Top up",
+      "referenceType": "Appliance",
+      "applianceIndex": 1
+    },
+
+    {
+      "description": "Water heater flush",
+      "date": "2024-07-12",
+      "cost": 50.0,
+      "notes": "Sediment removed",
+      "referenceType": "Appliance",
+      "applianceIndex": 2
+    },
+    {
+      "description": "Water heater element check",
+      "date": "2023-08-05",
+      "cost": 40.0,
+      "notes": "Element OK",
+      "referenceType": "Appliance",
+      "applianceIndex": 2
+    },
+
+    {
+      "description": "Washer belt replacement",
+      "date": "2023-11-20",
+      "cost": 120.0,
+      "notes": "Belt replaced",
+      "referenceType": "Appliance",
+      "applianceIndex": 3
+    },
+    {
+      "description": "Washer drum balance check",
+      "date": "2024-03-03",
+      "cost": 30.0,
+      "notes": "Balanced",
+      "referenceType": "Appliance",
+      "applianceIndex": 3
+    },
+
+    // Space maintenance: 2 per section
+    {
+      "description": "HVAC duct cleaning",
+      "date": "2024-05-10",
+      "cost": 200.0,
+      "notes": "Cleaned ducts",
+      "referenceType": "Space",
+      "spaceType": "HVAC"
+    },
+    {
+      "description": "HVAC thermostat calibration",
+      "date": "2025-01-12",
+      "cost": 60.0,
+      "notes": "Calibrated",
+      "referenceType": "Space",
+      "spaceType": "HVAC"
+    },
+
+    {
+      "description": "Lawn aeration",
+      "date": "2024-04-20",
+      "cost": 90.0,
+      "notes": "Aerated front yard",
+      "referenceType": "Space",
+      "spaceType": "Yard"
+    },
+    {
+      "description": "Tree trimming",
+      "date": "2024-09-01",
+      "cost": 150.0,
+      "notes": "Trimmed oaks",
+      "referenceType": "Space",
+      "spaceType": "Yard"
+    },
+
+    {
+      "description": "Interior deep clean",
+      "date": "2024-12-01",
+      "cost": 250.0,
+      "notes": "Carpets cleaned",
+      "referenceType": "Space",
+      "spaceType": "Interior"
+    },
+    {
+      "description": "Interior HVAC vent cleaning",
+      "date": "2025-02-15",
+      "cost": 80.0,
+      "notes": "Vents cleaned",
+      "referenceType": "Space",
+      "spaceType": "Interior"
+    },
+
+    {
+      "description": "Gutter cleaning",
+      "date": "2024-11-10",
+      "cost": 120.0,
+      "notes": "Debris removed",
+      "referenceType": "Space",
+      "spaceType": "Exterior"
+    },
+    {
+      "description": "Siding inspection",
+      "date": "2025-03-20",
+      "cost": 0.0,
+      "notes": "Minor touchups needed",
+      "referenceType": "Space",
+      "spaceType": "Exterior"
+    },
+
+    {
+      "description": "Electrical panel inspection",
+      "date": "2024-06-30",
+      "cost": 95.0,
+      "notes": "No issues",
+      "referenceType": "Space",
+      "spaceType": "Electrical"
+    },
+    {
+      "description": "Outlet testing",
+      "date": "2025-01-05",
+      "cost": 40.0,
+      "notes": "GFCI replaced",
+      "referenceType": "Space",
+      "spaceType": "Electrical"
+    },
+
+    {
+      "description": "Plumbing inspection",
+      "date": "2024-10-01",
+      "cost": 85.0,
+      "notes": "No leaks",
+      "referenceType": "Space",
+      "spaceType": "Plumbing"
+    },
+    {
+      "description": "Sump pump service",
+      "date": "2025-04-10",
+      "cost": 110.0,
+      "notes": "Replaced hoses",
+      "referenceType": "Space",
+      "spaceType": "Plumbing"
     }
   ],
   "repairs": [
+    // Appliance repairs (1 each)
     {
-      "description": "Fixed kitchen sink leak",
-      "date": "2024-09-10",
-      "cost": 200.0,
-      "notes": "Replaced valve",
+      "description": "Furnace ignition repair",
+      "date": "2023-12-15",
+      "cost": 220.0,
+      "notes": "Replaced igniter",
+      "referenceType": "Appliance",
+      "applianceIndex": 0
+    },
+    {
+      "description": "Refrigerator compressor tune",
+      "date": "2022-08-20",
+      "cost": 300.0,
+      "notes": "Compressor serviced",
+      "referenceType": "Appliance",
+      "applianceIndex": 1
+    },
+    {
+      "description": "Water heater thermostat replaced",
+      "date": "2021-05-05",
+      "cost": 180.0,
+      "notes": "Thermostat replaced",
+      "referenceType": "Appliance",
+      "applianceIndex": 2
+    },
+    {
+      "description": "Washer motor repair",
+      "date": "2020-07-22",
+      "cost": 250.0,
+      "notes": "Motor replaced",
+      "referenceType": "Appliance",
+      "applianceIndex": 3
+    },
+
+    // Space repairs (1 per section)
+    {
+      "description": "HVAC motor replacement",
+      "date": "2024-02-14",
+      "cost": 400.0,
+      "notes": "Blower motor replaced",
       "referenceType": "Space",
-      "spaceType": "Kitchen"
+      "spaceType": "HVAC"
+    },
+    {
+      "description": "Yard fence repair",
+      "date": "2023-09-10",
+      "cost": 150.0,
+      "notes": "Fixed gate",
+      "referenceType": "Space",
+      "spaceType": "Yard"
+    },
+    {
+      "description": "Interior drywall repair",
+      "date": "2024-01-18",
+      "cost": 120.0,
+      "notes": "Patched wall",
+      "referenceType": "Space",
+      "spaceType": "Interior"
+    },
+    {
+      "description": "Exterior deck board replacement",
+      "date": "2022-06-11",
+      "cost": 95.0,
+      "notes": "Replaced rotten board",
+      "referenceType": "Space",
+      "spaceType": "Exterior"
+    },
+    {
+      "description": "Electrical outlet replacement",
+      "date": "2024-03-03",
+      "cost": 60.0,
+      "notes": "Replaced faulty outlet",
+      "referenceType": "Space",
+      "spaceType": "Electrical"
+    },
+    {
+      "description": "Plumbing line repair",
+      "date": "2023-05-25",
+      "cost": 320.0,
+      "notes": "Repaired leaking line",
+      "referenceType": "Space",
+      "spaceType": "Plumbing"
     }
   ],
   "files": []

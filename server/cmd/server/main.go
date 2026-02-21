@@ -8,10 +8,10 @@ import (
 	"io"
 	"os"
 	"os/signal"
-	"syscall"
 	"path/filepath"
 	"strconv"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
