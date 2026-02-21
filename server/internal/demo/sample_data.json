@@ -91,26 +91,26 @@
       "label": "Test all smoke and CO detectors",
       "checked": false,
       "userID": "1",
-      "spaceType": "Interior"
+      "spaceType": "BuildingInterior"
     },
     {
       "label": "Replace interior lightbulbs as needed",
       "checked": false,
       "userID": "1",
-      "spaceType": "Interior"
+      "spaceType": "BuildingInterior"
     },
 
     {
       "label": "Clear gutters and downspouts",
       "checked": false,
       "userID": "1",
-      "spaceType": "Exterior"
+      "spaceType": "BuildingExterior"
     },
     {
       "label": "Inspect exterior trim and caulking",
       "checked": false,
       "userID": "1",
-      "spaceType": "Exterior"
+      "spaceType": "BuildingExterior"
     },
 
     {
@@ -237,23 +237,23 @@
     {
       "title": "Smoke detector locations",
       "body": "Detectors installed in hallway, living room, and each bedroom. Test monthly.",
-      "spaceType": "Interior"
+      "spaceType": "BuildingInterior"
     },
     {
       "title": "Interior paint info",
       "body": "Living room: Sherwin-Williams Alabaster (SW 7008). Trim is semi-gloss.",
-      "spaceType": "Interior"
+      "spaceType": "BuildingInterior"
     },
 
     {
       "title": "Roof replacement note",
       "body": "Asphalt shingles replaced in 2019; warranty paperwork in garage cabinet.",
-      "spaceType": "Exterior"
+      "spaceType": "BuildingExterior"
     },
     {
       "title": "Exterior siding care",
       "body": "White vinyl siding; pressure-wash on low power to avoid damage.",
-      "spaceType": "Exterior"
+      "spaceType": "BuildingExterior"
     },
 
     {
@@ -386,7 +386,7 @@
       "cost": 250.0,
       "notes": "Carpets cleaned",
       "referenceType": "Space",
-      "spaceType": "Interior"
+      "spaceType": "BuildingInterior"
     },
     {
       "description": "Interior vent cleaning",
@@ -394,7 +394,7 @@
       "cost": 80.0,
       "notes": "Vents cleaned",
       "referenceType": "Space",
-      "spaceType": "Interior"
+      "spaceType": "BuildingInterior"
     },
 
     {
@@ -403,7 +403,7 @@
       "cost": 120.0,
       "notes": "Debris removed from gutters",
       "referenceType": "Space",
-      "spaceType": "Exterior"
+      "spaceType": "BuildingExterior"
     },
     {
       "description": "Siding inspection",
@@ -411,7 +411,7 @@
       "cost": 0.0,
       "notes": "Minor caulking scheduled",
       "referenceType": "Space",
-      "spaceType": "Exterior"
+      "spaceType": "BuildingExterior"
     },
 
     {
@@ -531,7 +531,7 @@
       "cost": 120.0,
       "notes": "Patched hole in hallway",
       "referenceType": "Space",
-      "spaceType": "Interior"
+      "spaceType": "BuildingInterior"
     },
     {
       "description": "Exterior deck board replacement",
@@ -539,7 +539,7 @@
       "cost": 95.0,
       "notes": "Replaced rotten board on deck",
       "referenceType": "Space",
-      "spaceType": "Exterior"
+      "spaceType": "BuildingExterior"
     },
     {
       "description": "Electrical outlet replacement",
