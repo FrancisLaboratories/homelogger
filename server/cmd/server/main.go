@@ -1091,4 +1091,14 @@ func main() {
 			fmt.Printf("Removed demo DB %s\n", demoDBPath)
 		}
 	}
+
+	// Remove demo uploads folder if demo mode
+	if demoMode {
+		demoUploadsPath := filepath.Join("./data/uploads", "demo-uploads")
+		if err := os.RemoveAll(demoUploadsPath); err != nil {
+			fmt.Printf("Error removing demo uploads %s: %v\n", demoUploadsPath, err)
+		} else {
+			fmt.Printf("Removed demo uploads %s\n", demoUploadsPath)
+		}
+	}
 }
