@@ -7,14 +7,17 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strconv"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/masoncfrancis/homelogger/server/internal/database"
+	"github.com/masoncfrancis/homelogger/server/internal/demo"
 	"github.com/masoncfrancis/homelogger/server/internal/models"
 	"github.com/masoncfrancis/homelogger/server/internal/version"
 )
@@ -31,6 +34,15 @@ func main() {
 		os.Exit(0)
 	}
 
+	// Demo DB handling: if demo mode is enabled, use a separate demo DB file
+	demoMode := false
+	demoDBPath := ""
+	if dm := os.Getenv("DEMO_MODE"); dm == "true" || dm == "1" {
+		demoMode = true
+		demoDBPath = "./data/db/demo.db"
+		_ = os.Setenv("DEMO_DB_PATH", demoDBPath)
+	}
+
 	// Connect to GORM
 	db, err := database.ConnectGorm()
 	if err != nil {
@@ -41,6 +53,14 @@ func main() {
 	err = database.MigrateGorm(db)
 	if err != nil {
 		panic("Error migrating GORM")
+	}
+
+	// Demo mode: optionally seed the DB from sample JSON when DEMO_MODE env var is true
+	if dm := os.Getenv("DEMO_MODE"); dm == "true" || dm == "1" {
+		demoPath := os.Getenv("DEMO_FILE_PATH")
+		if err := demo.Seed(db, demoPath); err != nil {
+			fmt.Printf("Error seeding demo data: %v\n", err)
+		}
 	}
 
 	// Create new fiber server
@@ -1022,5 +1042,44 @@ func main() {
 	})
 
 	fmt.Printf("Starting HomeLogger Server %s on port 8083\n", version.Version)
-	app.Listen(":8083")
+
+	// Start server in goroutine so we can handle signals and cleanup
+	serverErr := make(chan error, 1)
+	go func() {
+		if err := app.Listen(":8083"); err != nil {
+			serverErr <- err
+		}
+	}()
+
+	// Wait for termination signal or server error
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
+
+	select {
+	case sig := <-sigCh:
+		fmt.Printf("Received signal %v, shutting down\n", sig)
+	case err := <-serverErr:
+		fmt.Printf("Server error: %v\n", err)
+	}
+
+	// Attempt graceful shutdown
+	if err := app.Shutdown(); err != nil {
+		fmt.Printf("Error shutting down server: %v\n", err)
+	}
+
+	// Close DB connection
+	if db != nil {
+		if sqlDB, err := db.DB(); err == nil {
+			_ = sqlDB.Close()
+		}
+	}
+
+	// Remove demo DB file if demo mode
+	if demoMode && demoDBPath != "" {
+		if err := os.Remove(demoDBPath); err != nil {
+			fmt.Printf("Error removing demo DB %s: %v\n", demoDBPath, err)
+		} else {
+			fmt.Printf("Removed demo DB %s\n", demoDBPath)
+		}
+	}
 }

@@ -56,6 +56,9 @@ COPY nginx-default.conf /etc/nginx/conf.d/default.conf
 COPY --from=server-builder /app/main /usr/local/bin/main
 RUN chmod +x /usr/local/bin/main
 
+# Copy the demo data file
+COPY --from=server-builder /app/internal/demo/sample_data.json ./sample_data.json
+
 # Copy healthcheck script and use a single unified HEALTHCHECK that calls it.
 COPY prod.healthcheck.sh /usr/local/bin/healthcheck.sh
 RUN chmod +x /usr/local/bin/healthcheck.sh
