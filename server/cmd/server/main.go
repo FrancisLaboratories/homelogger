@@ -607,12 +607,17 @@ func main() {
 			return c.Status(fiber.StatusInternalServerError).SendString("Error saving file information: " + err.Error())
 		}
 
-		// Save the file to the server with the id as the file name
-		filePath := "./data/uploads/" + strconv.FormatUint(uint64(newFile.ID), 10)
+		// Save the file to the server with the id as the file name.
+		// If demo mode is enabled, save under a demo-uploads subfolder.
+		uploadsBase := "./data/uploads"
+		if demoMode {
+			uploadsBase = filepath.Join(uploadsBase, "demo-uploads")
+		}
 		// Ensure the uploads directory exists
-		if err := os.MkdirAll("./data/uploads", 0755); err != nil {
+		if err := os.MkdirAll(uploadsBase, 0755); err != nil {
 			return c.Status(fiber.StatusInternalServerError).SendString("Error creating uploads directory: " + err.Error())
 		}
+		filePath := filepath.Join(uploadsBase, strconv.FormatUint(uint64(newFile.ID), 10))
 		if err := c.SaveFile(file, filePath); err != nil {
 			return c.Status(fiber.StatusInternalServerError).SendString("Error saving file: " + err.Error())
 		}
