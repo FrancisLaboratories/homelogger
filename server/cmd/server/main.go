@@ -15,6 +15,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/masoncfrancis/homelogger/server/internal/database"
+	"github.com/masoncfrancis/homelogger/server/internal/demo"
 	"github.com/masoncfrancis/homelogger/server/internal/models"
 	"github.com/masoncfrancis/homelogger/server/internal/version"
 )
@@ -41,6 +42,14 @@ func main() {
 	err = database.MigrateGorm(db)
 	if err != nil {
 		panic("Error migrating GORM")
+	}
+
+	// Demo mode: optionally seed the DB from sample JSON when DEMO_MODE env var is true
+	if dm := os.Getenv("DEMO_MODE"); dm == "true" || dm == "1" {
+		demoPath := os.Getenv("DEMO_FILE_PATH")
+		if err := demo.Seed(db, demoPath); err != nil {
+			fmt.Printf("Error seeding demo data: %v\n", err)
+		}
 	}
 
 	// Create new fiber server

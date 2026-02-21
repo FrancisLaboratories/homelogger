@@ -4,9 +4,12 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    volumes:
-      - ./server/data/db:/root/data/db
-      - ./server/data/uploads:/root/data/uploads
+    # volumes:
+    #   - ./server/data/db:/root/data/db
+    #   - ./server/data/uploads:/root/data/uploads
     ports:
       - "3005:80"
     restart: unless-stopped
+    environment:
+      - DEMO_MODE=true
+      - DEMO_FILE_PATH=/root/sample_data.json

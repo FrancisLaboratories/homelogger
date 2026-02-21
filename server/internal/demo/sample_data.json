@@ -1,0 +1,85 @@
+{
+  "appliances": [
+    {
+      "applianceName": "Furnace",
+      "manufacturer": "GenericCo",
+      "modelNumber": "F-1000",
+      "serialNumber": "SN-001",
+      "yearPurchased": "2018",
+      "purchasePrice": "1200",
+      "location": "Basement",
+      "type": "HVAC"
+    },
+    {
+      "applianceName": "Refrigerator",
+      "manufacturer": "ColdTech",
+      "modelNumber": "CT-500",
+      "serialNumber": "SN-002",
+      "yearPurchased": "2020",
+      "purchasePrice": "800",
+      "location": "Kitchen",
+      "type": "Appliance"
+    }
+  ],
+  "todos": [
+    {
+      "label": "Replace furnace filter",
+      "checked": false,
+      "userID": "1",
+      "applianceIndex": 0
+    },
+    {
+      "label": "Clean refrigerator coils",
+      "checked": false,
+      "userID": "1",
+      "applianceIndex": 1
+    },
+    {
+      "label": "Inspect roof",
+      "checked": false,
+      "userID": "1",
+      "spaceType": "Exterior"
+    }
+  ],
+  "notes": [
+    {
+      "title": "Furnace manual location",
+      "body": "In basement closet.",
+      "applianceIndex": 0
+    },
+    {
+      "title": "Paint color",
+      "body": "Kitchen is SW 7006.",
+      "spaceType": "Kitchen"
+    }
+  ],
+  "maintenances": [
+    {
+      "description": "Annual furnace service",
+      "date": "2025-10-01",
+      "cost": 150.0,
+      "notes": "Filter replaced",
+      "referenceType": "Appliance",
+      "applianceIndex": 0
+    },
+    {
+      "description": "Refrigerator door seal check",
+      "date": "2025-06-15",
+      "cost": 0.0,
+      "notes": "OK",
+      "referenceType": "Appliance",
+      "applianceIndex": 1
+    }
+  ],
+  "repairs": [
+    {
+      "description": "Fixed kitchen sink leak",
+      "date": "2024-09-10",
+      "cost": 200.0,
+      "notes": "Replaced valve",
+      "referenceType": "Space",
+      "spaceType": "Kitchen"
+    }
+  ],
+  "files": []
+}

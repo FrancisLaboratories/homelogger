@@ -29,6 +29,9 @@ WORKDIR /root/
 # Copy the Pre-built binary file from the previous stage
 COPY --from=builder /app/main .
 
+# Copy the demo data file
+COPY --from=builder /app/server/internal/demo/sample_data.json ./sample_data.json
+
 # Expose port 8083 to the outside world
 EXPOSE 8083
 
