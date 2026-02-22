@@ -9,6 +9,8 @@ HomeLogger is a simple home maintenance and asset tracker for homeowners, inspir
 
 This project is in it's early stages. Expect changes. You are encouraged to [contribute](#Contributing) as well.
 
+There is a demo available at [homelogger-demo.francislaboratories.com](https://homelogger-demo.francislaboratories.com)
+
 This repository contains a Next.js React client and a Go (Fiber + GORM) server with an SQLite database. The project is early-stage but includes a working client and server and a small REST API defined in [server/openapi.yaml](server/openapi.yaml).
 
 **Contents**
@@ -44,12 +46,12 @@ Prerequisites
  Docker Compose (recommended for quick start)
 ----------------------------------
 
-This repo includes a `docker-compose.yml` for running both services together.
+This repo includes an example `docker-compose.yml` for running both services together.
 
 Start both services with:
 
 ```bash
-docker compose up --build
+docker compose up
 ```
 
 The client will be available at http://localhost:3005
