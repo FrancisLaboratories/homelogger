@@ -13,6 +13,7 @@ import (
 	"sync"
 	"syscall"
 	"time"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -23,6 +24,7 @@ import (
 )
 
 var backupMu sync.Mutex
+var demoMu sync.Mutex
 
 func main() {
 	// CLI flags
@@ -61,6 +63,72 @@ func main() {
 		if err := demo.Seed(db, demoPath); err != nil {
 			fmt.Printf("Error seeding demo data: %v\n", err)
 		}
+		// record initial demo seed time
+		_ = os.MkdirAll("./data", 0755)
+		_ = os.WriteFile("./data/demo_last_reset", []byte(strconv.FormatInt(time.Now().Unix(), 10)), 0644)
+	}
+
+	// If demo mode, start a background checker that resets demo data every 10 minutes.
+	if demoMode {
+
+		resetDemo := func() {
+			demoMu.Lock()
+			defer demoMu.Unlock()
+
+			demoPath := os.Getenv("DEMO_FILE_PATH")
+
+			// Close existing DB connection before replacing the file
+			if db != nil {
+				if sqlDB, err := db.DB(); err == nil {
+					_ = sqlDB.Close()
+				}
+			}
+
+			// Remove demo DB file
+			if demoDBPath != "" {
+				_ = os.Remove(demoDBPath)
+			}
+
+			// Remove demo uploads folder
+			demoUploadsPath := filepath.Join("./data/uploads", "demo-uploads")
+			_ = os.RemoveAll(demoUploadsPath)
+
+			// Reconnect and re-seed
+			newDB, err := database.ConnectGorm()
+			if err != nil {
+				fmt.Printf("demo reset connect error: %v\n", err)
+				return
+			}
+			db = newDB
+			if err := database.MigrateGorm(db); err != nil {
+				fmt.Printf("demo reset migrate error: %v\n", err)
+				return
+			}
+			if err := demo.Seed(db, demoPath); err != nil {
+				fmt.Printf("demo reset seed error: %v\n", err)
+				return
+			}
+
+			// update timestamp file
+			_ = os.WriteFile("./data/demo_last_reset", []byte(strconv.FormatInt(time.Now().Unix(), 10)), 0644)
+		}
+
+		go func() {
+			ticker := time.NewTicker(1 * time.Minute)
+			defer ticker.Stop()
+			for range ticker.C {
+				data, err := os.ReadFile("./data/demo_last_reset")
+				var last int64 = 0
+				if err == nil {
+					if v, err2 := strconv.ParseInt(strings.TrimSpace(string(data)), 10, 64); err2 == nil {
+						last = v
+					}
+				}
+				if time.Now().Unix()-last >= int64(10*60) {
+					resetDemo()
+				}
+			}
+		}()
 	}
 
 	// Create new fiber server
