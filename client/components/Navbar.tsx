@@ -25,7 +25,36 @@ const MyNavbar: React.FC = () => {
                     }}
                     aria-hidden={false}
                 >
-                    Demo mode enabled — data will reset periodically.
+                    <div>This is a public demo — data will reset periodically.</div>
+                    <div
+                        style={{
+                            fontSize: '0.85rem',
+                            color: '#6c757d',
+                            fontWeight: 600,
+                            marginTop: 4,
+                        }}
+                    >
+                        Please do not enter personal information.
+                    </div>
+                    <div
+                        style={{
+                            fontSize: '0.75rem',
+                            color: '#6c757d',
+                            fontWeight: 500,
+                            marginTop: 6,
+                        }}
+                    >
+                        All users must follow the{' '}
+                        <a
+                            href="https://github.com/FrancisLaboratories/homelogger/blob/main/CODE_OF_CONDUCT.md"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ color: '#856404', textDecoration: 'underline' }}
+                        >
+                            Code of Conduct
+                        </a>
+                        . Inappropriate behavior may result in removal of demo or IP blacklisting.
+                    </div>
                 </div>
             )}
             <Navbar expand="lg">
