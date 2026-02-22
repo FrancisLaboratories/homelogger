@@ -1,0 +1,587 @@
+{
+  "appliances": [
+    {
+      "applianceName": "Refrigerator",
+      "manufacturer": "ColdTech",
+      "modelNumber": "CT-500",
+      "serialNumber": "SN-002",
+      "yearPurchased": "2020",
+      "purchasePrice": "800",
+      "location": "Kitchen",
+      "type": "Appliance"
+    },
+    {
+      "applianceName": "Washer",
+      "manufacturer": "SpinTech",
+      "modelNumber": "ST-900",
+      "serialNumber": "SN-004",
+      "yearPurchased": "2019",
+      "purchasePrice": "700",
+      "location": "Laundry Room",
+      "type": "Appliance"
+    }
+  ],
+  "todos": [
+    {
+      "label": "Clean refrigerator coils",
+      "checked": false,
+      "userID": "1",
+      "applianceIndex": 0
+    },
+    {
+      "label": "Check refrigerator temperature",
+      "checked": false,
+      "userID": "1",
+      "applianceIndex": 0
+    },
+
+    {
+      "label": "Inspect water heater pressure relief valve",
+      "checked": false,
+      "userID": "1",
+      "spaceType": "Plumbing"
+    },
+    {
+      "label": "Drain a quarter tank from water heater to remove sediment",
+      "checked": false,
+      "userID": "1",
+      "spaceType": "Plumbing"
+    },
+
+    {
+      "label": "Clean washer lint trap and door seal",
+      "checked": false,
+      "userID": "1",
+      "applianceIndex": 1
+    },
+    {
+      "label": "Run maintenance wash cycle with cleaning solution",
+      "checked": false,
+      "userID": "1",
+      "applianceIndex": 1
+    },
+
+    {
+      "label": "Check HVAC vents for blockages",
+      "checked": false,
+      "userID": "1",
+      "spaceType": "HVAC"
+    },
+    {
+      "label": "Replace central HVAC filter",
+      "checked": false,
+      "userID": "1",
+      "spaceType": "HVAC"
+    },
+
+    {
+      "label": "Trim front yard hedges",
+      "checked": false,
+      "userID": "1",
+      "spaceType": "Yard"
+    },
+    {
+      "label": "Inspect sprinkler heads for clogs",
+      "checked": false,
+      "userID": "1",
+      "spaceType": "Yard"
+    },
+
+    {
+      "label": "Test all smoke and CO detectors",
+      "checked": false,
+      "userID": "1",
+      "spaceType": "BuildingInterior"
+    },
+    {
+      "label": "Replace interior lightbulbs as needed",
+      "checked": false,
+      "userID": "1",
+      "spaceType": "BuildingInterior"
+    },
+
+    {
+      "label": "Clear gutters and downspouts",
+      "checked": false,
+      "userID": "1",
+      "spaceType": "BuildingExterior"
+    },
+    {
+      "label": "Inspect exterior trim and caulking",
+      "checked": false,
+      "userID": "1",
+      "spaceType": "BuildingExterior"
+    },
+
+    {
+      "label": "Test GFCI outlets around exterior",
+      "checked": false,
+      "userID": "1",
+      "spaceType": "Electrical"
+    },
+    {
+      "label": "Verify breaker labels in panel",
+      "checked": false,
+      "userID": "1",
+      "spaceType": "Electrical"
+    },
+
+    {
+      "label": "Inspect visible plumbing for leaks",
+      "checked": false,
+      "userID": "1",
+      "spaceType": "Plumbing"
+    },
+    {
+      "label": "Test main water shutoff valve",
+      "checked": false,
+      "userID": "1",
+      "spaceType": "Plumbing"
+    },
+
+    {
+      "label": "Touch-up scuffed paint in hallway",
+      "checked": false,
+      "userID": "1",
+      "spaceType": "Interior"
+    },
+    {
+      "label": "Inspect attic insulation for settling",
+      "checked": false,
+      "userID": "1",
+      "spaceType": "Interior"
+    },
+
+    {
+      "label": "Power-wash front siding",
+      "checked": false,
+      "userID": "1",
+      "spaceType": "Exterior"
+    },
+    {
+      "label": "Check chimney flashing after storms",
+      "checked": false,
+      "userID": "1",
+      "spaceType": "Exterior"
+    },
+
+    {
+      "label": "Test whole-home surge protector",
+      "checked": false,
+      "userID": "1",
+      "spaceType": "Electrical"
+    },
+    {
+      "label": "Verify outlet polarity in kitchen",
+      "checked": false,
+      "userID": "1",
+      "spaceType": "Electrical"
+    }
+  ],
+  "notes": [
+    {
+      "title": "Refrigerator energy rating",
+      "body": "EnergyStar rated; estimated annual energy cost $45.",
+      "applianceIndex": 0
+    },
+    {
+      "title": "Fridge maintenance tips",
+      "body": "Keep coils clean and door seals free of debris for optimal efficiency.",
+      "applianceIndex": 0
+    },
+
+    {
+      "title": "Water heater capacity and setting",
+      "body": "40-gallon tank; keep thermostat at 120°F to prevent scalding.",
+      "spaceType": "Plumbing"
+    },
+    {
+      "title": "Water heater placement",
+      "body": "Installed on concrete pad in basement; allow 6in clearance for servicing.",
+      "spaceType": "Plumbing"
+    },
+
+    {
+      "title": "Washer detergent guidance",
+      "body": "Use HE detergent and avoid overloading to extend life of the motor.",
+      "applianceIndex": 1
+    },
+    {
+      "title": "Washer installation notes",
+      "body": "Flexible hose connections installed; drain height 36in from floor.",
+      "applianceIndex": 1
+    },
+
+    {
+      "title": "Ductwork layout",
+      "body": "Main return in hallway; two supply branches to living room and bedrooms. Map in basement utility panel.",
+      "spaceType": "HVAC"
+    },
+    {
+      "title": "HVAC filter schedule suggestion",
+      "body": "Replace pleated filters every 90 days or monthly if heavy use.",
+      "spaceType": "HVAC"
+    },
+
+    {
+      "title": "Sprinkler zone map",
+      "body": "Front yard zones 1-3, backyard zones 4-6; controller in shed.",
+      "spaceType": "Yard"
+    },
+    {
+      "title": "Lawn care note",
+      "body": "Soil is clay-loam; aerate in spring and overseed in fall.",
+      "spaceType": "Yard"
+    },
+
+    {
+      "title": "Smoke detector locations",
+      "body": "Detectors installed in hallway, living room, and each bedroom. Test monthly.",
+      "spaceType": "BuildingInterior"
+    },
+    {
+      "title": "Interior paint info",
+      "body": "Living room: Sherwin-Williams Alabaster (SW 7008). Trim is semi-gloss.",
+      "spaceType": "BuildingInterior"
+    },
+
+    {
+      "title": "Roof replacement note",
+      "body": "Asphalt shingles replaced in 2019; warranty paperwork in garage cabinet.",
+      "spaceType": "BuildingExterior"
+    },
+    {
+      "title": "Exterior siding care",
+      "body": "White vinyl siding; pressure-wash on low power to avoid damage.",
+      "spaceType": "BuildingExterior"
+    },
+
+    {
+      "title": "Main electrical panel specs",
+      "body": "200A main; spare 2-pole breakers available; panel in garage.",
+      "spaceType": "Electrical"
+    },
+    {
+      "title": "Outlet labeling",
+      "body": "Breaker-room map taped inside panel door and a copy in the garage binder.",
+      "spaceType": "Electrical"
+    },
+
+    {
+      "title": "Main water meter location",
+      "body": "Meter at curb; interior shutoff in utility room next to washer.",
+      "spaceType": "Plumbing"
+    },
+    {
+      "title": "Sump pump info",
+      "body": "Zoeller model X; recommend monthly visual checks and yearly manual test.",
+      "spaceType": "Plumbing"
+    },
+
+    {
+      "title": "Hallway paint touchups",
+      "body": "Use interior eggshell finish; touch up with stored can in pantry.",
+      "spaceType": "Interior"
+    },
+    {
+      "title": "Stair handrail spec",
+      "body": "Oak handrail, varnished; screws accessible from underside for tightening.",
+      "spaceType": "Interior"
+    },
+
+    {
+      "title": "Siding warranty",
+      "body": "Vinyl siding 10-year limited warranty; paperwork in garage binder.",
+      "spaceType": "Exterior"
+    },
+    {
+      "title": "Roof vent locations",
+      "body": "Ridge vents present; plumbing vents on rear slope. Recommended annual inspection.",
+      "spaceType": "Exterior"
+    },
+
+    {
+      "title": "Electrical panel notes",
+      "body": "Panel: Square D QO series; main breaker labeled. Surge protector installed on service entrance.",
+      "spaceType": "Electrical"
+    },
+    {
+      "title": "GFCI locations",
+      "body": "GFCIs at kitchen, garage, exterior outlets; test monthly.",
+      "spaceType": "Electrical"
+    }
+  ],
+  "maintenances": [
+    {
+      "description": "Refrigerator seal check",
+      "date": "2025-06-15",
+      "cost": 0.0,
+      "notes": "Door seals intact",
+      "referenceType": "Appliance",
+      "applianceIndex": 0
+    },
+    {
+      "description": "Refrigerator coolant check",
+      "date": "2024-06-10",
+      "cost": 65.0,
+      "notes": "Coolant topped up",
+      "referenceType": "Appliance",
+      "applianceIndex": 0
+    },
+
+    {
+      "description": "Washer belt replacement",
+      "date": "2023-11-20",
+      "cost": 120.0,
+      "notes": "Drive belt replaced",
+      "referenceType": "Appliance",
+      "applianceIndex": 1
+    },
+    {
+      "description": "Washer drum balance check",
+      "date": "2024-03-03",
+      "cost": 30.0,
+      "notes": "Drum balanced",
+      "referenceType": "Appliance",
+      "applianceIndex": 1
+    },
+
+    {
+      "description": "HVAC duct cleaning",
+      "date": "2024-05-10",
+      "cost": 200.0,
+      "notes": "Ducts cleaned and sanitized",
+      "referenceType": "Space",
+      "spaceType": "HVAC"
+    },
+    {
+      "description": "HVAC thermostat calibration",
+      "date": "2025-01-12",
+      "cost": 60.0,
+      "notes": "Thermostat calibrated",
+      "referenceType": "Space",
+      "spaceType": "HVAC"
+    },
+
+    {
+      "description": "Lawn aeration",
+      "date": "2024-04-20",
+      "cost": 90.0,
+      "notes": "Aerated front yard",
+      "referenceType": "Space",
+      "spaceType": "Yard"
+    },
+    {
+      "description": "Tree trimming",
+      "date": "2024-09-01",
+      "cost": 150.0,
+      "notes": "Trimmed oaks",
+      "referenceType": "Space",
+      "spaceType": "Yard"
+    },
+
+    {
+      "description": "Interior deep clean",
+      "date": "2024-12-01",
+      "cost": 250.0,
+      "notes": "Carpets cleaned",
+      "referenceType": "Space",
+      "spaceType": "BuildingInterior"
+    },
+    {
+      "description": "Interior vent cleaning",
+      "date": "2025-02-15",
+      "cost": 80.0,
+      "notes": "Vents cleaned",
+      "referenceType": "Space",
+      "spaceType": "BuildingInterior"
+    },
+
+    {
+      "description": "Gutter cleaning",
+      "date": "2024-11-10",
+      "cost": 120.0,
+      "notes": "Debris removed from gutters",
+      "referenceType": "Space",
+      "spaceType": "BuildingExterior"
+    },
+    {
+      "description": "Siding inspection",
+      "date": "2025-03-20",
+      "cost": 0.0,
+      "notes": "Minor caulking scheduled",
+      "referenceType": "Space",
+      "spaceType": "BuildingExterior"
+    },
+
+    {
+      "description": "Electrical panel inspection",
+      "date": "2024-06-30",
+      "cost": 95.0,
+      "notes": "No issues found",
+      "referenceType": "Space",
+      "spaceType": "Electrical"
+    },
+    {
+      "description": "Outlet testing",
+      "date": "2025-01-05",
+      "cost": 40.0,
+      "notes": "Replaced one faulty GFCI",
+      "referenceType": "Space",
+      "spaceType": "Electrical"
+    },
+
+    {
+      "description": "Plumbing inspection",
+      "date": "2024-10-01",
+      "cost": 85.0,
+      "notes": "No visible leaks",
+      "referenceType": "Space",
+      "spaceType": "Plumbing"
+    },
+    {
+      "description": "Sump pump service",
+      "date": "2025-04-10",
+      "cost": 110.0,
+      "notes": "Replaced discharge hose",
+      "referenceType": "Space",
+      "spaceType": "Plumbing"
+    },
+
+    {
+      "description": "Interior smoke/CO battery replacement",
+      "date": "2025-01-01",
+      "cost": 0.0,
+      "notes": "Batteries replaced in all detectors",
+      "referenceType": "Space",
+      "spaceType": "Interior"
+    },
+    {
+      "description": "Stair runner re-attachment",
+      "date": "2024-08-15",
+      "cost": 45.0,
+      "notes": "Staples replaced and runner re-centered",
+      "referenceType": "Space",
+      "spaceType": "Interior"
+    },
+
+    {
+      "description": "Exterior roof inspection",
+      "date": "2024-09-12",
+      "cost": 95.0,
+      "notes": "No loose shingles; recommend replacing one ridge cap",
+      "referenceType": "Space",
+      "spaceType": "Exterior"
+    },
+    {
+      "description": "Gutter guard installation",
+      "date": "2023-10-05",
+      "cost": 220.0,
+      "notes": "Mesh guards installed on front gutters",
+      "referenceType": "Space",
+      "spaceType": "Exterior"
+    },
+
+    {
+      "description": "Electrical panel tightening and inspection",
+      "date": "2024-06-30",
+      "cost": 95.0,
+      "notes": "Terminal screws checked and tightened",
+      "referenceType": "Space",
+      "spaceType": "Electrical"
+    }
+  ],
+  "repairs": [
+    {
+      "description": "Refrigerator compressor tune",
+      "date": "2022-08-20",
+      "cost": 300.0,
+      "notes": "Compressor serviced",
+      "referenceType": "Appliance",
+      "applianceIndex": 0
+    },
+    {
+      "description": "Washer motor repair",
+      "date": "2020-07-22",
+      "cost": 250.0,
+      "notes": "Motor replaced",
+      "referenceType": "Appliance",
+      "applianceIndex": 1
+    },
+
+    {
+      "description": "HVAC motor replacement (blower)",
+      "date": "2024-02-14",
+      "cost": 400.0,
+      "notes": "Blower motor replaced on central unit",
+      "referenceType": "Space",
+      "spaceType": "HVAC"
+    },
+    {
+      "description": "Yard fence repair",
+      "date": "2023-09-10",
+      "cost": 150.0,
+      "notes": "Repaired gate hinge",
+      "referenceType": "Space",
+      "spaceType": "Yard"
+    },
+    {
+      "description": "Interior drywall repair",
+      "date": "2024-01-18",
+      "cost": 120.0,
+      "notes": "Patched hole in hallway",
+      "referenceType": "Space",
+      "spaceType": "BuildingInterior"
+    },
+    {
+      "description": "Exterior deck board replacement",
+      "date": "2022-06-11",
+      "cost": 95.0,
+      "notes": "Replaced rotten board on deck",
+      "referenceType": "Space",
+      "spaceType": "BuildingExterior"
+    },
+    {
+      "description": "Electrical outlet replacement",
+      "date": "2024-03-03",
+      "cost": 60.0,
+      "notes": "Replaced faulty outlet on kitchen counter",
+      "referenceType": "Space",
+      "spaceType": "Electrical"
+    },
+    {
+      "description": "Plumbing line repair",
+      "date": "2023-05-25",
+      "cost": 320.0,
+      "notes": "Repaired leaking supply line under sink",
+      "referenceType": "Space",
+      "spaceType": "Plumbing"
+    },
+
+    {
+      "description": "Interior drywall patch (hallway)",
+      "date": "2024-01-18",
+      "cost": 120.0,
+      "notes": "Patched and painted",
+      "referenceType": "Space",
+      "spaceType": "Interior"
+    },
+    {
+      "description": "Chimney flashing repair",
+      "date": "2023-11-02",
+      "cost": 260.0,
+      "notes": "Flashing resealed and metal replaced",
+      "referenceType": "Space",
+      "spaceType": "Exterior"
+    },
+    {
+      "description": "Replace corroded breaker",
+      "date": "2024-03-03",
+      "cost": 60.0,
+      "notes": "Replaced 1-pole corroded breaker",
+      "referenceType": "Space",
+      "spaceType": "Electrical"
+    }
+  ],
+  "files": []
+}

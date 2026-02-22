@@ -5,7 +5,9 @@
 
 # HomeLogger
 
-HomeLogger is a simple home maintenance and asset tracker for homeowners. It centralizes appliances, repairs, and maintenance tasks so you can record work, receipts, and schedules for things around your home.
+HomeLogger is a simple home maintenance and asset tracker for homeowners, inspired by the similarly-named [LubeLogger](https://github.com/hargata/lubelog). It centralizes appliances, repairs, and maintenance tasks so you can record work, receipts, and schedules for things around your home.
+
+This project is in it's early stages. Expect changes. You are encouraged to [contribute](#Contributing) as well.
 
 This repository contains a Next.js React client and a Go (Fiber + GORM) server with an SQLite database. The project is early-stage but includes a working client and server and a small REST API defined in [server/openapi.yaml](server/openapi.yaml).
 
@@ -126,13 +128,11 @@ Development tips
 Contributing
 ------------
 
-Contributions are welcome. Suggested workflow:
+Contributions are welcome. Please read the following guidelines before submitting a PR:
 
-1. Fork the repo
-2. Create a feature branch
-3. Open a PR with a clear description of changes
-
-If you plan to add larger features (new API endpoints, DB schema changes) open an issue first to discuss the design.
+- Contributors Policy [CONTRIBUTORS.md](CONTRIBUTORS.md)
+- AI Policy [AI_POLICY.md](AI_POLICY.md)
+- Code of Conduct [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
 
 License
 -------
@@ -142,13 +142,14 @@ This project is available under the terms of the MIT license, as shown in the [L
 Contact
 -------
 
-For questions or feedback, open an issue or discussion post in this repo. 
+For questions or feedback, open an issue or discussion post in this repo. To privately report security vulnerabilities, please follow the guidelines in the [SECURITY.md](SECURITY.md) document.
 
 Further work / Roadmap
 ----------------------
 Development is ongoing. Planned features include:
 
-- Planning tools for seasonal maintenance and repairs
-- Enhanced reporting and export options
+- Planning/scheduling tools for seasonal maintenance and repairs
+- Report creation and export functionality
+- Much more to come. Also open to suggestions and contributions!
+  - Please don't submit a PR for a major feature without discussing it first via an issue or discussion post.
 
-See [plan.md](plan.md) for tentative feature plans and priorities.

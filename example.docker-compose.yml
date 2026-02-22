@@ -1,0 +1,10 @@
+services:
+
+  homelogger:
+    image: francislaboratories/homelogger:latest
+    volumes:
+      - ./server/data/db:/root/data/db
+      - ./server/data/uploads:/root/data/uploads
+    ports:
+      - "3005:80"
+    restart: unless-stopped

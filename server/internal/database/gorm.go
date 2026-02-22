@@ -11,7 +11,11 @@ import (
 
 // ConnectGorm connects to the database
 func ConnectGorm() (*gorm.DB, error) {
-	dbPath := "./data/db/homelogger.db"
+	// Allow overriding DB path (used for demo mode)
+	dbPath := os.Getenv("DEMO_DB_PATH")
+	if dbPath == "" {
+		dbPath = "./data/db/homelogger.db"
+	}
 	dir := filepath.Dir(dbPath)
 
 	// Ensure the directory exists

@@ -1,50 +1,106 @@
-import 'bootstrap/dist/css/bootstrap.min.css';
+import 'bootstrap/dist/css/bootstrap.min.css'
 import type { AppProps } from 'next/app'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
 import { APP_VERSION } from '../version'
+import React, { createContext, useEffect, useState } from 'react'
 
 if (!process.env.NEXT_PUBLIC_SERVER_URL) {
-  throw new Error('NEXT_PUBLIC_SERVER_URL environment variable is not set, and is required.');
+    throw new Error('NEXT_PUBLIC_SERVER_URL environment variable is not set, and is required.')
 }
 
-export const SERVER_URL = `${process.env.NEXT_PUBLIC_SERVER_URL}`;
+export const SERVER_URL = `${process.env.NEXT_PUBLIC_SERVER_URL}`
 
+export const DemoContext = createContext<{ isDemo: boolean }>({ isDemo: false })
 
 export default function App({ Component, pageProps }: AppProps) {
-  const router = useRouter()
+    const router = useRouter()
+    const [isDemo, setIsDemo] = useState(false)
 
-  const getPageName = (p: string) => {
-    if (!p || p === '/') return 'Home'
-    const first = p.split('/').filter(Boolean)[0] || 'Home'
-    return first
-      .split(/[-_]/)
-      .map(w => w.charAt(0).toUpperCase() + w.slice(1))
-      .join(' ')
-  }
+    useEffect(() => {
+        let mounted = true
+        const fetchHealth = async () => {
+            try {
+                const res = await fetch(`${SERVER_URL}/health`)
+                if (!res.ok) return
+                const j = await res.json()
+                if (mounted) setIsDemo(!!j.demo)
+            } catch (e) {
+                // ignore network errors
+            }
+        }
+        // fetch once on page load
+        fetchHealth()
+        return () => {
+            mounted = false
+        }
+    }, [])
 
-  const pageName = getPageName(router.pathname)
+    const getPageName = (p: string) => {
+        if (!p || p === '/') return 'Home'
+        const first = p.split('/').filter(Boolean)[0] || 'Home'
+        return first
+            .split(/[-_]/)
+            .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+            .join(' ')
+    }
 
-  return (
-    <>
-      <Head>
-        <title>{`HomeLogger | ${pageName}`}</title>
-      </Head>
-      <Component {...pageProps} />
-      <footer style={{padding: '12px 0', marginTop: '24px'}}>
-        <div style={{textAlign: 'center', color: '#6c757d', fontSize: '0.9rem'}}>
-          <span style={{display: 'inline-flex', alignItems: 'center', gap: 8}}>
-            <img src="/logoname.png" alt="HomeLogger" style={{height: 22}} />
-            <span>v{APP_VERSION}</span>
-            <a href="https://github.com/FrancisLaboratories/homelogger" target="_blank" rel="noopener noreferrer" style={{display: 'inline-flex', alignItems: 'center', color: '#6c757d', textDecoration: 'none', marginLeft: 8}}>
-              <img src="/github.png" alt="GitHub" style={{width: 16, height: 16, marginLeft: 6}} />
-            </a>
-          </span>
-        </div>
-        <div style={{textAlign: 'center', color: '#6c757d', fontSize: '0.8rem', marginTop: '4px'}}>
-          Made with &#x2665; in Detroit
-        </div>
-      </footer>
-    </>
-  )
+    const pageName = getPageName(router.pathname)
+
+    return (
+        <DemoContext.Provider value={{ isDemo }}>
+            <Head>
+                <title>{`HomeLogger | ${pageName}`}</title>
+            </Head>
+            <Component {...pageProps} />
+            <footer style={{ padding: '12px 0', marginTop: '24px' }}>
+                <div
+                    style={{
+                        textAlign: 'center',
+                        color: '#6c757d',
+                        fontSize: '0.9rem',
+                    }}
+                >
+                    <span
+                        style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 8,
+                        }}
+                    >
+                        <img src="/logoname.png" alt="HomeLogger" style={{ height: 22 }} />
+                        <span>v{APP_VERSION}</span>
+                        <a
+                            href="https://github.com/FrancisLaboratories/homelogger"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                color: '#6c757d',
+                                textDecoration: 'none',
+                                marginLeft: 8,
+                            }}
+                        >
+                            <img
+                                src="/github.png"
+                                alt="GitHub"
+                                style={{ width: 16, height: 16, marginLeft: 6 }}
+                            />
+                        </a>
+                    </span>
+                </div>
+                <div
+                    style={{
+                        textAlign: 'center',
+                        color: '#6c757d',
+                        fontSize: '0.8rem',
+                        marginTop: '4px',
+                    }}
+                >
+                    Made with &#x2665; in Detroit
+                </div>
+            </footer>
+        </DemoContext.Provider>
+    )
 }

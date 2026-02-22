@@ -1,51 +1,69 @@
-import React, {useEffect, useState} from 'react';
-import {Button, Form, Modal} from 'react-bootstrap';
+import React, { useEffect, useState } from 'react'
+import { Button, Form, Modal } from 'react-bootstrap'
 
 interface AddApplianceModalProps {
-    show: boolean;
-    handleClose: () => void;
-    handleSave: (applianceName: string, manufacturer: string, modelNumber: string, serialNumber: string, yearPurchased: string, purchasePrice: string, location: string, type: string) => void;
+    show: boolean
+    handleClose: () => void
+    handleSave: (
+        applianceName: string,
+        manufacturer: string,
+        modelNumber: string,
+        serialNumber: string,
+        yearPurchased: string,
+        purchasePrice: string,
+        location: string,
+        type: string
+    ) => void
 }
 
-const AddApplianceModal: React.FC<AddApplianceModalProps> = ({show, handleClose, handleSave}) => {
-    const [applianceName, setApplianceName] = useState('');
-    const [manufacturer, setManufacturer] = useState('');
-    const [modelNumber, setModelNumber] = useState('');
-    const [serialNumber, setSerialNumber] = useState('');
-    const [yearPurchased, setYearPurchased] = useState('');
-    const [purchasePrice, setPurchasePrice] = useState('');
-    const [location, setLocation] = useState('');
-    const [type, setType] = useState('');
-    const [errors, setErrors] = useState<string[]>([]);
-    const [isSubmitting, setIsSubmitting] = useState(false);
+const AddApplianceModal: React.FC<AddApplianceModalProps> = ({ show, handleClose, handleSave }) => {
+    const [applianceName, setApplianceName] = useState('')
+    const [manufacturer, setManufacturer] = useState('')
+    const [modelNumber, setModelNumber] = useState('')
+    const [serialNumber, setSerialNumber] = useState('')
+    const [yearPurchased, setYearPurchased] = useState('')
+    const [purchasePrice, setPurchasePrice] = useState('')
+    const [location, setLocation] = useState('')
+    const [type, setType] = useState('')
+    const [errors, setErrors] = useState<string[]>([])
+    const [isSubmitting, setIsSubmitting] = useState(false)
 
     useEffect(() => {
         if (!show) {
-            setApplianceName('');
-            setManufacturer('');
-            setModelNumber('');
-            setSerialNumber('');
-            setYearPurchased('');
-            setPurchasePrice('');
-            setLocation('');
-            setType('');
+            setApplianceName('')
+            setManufacturer('')
+            setModelNumber('')
+            setSerialNumber('')
+            setYearPurchased('')
+            setPurchasePrice('')
+            setLocation('')
+            setType('')
         }
-    }, [show]);
+    }, [show])
 
     const handleSubmit = () => {
-        setErrors([]);
-        const errs: string[] = [];
-        if (!applianceName || applianceName.trim() === '') errs.push('Appliance name is required');
-        if (!type || type === '') errs.push('Type is required');
+        setErrors([])
+        const errs: string[] = []
+        if (!applianceName || applianceName.trim() === '') errs.push('Appliance name is required')
+        if (!type || type === '') errs.push('Type is required')
         if (errs.length > 0) {
-            setErrors(errs);
-            return;
+            setErrors(errs)
+            return
         }
-        setIsSubmitting(true);
-        handleSave(applianceName, manufacturer, modelNumber, serialNumber, yearPurchased, purchasePrice, location, type);
-        setIsSubmitting(false);
-        handleClose();
-    };
+        setIsSubmitting(true)
+        handleSave(
+            applianceName,
+            manufacturer,
+            modelNumber,
+            serialNumber,
+            yearPurchased,
+            purchasePrice,
+            location,
+            type
+        )
+        setIsSubmitting(false)
+        handleClose()
+    }
 
     return (
         <Modal show={show} onHide={handleClose}>
@@ -127,8 +145,10 @@ const AddApplianceModal: React.FC<AddApplianceModalProps> = ({show, handleClose,
                         />
                     </Form.Group>
                     {errors.length > 0 && (
-                        <div style={{color: 'red', marginTop: '8px'}}>
-                            {errors.map((e, idx) => <div key={idx}>{e}</div>)}
+                        <div style={{ color: 'red', marginTop: '8px' }}>
+                            {errors.map((e, idx) => (
+                                <div key={idx}>{e}</div>
+                            ))}
                         </div>
                     )}
                 </Form>
@@ -142,7 +162,7 @@ const AddApplianceModal: React.FC<AddApplianceModalProps> = ({show, handleClose,
                 </Button>
             </Modal.Footer>
         </Modal>
-    );
-};
+    )
+}
 
-export default AddApplianceModal;
+export default AddApplianceModal
