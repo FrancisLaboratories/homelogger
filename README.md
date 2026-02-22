@@ -46,12 +46,12 @@ Prerequisites
  Docker Compose (recommended for quick start)
 ----------------------------------
 
-This repo includes a `docker-compose.yml` for running both services together.
+This repo includes an example `docker-compose.yml` for running both services together.
 
 Start both services with:
 
 ```bash
-docker compose up --build
+docker compose up
 ```
 
 The client will be available at http://localhost:3005
