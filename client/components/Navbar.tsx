@@ -25,7 +25,7 @@ const MyNavbar: React.FC = () => {
                     }}
                     aria-hidden={false}
                 >
-                    <div>This is a public demo — data will reset periodically.</div>
+                    <div>This is a public demo — data will reset periodically</div>
                     <div
                         style={{
                             fontSize: '0.85rem',
@@ -34,7 +34,7 @@ const MyNavbar: React.FC = () => {
                             marginTop: 4,
                         }}
                     >
-                        Please do not enter personal information.
+                        Please do not enter personal information
                     </div>
                     <div
                         style={{
