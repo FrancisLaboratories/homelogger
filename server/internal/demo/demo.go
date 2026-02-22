@@ -179,7 +179,11 @@ func Seed(db *gorm.DB, demoFilePath string) error {
         }
 
         // set a reasonable path so other code can reference it
-        path := filepath.Join("data", "uploads", fmt.Sprintf("%d", created.ID))
+        uploadsBase := filepath.Join("data", "uploads")
+        if os.Getenv("DEMO_MODE") == "true" || os.Getenv("DEMO_MODE") == "1" {
+            uploadsBase = filepath.Join(uploadsBase, "demo-uploads")
+        }
+        path := filepath.Join(uploadsBase, fmt.Sprintf("%d", created.ID))
         created.Path = path
         if _, err := database.UpdateFilePath(db, created); err != nil {
             fmt.Printf("demo: error updating file path %d: %v\n", i, err)

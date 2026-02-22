@@ -3,6 +3,7 @@ import type { AppProps } from 'next/app'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
 import { APP_VERSION } from '../version'
+import React, { createContext, useEffect, useState } from 'react'
 
 if (!process.env.NEXT_PUBLIC_SERVER_URL) {
     throw new Error('NEXT_PUBLIC_SERVER_URL environment variable is not set, and is required.')
@@ -10,8 +11,30 @@ if (!process.env.NEXT_PUBLIC_SERVER_URL) {
 
 export const SERVER_URL = `${process.env.NEXT_PUBLIC_SERVER_URL}`
 
+export const DemoContext = createContext<{ isDemo: boolean }>({ isDemo: false })
+
 export default function App({ Component, pageProps }: AppProps) {
     const router = useRouter()
+    const [isDemo, setIsDemo] = useState(false)
+
+    useEffect(() => {
+        let mounted = true
+        const fetchHealth = async () => {
+            try {
+                const res = await fetch(`${SERVER_URL}/health`)
+                if (!res.ok) return
+                const j = await res.json()
+                if (mounted) setIsDemo(!!j.demo)
+            } catch (e) {
+                // ignore network errors
+            }
+        }
+        // fetch once on page load
+        fetchHealth()
+        return () => {
+            mounted = false
+        }
+    }, [])
 
     const getPageName = (p: string) => {
         if (!p || p === '/') return 'Home'
@@ -25,7 +48,7 @@ export default function App({ Component, pageProps }: AppProps) {
     const pageName = getPageName(router.pathname)
 
     return (
-        <>
+        <DemoContext.Provider value={{ isDemo }}>
             <Head>
                 <title>{`HomeLogger | ${pageName}`}</title>
             </Head>
@@ -78,6 +101,6 @@ export default function App({ Component, pageProps }: AppProps) {
                     Made with &#x2665; in Detroit
                 </div>
             </footer>
-        </>
+        </DemoContext.Provider>
     )
 }

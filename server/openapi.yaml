@@ -4,6 +4,30 @@ info:
   title: Todo API
   description: A simple API to manage todos
 paths:
+  /health:
+    get:
+      summary: Health and status
+      responses:
+        '200':
+          description: Service status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "ok"
+                  version:
+                    type: string
+                    example: "1.0.0"
+                  db:
+                    type: string
+                    example: "ok"
+                  demo:
+                    type: boolean
+                    example: true
+
   /todo:
     get:
       summary: Get todos (optionally filter by appliance or space)
