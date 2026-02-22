@@ -71,46 +71,61 @@ func main() {
 	// If demo mode, start a background checker that resets demo data every 10 minutes.
 	if demoMode {
 
-		resetDemo := func() {
+		resetDemo := func() error {
 			demoMu.Lock()
 			defer demoMu.Unlock()
 
 			demoPath := os.Getenv("DEMO_FILE_PATH")
 
+			var errs []string
+
 			// Close existing DB connection before replacing the file
 			if db != nil {
 				if sqlDB, err := db.DB(); err == nil {
-					_ = sqlDB.Close()
+					if err2 := sqlDB.Close(); err2 != nil {
+						errs = append(errs, fmt.Sprintf("close db: %v", err2))
+					}
 				}
 			}
 
 			// Remove demo DB file
 			if demoDBPath != "" {
-				_ = os.Remove(demoDBPath)
+				if err := os.Remove(demoDBPath); err != nil && !os.IsNotExist(err) {
+					errs = append(errs, fmt.Sprintf("remove demo db: %v", err))
+				}
 			}
 
 			// Remove demo uploads folder
 			demoUploadsPath := filepath.Join("./data/uploads", "demo-uploads")
-			_ = os.RemoveAll(demoUploadsPath)
+			if err := os.RemoveAll(demoUploadsPath); err != nil {
+				errs = append(errs, fmt.Sprintf("remove demo uploads: %v", err))
+			}
 
 			// Reconnect and re-seed
 			newDB, err := database.ConnectGorm()
 			if err != nil {
-				fmt.Printf("demo reset connect error: %v\n", err)
-				return
+				errs = append(errs, fmt.Sprintf("connect gorm: %v", err))
+				return fmt.Errorf(strings.Join(errs, "; "))
 			}
 			db = newDB
 			if err := database.MigrateGorm(db); err != nil {
-				fmt.Printf("demo reset migrate error: %v\n", err)
-				return
+				errs = append(errs, fmt.Sprintf("migrate gorm: %v", err))
+				return fmt.Errorf(strings.Join(errs, "; "))
 			}
 			if err := demo.Seed(db, demoPath); err != nil {
-				fmt.Printf("demo reset seed error: %v\n", err)
-				return
+				errs = append(errs, fmt.Sprintf("seed demo: %v", err))
+				return fmt.Errorf(strings.Join(errs, "; "))
 			}
 
 			// update timestamp file
-			_ = os.WriteFile("./data/demo_last_reset", []byte(strconv.FormatInt(time.Now().Unix(), 10)), 0644)
+			if err := os.WriteFile("./data/demo_last_reset", []byte(strconv.FormatInt(time.Now().Unix(), 10)), 0644); err != nil {
+				errs = append(errs, fmt.Sprintf("write timestamp: %v", err))
+			}
+
+			if len(errs) > 0 {
+				return fmt.Errorf(strings.Join(errs, "; "))
+			}
+			return nil
 		}
 
 		go func() {
@@ -124,8 +139,17 @@ func main() {
 						last = v
 					}
 				}
-				if time.Now().Unix()-last >= int64(10*60) {
-					resetDemo()
+				elapsed := time.Now().Unix() - last
+				minutesLeft := 10 - int(elapsed/60)
+				if minutesLeft > 0 {
+					fmt.Printf("Demo reset in %d minute(s)\n", minutesLeft)
+					continue
+				}
+				fmt.Printf("Demo reset triggered now\n")
+				if err := resetDemo(); err != nil {
+					fmt.Printf("Demo reset failed: %v\n", err)
+				} else {
+					fmt.Printf("Demo reset completed successfully\n")
 				}
 			}
 		}()
