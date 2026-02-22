@@ -7,7 +7,7 @@
 
 HomeLogger is a simple home maintenance and asset tracker for homeowners, inspired by the similarly-named [LubeLogger](https://github.com/hargata/lubelog). It centralizes appliances, repairs, and maintenance tasks so you can record work, receipts, and schedules for things around your home.
 
-This project is in it's early stages. Expect changes. You are encouraged to [contribute](#Contributing) as well.
+This project is in it's early stages. Expect changes. You are encouraged to [contribute](#Contributing) as well. Be mindful, this is a side project, not my full-time job, so development will be slow and incremental. The goal is to build a useful tool for myself and others. Constructive feedback is always welcome.
 
 There is a demo available at [homelogger-demo.francislaboratories.com](https://homelogger-demo.francislaboratories.com)
 
