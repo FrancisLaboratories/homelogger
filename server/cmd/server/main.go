@@ -10,10 +10,10 @@ import (
 	"os/signal"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
-	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -186,6 +186,7 @@ func main() {
 			"status":  "ok",
 			"version": version.Version,
 			"db":      dbStatus,
+			"demo":    demoMode,
 		}
 
 		// If DB is not ok, return 500

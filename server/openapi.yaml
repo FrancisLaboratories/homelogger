@@ -20,6 +20,29 @@ paths:
           schema:
             type: string
             example: "HVAC"
+  /health:
+    get:
+      summary: Health and status
+      responses:
+        '200':
+          description: Service status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "ok"
+                  version:
+                    type: string
+                    example: "1.0.0"
+                  db:
+                    type: string
+                    example: "ok"
+                  demo:
+                    type: boolean
+                    example: true
       responses:
         '200':
           description: A list of todos (filtered)
