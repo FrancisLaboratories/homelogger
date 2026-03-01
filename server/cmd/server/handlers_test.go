@@ -1,16 +1,16 @@
 package main
 
 import (
-    "bytes"
-    "encoding/json"
-    "net/http/httptest"
-    "testing"
+	"bytes"
+	"encoding/json"
+	"net/http/httptest"
+	"testing"
 
-    "github.com/gofiber/fiber/v2"
-    "github.com/masoncfrancis/homelogger/server/internal/database"
-    "github.com/masoncfrancis/homelogger/server/internal/models"
-    "gorm.io/driver/sqlite"
-    "gorm.io/gorm"
+	"github.com/gofiber/fiber/v2"
+	"github.com/masoncfrancis/homelogger/server/internal/database"
+	"github.com/masoncfrancis/homelogger/server/internal/models"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 )
 
 // openTestDB creates an in-memory DB and runs migrations
