@@ -5,8 +5,8 @@ services:
       context: .
       dockerfile: Dockerfile
     volumes:
-      - ./server/data/db:/root/data/db
-      - ./server/data/uploads:/root/data/uploads
+      - ./server/data:/root/data
     ports:
       - "3005:80"
     restart: unless-stopped
+ 

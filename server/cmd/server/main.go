@@ -7,19 +7,24 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/masoncfrancis/homelogger/server/internal/database"
+	"github.com/masoncfrancis/homelogger/server/internal/demo"
 	"github.com/masoncfrancis/homelogger/server/internal/models"
 	"github.com/masoncfrancis/homelogger/server/internal/version"
 )
 
 var backupMu sync.Mutex
+var demoMu sync.Mutex
 
 func main() {
 	// CLI flags
@@ -29,6 +34,15 @@ func main() {
 	if (showVersion != nil && *showVersion) || (shortV != nil && *shortV) {
 		fmt.Println(version.Version)
 		os.Exit(0)
+	}
+
+	// Demo DB handling: if demo mode is enabled, use a separate demo DB file
+	demoMode := false
+	demoDBPath := ""
+	if dm := os.Getenv("DEMO_MODE"); dm == "true" || dm == "1" {
+		demoMode = true
+		demoDBPath = "./data/db/demo.db"
+		_ = os.Setenv("DEMO_DB_PATH", demoDBPath)
 	}
 
 	// Connect to GORM
@@ -41,6 +55,104 @@ func main() {
 	err = database.MigrateGorm(db)
 	if err != nil {
 		panic("Error migrating GORM")
+	}
+
+	// Demo mode: optionally seed the DB from sample JSON when DEMO_MODE env var is true
+	if dm := os.Getenv("DEMO_MODE"); dm == "true" || dm == "1" {
+		demoPath := os.Getenv("DEMO_FILE_PATH")
+		if err := demo.Seed(db, demoPath); err != nil {
+			fmt.Printf("Error seeding demo data: %v\n", err)
+		}
+		// record initial demo seed time
+		_ = os.MkdirAll("./data", 0755)
+		_ = os.WriteFile("./data/demo_last_reset", []byte(strconv.FormatInt(time.Now().Unix(), 10)), 0644)
+	}
+
+	// If demo mode, start a background checker that resets demo data every 10 minutes.
+	if demoMode {
+
+		resetDemo := func() error {
+			demoMu.Lock()
+			defer demoMu.Unlock()
+
+			demoPath := os.Getenv("DEMO_FILE_PATH")
+
+			var errs []string
+
+			// Close existing DB connection before replacing the file
+			if db != nil {
+				if sqlDB, err := db.DB(); err == nil {
+					if err2 := sqlDB.Close(); err2 != nil {
+						errs = append(errs, fmt.Sprintf("close db: %v", err2))
+					}
+				}
+			}
+
+			// Remove demo DB file
+			if demoDBPath != "" {
+				if err := os.Remove(demoDBPath); err != nil && !os.IsNotExist(err) {
+					errs = append(errs, fmt.Sprintf("remove demo db: %v", err))
+				}
+			}
+
+			// Remove demo uploads folder
+			demoUploadsPath := filepath.Join("./data/uploads", "demo-uploads")
+			if err := os.RemoveAll(demoUploadsPath); err != nil {
+				errs = append(errs, fmt.Sprintf("remove demo uploads: %v", err))
+			}
+
+			// Reconnect and re-seed
+			newDB, err := database.ConnectGorm()
+			if err != nil {
+				errs = append(errs, fmt.Sprintf("connect gorm: %v", err))
+				return fmt.Errorf(strings.Join(errs, "; "))
+			}
+			db = newDB
+			if err := database.MigrateGorm(db); err != nil {
+				errs = append(errs, fmt.Sprintf("migrate gorm: %v", err))
+				return fmt.Errorf(strings.Join(errs, "; "))
+			}
+			if err := demo.Seed(db, demoPath); err != nil {
+				errs = append(errs, fmt.Sprintf("seed demo: %v", err))
+				return fmt.Errorf(strings.Join(errs, "; "))
+			}
+
+			// update timestamp file
+			if err := os.WriteFile("./data/demo_last_reset", []byte(strconv.FormatInt(time.Now().Unix(), 10)), 0644); err != nil {
+				errs = append(errs, fmt.Sprintf("write timestamp: %v", err))
+			}
+
+			if len(errs) > 0 {
+				return fmt.Errorf(strings.Join(errs, "; "))
+			}
+			return nil
+		}
+
+		go func() {
+			ticker := time.NewTicker(1 * time.Minute)
+			defer ticker.Stop()
+			for range ticker.C {
+				data, err := os.ReadFile("./data/demo_last_reset")
+				var last int64 = 0
+				if err == nil {
+					if v, err2 := strconv.ParseInt(strings.TrimSpace(string(data)), 10, 64); err2 == nil {
+						last = v
+					}
+				}
+				elapsed := time.Now().Unix() - last
+				minutesLeft := 10 - int(elapsed/60)
+				if minutesLeft > 0 {
+					fmt.Printf("Demo reset in %d minute(s)\n", minutesLeft)
+					continue
+				}
+				fmt.Printf("Demo reset triggered now\n")
+				if err := resetDemo(); err != nil {
+					fmt.Printf("Demo reset failed: %v\n", err)
+				} else {
+					fmt.Printf("Demo reset completed successfully\n")
+				}
+			}
+		}()
 	}
 
 	// Create new fiber server
@@ -74,6 +186,7 @@ func main() {
 			"status":  "ok",
 			"version": version.Version,
 			"db":      dbStatus,
+			"demo":    demoMode,
 		}
 
 		// If DB is not ok, return 500
@@ -587,8 +700,17 @@ func main() {
 			return c.Status(fiber.StatusInternalServerError).SendString("Error saving file information: " + err.Error())
 		}
 
-		// Save the file to the server with the id as the file name
-		filePath := "./data/uploads/" + strconv.FormatUint(uint64(newFile.ID), 10)
+		// Save the file to the server with the id as the file name.
+		// If demo mode is enabled, save under a demo-uploads subfolder.
+		uploadsBase := "./data/uploads"
+		if demoMode {
+			uploadsBase = filepath.Join(uploadsBase, "demo-uploads")
+		}
+		// Ensure the uploads directory exists
+		if err := os.MkdirAll(uploadsBase, 0755); err != nil {
+			return c.Status(fiber.StatusInternalServerError).SendString("Error creating uploads directory: " + err.Error())
+		}
+		filePath := filepath.Join(uploadsBase, strconv.FormatUint(uint64(newFile.ID), 10))
 		if err := c.SaveFile(file, filePath); err != nil {
 			return c.Status(fiber.StatusInternalServerError).SendString("Error saving file: " + err.Error())
 		}
@@ -1022,5 +1144,54 @@ func main() {
 	})
 
 	fmt.Printf("Starting HomeLogger Server %s on port 8083\n", version.Version)
-	app.Listen(":8083")
+
+	// Start server in goroutine so we can handle signals and cleanup
+	serverErr := make(chan error, 1)
+	go func() {
+		if err := app.Listen(":8083"); err != nil {
+			serverErr <- err
+		}
+	}()
+
+	// Wait for termination signal or server error
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
+
+	select {
+	case sig := <-sigCh:
+		fmt.Printf("Received signal %v, shutting down\n", sig)
+	case err := <-serverErr:
+		fmt.Printf("Server error: %v\n", err)
+	}
+
+	// Attempt graceful shutdown
+	if err := app.Shutdown(); err != nil {
+		fmt.Printf("Error shutting down server: %v\n", err)
+	}
+
+	// Close DB connection
+	if db != nil {
+		if sqlDB, err := db.DB(); err == nil {
+			_ = sqlDB.Close()
+		}
+	}
+
+	// Remove demo DB file if demo mode
+	if demoMode && demoDBPath != "" {
+		if err := os.Remove(demoDBPath); err != nil {
+			fmt.Printf("Error removing demo DB %s: %v\n", demoDBPath, err)
+		} else {
+			fmt.Printf("Removed demo DB %s\n", demoDBPath)
+		}
+	}
+
+	// Remove demo uploads folder if demo mode
+	if demoMode {
+		demoUploadsPath := filepath.Join("./data/uploads", "demo-uploads")
+		if err := os.RemoveAll(demoUploadsPath); err != nil {
+			fmt.Printf("Error removing demo uploads %s: %v\n", demoUploadsPath, err)
+		} else {
+			fmt.Printf("Removed demo uploads %s\n", demoUploadsPath)
+		}
+	}
 }
