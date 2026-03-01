@@ -8,6 +8,8 @@ on:
   pull_request:
     paths:
       - "server/**"
+permissions:
+  contents: read
 
 jobs:
   test-backend:
