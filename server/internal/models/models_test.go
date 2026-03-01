@@ -1,16 +1,19 @@
 package models
 
 import (
-    "testing"
+	"fmt"
+	"testing"
+	"time"
 
-    "gorm.io/driver/sqlite"
-    "gorm.io/gorm"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 )
 
 // openInMemory opens a unique in-memory sqlite DB for the test.
 func openInMemory(t *testing.T) *gorm.DB {
     t.Helper()
-    db, err := gorm.Open(sqlite.Open("file::memory:?cache=shared"), &gorm.Config{})
+    dsn := fmt.Sprintf("file:memdb_%d?mode=memory&cache=shared", time.Now().UnixNano())
+    db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{})
     if err != nil {
         t.Fatalf("open db: %v", err)
     }
