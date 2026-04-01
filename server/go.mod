@@ -5,8 +5,7 @@ go 1.23.2
 require (
 	github.com/gofiber/fiber/v2 v2.52.12
 	gorm.io/driver/sqlite v1.6.0
-	gorm.io/gorm v1.30.1
-	github.com/stretchr/testify v1.8.4
+	gorm.io/gorm v1.31.1
 )
 
 require (
