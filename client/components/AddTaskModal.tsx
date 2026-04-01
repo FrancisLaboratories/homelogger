@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react'
-import { Button, Form, Modal } from 'react-bootstrap'
+import { Button, Modal } from 'react-bootstrap'
 import { SERVER_URL } from '@/pages/_app'
 import { Task } from './TasksSection'
+import TaskForm, { PRIORITY_OPTIONS, UNIT_OPTIONS } from './TaskForm'
 
 interface AddTaskModalProps {
     show: boolean
@@ -104,145 +105,31 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({
                 <Modal.Title>Add Task</Modal.Title>
             </Modal.Header>
             <Modal.Body>
-                <div className="d-flex align-items-center gap-2 mb-3">
-                    <span className="text-muted" style={{ fontSize: '0.9rem' }}>
-                        Quick
-                    </span>
-                    <Form.Check
-                        type="switch"
-                        id="addtask-mode-switch"
-                        checked={!quickMode}
-                        onChange={(e) => setQuickMode(!e.target.checked)}
-                        label=""
-                    />
-                    <span className="text-muted" style={{ fontSize: '0.9rem' }}>
-                        Detailed
-                    </span>
-                </div>
-
-                {errors.length > 0 && (
-                    <div className="alert alert-danger py-2">
-                        {errors.map((e) => (
-                            <div key={e}>{e}</div>
-                        ))}
-                    </div>
-                )}
-
-                <Form.Group className="mb-3">
-                    <Form.Label>
-                        Label <span className="text-danger">*</span>
-                    </Form.Label>
-                    <Form.Control
-                        type="text"
-                        value={label}
-                        onChange={(e) => setLabel(e.target.value)}
-                        placeholder="What needs to be done?"
-                        autoFocus
-                    />
-                </Form.Group>
-
-                {!quickMode && (
-                    <>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Notes</Form.Label>
-                            <Form.Control
-                                as="textarea"
-                                rows={2}
-                                value={notes}
-                                onChange={(e) => setNotes(e.target.value)}
-                                placeholder="Optional details"
-                            />
-                        </Form.Group>
-
-                        <div className="row">
-                            <Form.Group className="mb-3 col-6">
-                                <Form.Label>Priority</Form.Label>
-                                <Form.Select
-                                    value={priority}
-                                    onChange={(e) => setPriority(e.target.value)}
-                                >
-                                    <option value="">None</option>
-                                    <option value="low">Low</option>
-                                    <option value="medium">Medium</option>
-                                    <option value="high">High</option>
-                                    <option value="critical">Critical</option>
-                                </Form.Select>
-                            </Form.Group>
-
-                            <Form.Group className="mb-3 col-6">
-                                <Form.Label>Due Date</Form.Label>
-                                <Form.Control
-                                    type="date"
-                                    value={dueDate}
-                                    onChange={(e) => setDueDate(e.target.value)}
-                                />
-                            </Form.Group>
-                        </div>
-
-                        <Form.Group className="mb-3">
-                            <Form.Label>Estimated Cost ($)</Form.Label>
-                            <Form.Control
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                value={estimatedCost}
-                                onChange={(e) => setEstimatedCost(e.target.value)}
-                                placeholder="Optional"
-                            />
-                        </Form.Group>
-
-                        <Form.Group className="mb-3">
-                            <Form.Check
-                                type="switch"
-                                id="recurring-switch"
-                                label="Recurring task"
-                                checked={isRecurring}
-                                onChange={(e) => setIsRecurring(e.target.checked)}
-                            />
-                        </Form.Group>
-
-                        {isRecurring && (
-                            <div className="border rounded p-3 mb-3">
-                                <div className="row">
-                                    <Form.Group className="mb-2 col-4">
-                                        <Form.Label>Every</Form.Label>
-                                        <Form.Control
-                                            type="number"
-                                            min="1"
-                                            value={recurrenceInterval}
-                                            onChange={(e) =>
-                                                setRecurrenceInterval(Number(e.target.value))
-                                            }
-                                        />
-                                    </Form.Group>
-                                    <Form.Group className="mb-2 col-8">
-                                        <Form.Label>Unit</Form.Label>
-                                        <Form.Select
-                                            value={recurrenceUnit}
-                                            onChange={(e) => setRecurrenceUnit(e.target.value)}
-                                        >
-                                            {UNIT_OPTIONS.map((u) => (
-                                                <option key={u} value={u}>
-                                                    {u.charAt(0).toUpperCase() + u.slice(1)}
-                                                </option>
-                                            ))}
-                                        </Form.Select>
-                                    </Form.Group>
-                                </div>
-                                <Form.Group>
-                                    <Form.Label>Schedule next occurrence based on</Form.Label>
-                                    <Form.Select
-                                        value={recurrenceMode}
-                                        onChange={(e) => setRecurrenceMode(e.target.value)}
-                                    >
-                                        <option value="completion_date">Completion date</option>
-                                        <option value="due_date">Original due date</option>
-                                    </Form.Select>
-                                </Form.Group>
-                            </div>
-                        )}
-                    </>
-                )}
+                <TaskForm
+                    label={label}
+                    setLabel={setLabel}
+                    notes={notes}
+                    setNotes={setNotes}
+                    priority={priority}
+                    setPriority={setPriority}
+                    dueDate={dueDate}
+                    setDueDate={setDueDate}
+                    estimatedCost={estimatedCost}
+                    setEstimatedCost={setEstimatedCost}
+                    isRecurring={isRecurring}
+                    setIsRecurring={setIsRecurring}
+                    recurrenceInterval={recurrenceInterval}
+                    setRecurrenceInterval={setRecurrenceInterval}
+                    recurrenceUnit={recurrenceUnit}
+                    setRecurrenceUnit={setRecurrenceUnit}
+                    recurrenceMode={recurrenceMode}
+                    setRecurrenceMode={setRecurrenceMode}
+                    errors={errors}
+                    autoFocus
+                    showQuickToggle
+                    quickMode={quickMode}
+                    setQuickMode={setQuickMode}
+                />
             </Modal.Body>
             <Modal.Footer>
                 <Button variant="secondary" onClick={onHide}>
@@ -257,5 +144,3 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({
 }
 
 export default AddTaskModal
-// re-export ignored options reference to silence unused import warning
-export { PRIORITY_OPTIONS, UNIT_OPTIONS }
