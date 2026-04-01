@@ -57,7 +57,7 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({
     const handleSubmit = async () => {
         const errs: string[] = []
         if (!label.trim()) errs.push('Label is required')
-        if (estimatedCost !== '' && isNaN(Number(estimatedCost)))
+        if (estimatedCost !== '' && Number.isNaN(Number(estimatedCost)))
             errs.push('Estimated cost must be a number')
         if (isRecurring && recurrenceInterval < 1)
             errs.push('Recurrence interval must be at least 1')
@@ -73,7 +73,7 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({
                 notes,
                 priority,
                 dueDate: dueDate || null,
-                estimatedCost: estimatedCost !== '' ? Number(estimatedCost) : null,
+                estimatedCost: estimatedCost === '' ? null : Number(estimatedCost),
                 isRecurring,
                 recurrenceInterval: isRecurring ? recurrenceInterval : 0,
                 recurrenceUnit: isRecurring ? recurrenceUnit : '',
@@ -122,8 +122,8 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({
 
                 {errors.length > 0 && (
                     <div className="alert alert-danger py-2">
-                        {errors.map((e, i) => (
-                            <div key={i}>{e}</div>
+                        {errors.map((e) => (
+                            <div key={e}>{e}</div>
                         ))}
                     </div>
                 )}
