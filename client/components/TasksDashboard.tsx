@@ -260,7 +260,10 @@ const TasksDashboard: React.FC = () => {
             <AddTaskModal
                 show={showAddModal}
                 onHide={() => setShowAddModal(false)}
-                onAdd={(task) => { setTasks((prev) => [...prev, task]); setShowAddModal(false) }}
+                onAdd={(task) => {
+                    setTasks((prev) => [...prev, task])
+                    setShowAddModal(false)
+                }}
             />
         </div>
     )
