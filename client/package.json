@@ -12,7 +12,7 @@
         "bootstrap": "^5.3.8",
         "bootstrap-icons": "^1.11.3",
         "next": "^16.2.2",
-        "react": "^18.3.1",
+        "react": "^19.2.4",
         "react-bootstrap": "^2.10.10",
         "react-dom": "^18.3.1",
         "react-markdown": "^10.1.0",
@@ -20,7 +20,7 @@
     },
     "devDependencies": {
         "@types/node": "^20",
-        "@types/react": "^18",
+        "@types/react": "^19",
         "@types/react-dom": "^18",
         "eslint": "^8",
         "eslint-config-next": "15.0.3",
