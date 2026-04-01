@@ -3,6 +3,7 @@ import { Button, Modal } from 'react-bootstrap'
 import { SERVER_URL } from '@/pages/_app'
 import { Task } from './TasksSection'
 import TaskForm from './TaskForm'
+import { validateTaskValues, buildTaskBody, TaskFormValues } from './taskHelpers'
 
 interface EditTaskModalProps {
     show: boolean
@@ -43,12 +44,20 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({ show, onHide, task, onSav
 
     const handleSubmit = async () => {
         if (!task) return
-        const errs: string[] = []
-        if (!label.trim()) errs.push('Label is required')
-        if (estimatedCost !== '' && Number.isNaN(Number(estimatedCost)))
-            errs.push('Estimated cost must be a number')
-        if (isRecurring && recurrenceInterval < 1)
-            errs.push('Recurrence interval must be at least 1')
+
+        const vals: TaskFormValues = {
+            label,
+            notes,
+            priority,
+            dueDate,
+            estimatedCost,
+            isRecurring,
+            recurrenceInterval,
+            recurrenceUnit,
+            recurrenceMode,
+        }
+
+        const errs = validateTaskValues(vals)
         if (errs.length > 0) {
             setErrors(errs)
             return
@@ -56,19 +65,11 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({ show, onHide, task, onSav
 
         setSubmitting(true)
         try {
-            const body: Record<string, unknown> = {
-                label: label.trim(),
-                notes,
-                priority,
-                dueDate: dueDate || null,
-                estimatedCost: estimatedCost === '' ? null : Number(estimatedCost),
-                isRecurring,
-                recurrenceInterval: isRecurring ? recurrenceInterval : 0,
-                recurrenceUnit: isRecurring ? recurrenceUnit : '',
-                recurrenceMode: isRecurring ? recurrenceMode : '',
+            const extras: Record<string, unknown> = {
                 applianceId: task.applianceId ?? null,
                 spaceType: task.spaceType ?? null,
             }
+            const body = buildTaskBody(vals, extras)
 
             const res = await fetch(`${SERVER_URL}/task/update/${task.id}`, {
                 method: 'PUT',
