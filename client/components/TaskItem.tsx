@@ -25,7 +25,9 @@ const priorityBadge: Record<string, { bg: string; label: string }> = {
     critical: { bg: 'danger', label: 'Critical' },
 }
 
-function dueDateStyle(dueDate: string | null | undefined): { text: string; className: string } | null {
+function dueDateStyle(
+    dueDate: string | null | undefined
+): { text: string; className: string } | null {
     if (!dueDate) return null
     const today = new Date()
     today.setHours(0, 0, 0, 0)
@@ -39,9 +41,8 @@ function dueDateStyle(dueDate: string | null | undefined): { text: string; class
 
 function recurrenceLabel(task: Task): string {
     if (!task.isRecurring || !task.recurrenceInterval || !task.recurrenceUnit) return ''
-    const unit = task.recurrenceInterval === 1
-        ? task.recurrenceUnit.replace(/s$/, '')
-        : task.recurrenceUnit
+    const unit =
+        task.recurrenceInterval === 1 ? task.recurrenceUnit.replace(/s$/, '') : task.recurrenceUnit
     return `Every ${task.recurrenceInterval} ${unit}`
 }
 
@@ -135,23 +136,29 @@ const TaskItem: React.FC<TaskItemProps> = ({
                             </span>
                         )}
                         {task.lastCompletedAt && (
-                            <span className="text-muted">
-                                Last done: {task.lastCompletedAt}
-                            </span>
+                            <span className="text-muted">Last done: {task.lastCompletedAt}</span>
                         )}
                         {showSource && sourceLabel && (
                             <span className="text-muted">
                                 {sourceHref ? (
-                                    <a href={sourceHref} style={{ textDecoration: 'none', color: 'inherit' }}>
+                                    <a
+                                        href={sourceHref}
+                                        style={{ textDecoration: 'none', color: 'inherit' }}
+                                    >
                                         {sourceLabel}
                                     </a>
-                                ) : sourceLabel}
+                                ) : (
+                                    sourceLabel
+                                )}
                             </span>
                         )}
                     </div>
 
                     {task.notes && (
-                        <div className="text-muted mt-1" style={{ fontSize: '0.8rem', fontStyle: 'italic' }}>
+                        <div
+                            className="text-muted mt-1"
+                            style={{ fontSize: '0.8rem', fontStyle: 'italic' }}
+                        >
                             {task.notes}
                         </div>
                     )}

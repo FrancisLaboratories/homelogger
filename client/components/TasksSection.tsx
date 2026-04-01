@@ -69,7 +69,9 @@ const TasksSection: React.FC<TasksSectionProps> = ({ applianceId, spaceType }) =
             const savedFilter = localStorage.getItem('homelogger_tasks_filter')
             if (savedSort) setSortOption(savedSort as SortOption)
             if (savedFilter) setFilterOption(savedFilter as FilterOption)
-        } catch (_) { /* ignore */ }
+        } catch (_) {
+            /* ignore */
+        }
     }, [])
 
     const fetchTasks = useCallback(async () => {
@@ -87,16 +89,26 @@ const TasksSection: React.FC<TasksSectionProps> = ({ applianceId, spaceType }) =
         }
     }, [applianceId, spaceType])
 
-    useEffect(() => { fetchTasks() }, [fetchTasks])
+    useEffect(() => {
+        fetchTasks()
+    }, [fetchTasks])
 
     const handleSortChange = (val: SortOption) => {
         setSortOption(val)
-        try { localStorage.setItem('homelogger_tasks_sort', val) } catch (_) { /* ignore */ }
+        try {
+            localStorage.setItem('homelogger_tasks_sort', val)
+        } catch (_) {
+            /* ignore */
+        }
     }
 
     const handleFilterChange = (val: FilterOption) => {
         setFilterOption(val)
-        try { localStorage.setItem('homelogger_tasks_filter', val) } catch (_) { /* ignore */ }
+        try {
+            localStorage.setItem('homelogger_tasks_filter', val)
+        } catch (_) {
+            /* ignore */
+        }
     }
 
     const handleQuickAdd = async () => {
@@ -147,7 +159,10 @@ const TasksSection: React.FC<TasksSectionProps> = ({ applianceId, spaceType }) =
             case 'due_desc':
                 return parseDue(b.dueDate) - parseDue(a.dueDate)
             case 'priority':
-                return (PRIORITY_ORDER[a.priority || ''] ?? 4) - (PRIORITY_ORDER[b.priority || ''] ?? 4)
+                return (
+                    (PRIORITY_ORDER[a.priority || ''] ?? 4) -
+                    (PRIORITY_ORDER[b.priority || ''] ?? 4)
+                )
             case 'label_asc':
                 return a.label.localeCompare(b.label)
             case 'created_desc':
@@ -172,10 +187,10 @@ const TasksSection: React.FC<TasksSectionProps> = ({ applianceId, spaceType }) =
                     onChange={(e) => handleFilterChange(e.target.value as FilterOption)}
                     aria-label="Filter tasks"
                 >
-                    <option value="upcoming">
-                        Upcoming{overdueCount > 0 ? '' : ''}
+                    <option value="upcoming">Upcoming{overdueCount > 0 ? '' : ''}</option>
+                    <option value="overdue">
+                        Overdue {overdueCount > 0 ? `(${overdueCount})` : ''}
                     </option>
-                    <option value="overdue">Overdue {overdueCount > 0 ? `(${overdueCount})` : ''}</option>
                     <option value="all">All</option>
                     <option value="completed">Completed</option>
                 </Form.Select>
@@ -198,7 +213,10 @@ const TasksSection: React.FC<TasksSectionProps> = ({ applianceId, spaceType }) =
                     variant="outline-primary"
                     size="sm"
                     className="ms-auto"
-                    onClick={() => { setShowAddDetailed(true); setShowAddModal(true) }}
+                    onClick={() => {
+                        setShowAddDetailed(true)
+                        setShowAddModal(true)
+                    }}
                 >
                     <i className="bi bi-plus-lg me-1" />
                     Add detailed...
@@ -243,7 +261,9 @@ const TasksSection: React.FC<TasksSectionProps> = ({ applianceId, spaceType }) =
                     placeholder="Quick add — type and press Enter"
                     value={quickLabel}
                     onChange={(e) => setQuickLabel(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === 'Enter') handleQuickAdd() }}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleQuickAdd()
+                    }}
                 />
                 <Button variant="outline-secondary" size="sm" onClick={handleQuickAdd}>
                     <i className="bi bi-plus-lg" />
@@ -252,7 +272,10 @@ const TasksSection: React.FC<TasksSectionProps> = ({ applianceId, spaceType }) =
 
             <AddTaskModal
                 show={showAddModal}
-                onHide={() => { setShowAddModal(false); setShowAddDetailed(false) }}
+                onHide={() => {
+                    setShowAddModal(false)
+                    setShowAddDetailed(false)
+                }}
                 onAdd={(task) => setTasks((prev) => [task, ...prev])}
                 applianceId={applianceId}
                 spaceType={spaceType}

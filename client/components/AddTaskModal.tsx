@@ -14,7 +14,13 @@ interface AddTaskModalProps {
 const PRIORITY_OPTIONS = ['', 'low', 'medium', 'high', 'critical']
 const UNIT_OPTIONS = ['days', 'weeks', 'months', 'years']
 
-const AddTaskModal: React.FC<AddTaskModalProps> = ({ show, onHide, onAdd, applianceId, spaceType }) => {
+const AddTaskModal: React.FC<AddTaskModalProps> = ({
+    show,
+    onHide,
+    onAdd,
+    applianceId,
+    spaceType,
+}) => {
     const [quickMode, setQuickMode] = useState(true)
     const [label, setLabel] = useState('')
     const [notes, setNotes] = useState('')
@@ -47,9 +53,14 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ show, onHide, onAdd, applia
     const handleSubmit = async () => {
         const errs: string[] = []
         if (!label.trim()) errs.push('Label is required')
-        if (estimatedCost !== '' && isNaN(Number(estimatedCost))) errs.push('Estimated cost must be a number')
-        if (isRecurring && recurrenceInterval < 1) errs.push('Recurrence interval must be at least 1')
-        if (errs.length > 0) { setErrors(errs); return }
+        if (estimatedCost !== '' && isNaN(Number(estimatedCost)))
+            errs.push('Estimated cost must be a number')
+        if (isRecurring && recurrenceInterval < 1)
+            errs.push('Recurrence interval must be at least 1')
+        if (errs.length > 0) {
+            setErrors(errs)
+            return
+        }
 
         setSubmitting(true)
         try {
@@ -90,7 +101,9 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ show, onHide, onAdd, applia
             </Modal.Header>
             <Modal.Body>
                 <div className="d-flex align-items-center gap-2 mb-3">
-                    <span className="text-muted" style={{ fontSize: '0.9rem' }}>Quick</span>
+                    <span className="text-muted" style={{ fontSize: '0.9rem' }}>
+                        Quick
+                    </span>
                     <Form.Check
                         type="switch"
                         id="addtask-mode-switch"
@@ -98,17 +111,23 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ show, onHide, onAdd, applia
                         onChange={(e) => setQuickMode(!e.target.checked)}
                         label=""
                     />
-                    <span className="text-muted" style={{ fontSize: '0.9rem' }}>Detailed</span>
+                    <span className="text-muted" style={{ fontSize: '0.9rem' }}>
+                        Detailed
+                    </span>
                 </div>
 
                 {errors.length > 0 && (
                     <div className="alert alert-danger py-2">
-                        {errors.map((e, i) => <div key={i}>{e}</div>)}
+                        {errors.map((e, i) => (
+                            <div key={i}>{e}</div>
+                        ))}
                     </div>
                 )}
 
                 <Form.Group className="mb-3">
-                    <Form.Label>Label <span className="text-danger">*</span></Form.Label>
+                    <Form.Label>
+                        Label <span className="text-danger">*</span>
+                    </Form.Label>
                     <Form.Control
                         type="text"
                         value={label}
@@ -134,7 +153,10 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ show, onHide, onAdd, applia
                         <div className="row">
                             <Form.Group className="mb-3 col-6">
                                 <Form.Label>Priority</Form.Label>
-                                <Form.Select value={priority} onChange={(e) => setPriority(e.target.value)}>
+                                <Form.Select
+                                    value={priority}
+                                    onChange={(e) => setPriority(e.target.value)}
+                                >
                                     <option value="">None</option>
                                     <option value="low">Low</option>
                                     <option value="medium">Medium</option>
@@ -184,7 +206,9 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ show, onHide, onAdd, applia
                                             type="number"
                                             min="1"
                                             value={recurrenceInterval}
-                                            onChange={(e) => setRecurrenceInterval(Number(e.target.value))}
+                                            onChange={(e) =>
+                                                setRecurrenceInterval(Number(e.target.value))
+                                            }
                                         />
                                     </Form.Group>
                                     <Form.Group className="mb-2 col-8">
@@ -217,7 +241,9 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ show, onHide, onAdd, applia
                 )}
             </Modal.Body>
             <Modal.Footer>
-                <Button variant="secondary" onClick={onHide}>Cancel</Button>
+                <Button variant="secondary" onClick={onHide}>
+                    Cancel
+                </Button>
                 <Button variant="primary" onClick={handleSubmit} disabled={submitting}>
                     {submitting ? 'Adding…' : 'Add Task'}
                 </Button>

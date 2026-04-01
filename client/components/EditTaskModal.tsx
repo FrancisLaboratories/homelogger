@@ -44,9 +44,14 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({ show, onHide, task, onSav
         if (!task) return
         const errs: string[] = []
         if (!label.trim()) errs.push('Label is required')
-        if (estimatedCost !== '' && isNaN(Number(estimatedCost))) errs.push('Estimated cost must be a number')
-        if (isRecurring && recurrenceInterval < 1) errs.push('Recurrence interval must be at least 1')
-        if (errs.length > 0) { setErrors(errs); return }
+        if (estimatedCost !== '' && isNaN(Number(estimatedCost)))
+            errs.push('Estimated cost must be a number')
+        if (isRecurring && recurrenceInterval < 1)
+            errs.push('Recurrence interval must be at least 1')
+        if (errs.length > 0) {
+            setErrors(errs)
+            return
+        }
 
         setSubmitting(true)
         try {
@@ -90,12 +95,16 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({ show, onHide, task, onSav
             <Modal.Body>
                 {errors.length > 0 && (
                     <div className="alert alert-danger py-2">
-                        {errors.map((e, i) => <div key={i}>{e}</div>)}
+                        {errors.map((e, i) => (
+                            <div key={i}>{e}</div>
+                        ))}
                     </div>
                 )}
 
                 <Form.Group className="mb-3">
-                    <Form.Label>Label <span className="text-danger">*</span></Form.Label>
+                    <Form.Label>
+                        Label <span className="text-danger">*</span>
+                    </Form.Label>
                     <Form.Control
                         type="text"
                         value={label}
@@ -198,7 +207,9 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({ show, onHide, task, onSav
                 )}
             </Modal.Body>
             <Modal.Footer>
-                <Button variant="secondary" onClick={onHide}>Cancel</Button>
+                <Button variant="secondary" onClick={onHide}>
+                    Cancel
+                </Button>
                 <Button variant="primary" onClick={handleSubmit} disabled={submitting}>
                     {submitting ? 'Saving…' : 'Save Changes'}
                 </Button>

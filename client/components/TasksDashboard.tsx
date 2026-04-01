@@ -73,7 +73,9 @@ const TasksDashboard: React.FC = () => {
                         if (!r.ok) return
                         const a = await r.json()
                         nameMap[id] = a.applianceName || `Appliance ${id}`
-                    } catch (_) { /* ignore */ }
+                    } catch (_) {
+                        /* ignore */
+                    }
                 })
             )
             setApplianceNames(nameMap)
@@ -82,10 +84,16 @@ const TasksDashboard: React.FC = () => {
         }
     }, [])
 
-    useEffect(() => { fetchTasks() }, [fetchTasks])
+    useEffect(() => {
+        fetchTasks()
+    }, [fetchTasks])
 
     const handleComplete = (updated: Task) => {
-        setTasks((prev) => prev.map((t) => (t.id === updated.id ? updated : t)).filter((t) => !t.checked || t.isRecurring))
+        setTasks((prev) =>
+            prev
+                .map((t) => (t.id === updated.id ? updated : t))
+                .filter((t) => !t.checked || t.isRecurring)
+        )
         // refresh to pick up any new due date for recurring
         fetchTasks()
     }
@@ -118,7 +126,9 @@ const TasksDashboard: React.FC = () => {
 
     function getSourceLabel(task: Task): string {
         if (task.applianceId != null) {
-            return applianceNames[task.applianceId] ? `Appliance: ${applianceNames[task.applianceId]}` : `Appliance ${task.applianceId}`
+            return applianceNames[task.applianceId]
+                ? `Appliance: ${applianceNames[task.applianceId]}`
+                : `Appliance ${task.applianceId}`
         }
         if (task.spaceType) return SPACE_LABELS[task.spaceType] || task.spaceType
         return 'General'
@@ -183,16 +193,15 @@ const TasksDashboard: React.FC = () => {
                 <h4 className="mb-0">
                     Tasks
                     {totalActive > 0 && (
-                        <span className="text-muted ms-2" style={{ fontSize: '1rem', fontWeight: 'normal' }}>
+                        <span
+                            className="text-muted ms-2"
+                            style={{ fontSize: '1rem', fontWeight: 'normal' }}
+                        >
                             ({totalActive} active)
                         </span>
                     )}
                 </h4>
-                <Button
-                    variant="outline-primary"
-                    size="sm"
-                    onClick={() => setShowAddModal(true)}
-                >
+                <Button variant="outline-primary" size="sm" onClick={() => setShowAddModal(true)}>
                     <i className="bi bi-plus-lg me-1" />
                     Add detailed...
                 </Button>
@@ -206,16 +215,16 @@ const TasksDashboard: React.FC = () => {
                     placeholder="Quick add a task — press Enter"
                     value={quickLabel}
                     onChange={(e) => setQuickLabel(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === 'Enter') handleQuickAdd() }}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleQuickAdd()
+                    }}
                 />
                 <Button variant="outline-secondary" size="sm" onClick={handleQuickAdd}>
                     <i className="bi bi-plus-lg" />
                 </Button>
             </div>
 
-            {totalActive === 0 && (
-                <div className="text-muted">No active tasks. Great work!</div>
-            )}
+            {totalActive === 0 && <div className="text-muted">No active tasks. Great work!</div>}
 
             {groups.map((group) => {
                 if (group.tasks.length === 0) return null
@@ -223,7 +232,10 @@ const TasksDashboard: React.FC = () => {
                     <div key={group.label} className="mb-3">
                         <h6 className={`${group.headerClass} mb-1`} style={{ fontWeight: 600 }}>
                             {group.label}
-                            <span className="ms-2 text-muted fw-normal" style={{ fontSize: '0.85rem' }}>
+                            <span
+                                className="ms-2 text-muted fw-normal"
+                                style={{ fontSize: '0.85rem' }}
+                            >
                                 ({group.tasks.length})
                             </span>
                         </h6>
@@ -248,7 +260,10 @@ const TasksDashboard: React.FC = () => {
             <AddTaskModal
                 show={showAddModal}
                 onHide={() => setShowAddModal(false)}
-                onAdd={(task) => { setTasks((prev) => [...prev, task]); setShowAddModal(false) }}
+                onAdd={(task) => {
+                    setTasks((prev) => [...prev, task])
+                    setShowAddModal(false)
+                }}
             />
         </div>
     )

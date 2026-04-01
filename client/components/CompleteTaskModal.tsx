@@ -10,7 +10,12 @@ interface CompleteTaskModalProps {
     onComplete: (updatedTask: Task) => void
 }
 
-const CompleteTaskModal: React.FC<CompleteTaskModalProps> = ({ show, onHide, task, onComplete }) => {
+const CompleteTaskModal: React.FC<CompleteTaskModalProps> = ({
+    show,
+    onHide,
+    task,
+    onComplete,
+}) => {
     const today = new Date().toISOString().split('T')[0]
     const [completionDate, setCompletionDate] = useState(today)
     const [recordType, setRecordType] = useState<'none' | 'maintenance' | 'repair'>('none')
@@ -71,7 +76,9 @@ const CompleteTaskModal: React.FC<CompleteTaskModalProps> = ({ show, onHide, tas
             <Modal.Body>
                 {error && <div className="alert alert-danger py-2">{error}</div>}
 
-                <p className="mb-1"><strong>{task.label}</strong></p>
+                <p className="mb-1">
+                    <strong>{task.label}</strong>
+                </p>
 
                 <Form.Group className="mb-3">
                     <Form.Label>Completion date</Form.Label>
@@ -84,7 +91,8 @@ const CompleteTaskModal: React.FC<CompleteTaskModalProps> = ({ show, onHide, tas
 
                 {task.isRecurring && (
                     <div className="alert alert-info py-2 mb-3" style={{ fontSize: '0.875rem' }}>
-                        This is a recurring task. The next due date will be calculated automatically.
+                        This is a recurring task. The next due date will be calculated
+                        automatically.
                     </div>
                 )}
 
@@ -143,7 +151,9 @@ const CompleteTaskModal: React.FC<CompleteTaskModalProps> = ({ show, onHide, tas
                 )}
             </Modal.Body>
             <Modal.Footer>
-                <Button variant="secondary" onClick={onHide}>Cancel</Button>
+                <Button variant="secondary" onClick={onHide}>
+                    Cancel
+                </Button>
                 <Button variant="success" onClick={handleConfirm} disabled={submitting}>
                     {submitting ? 'Saving…' : 'Mark Complete'}
                 </Button>
