@@ -218,8 +218,7 @@ const TasksSection: React.FC<TasksSectionProps> = ({ applianceId, spaceType }) =
                         setShowAddModal(true)
                     }}
                 >
-                    <i className="bi bi-plus-lg me-1" aria-hidden="true" />{' '}
-                    Add Detailed Task
+                    <i className="bi bi-plus-lg me-1" aria-hidden="true" /> Add Detailed Task
                 </Button>
             </div>
 
