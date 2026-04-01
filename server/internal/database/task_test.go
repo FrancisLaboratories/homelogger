@@ -10,6 +10,15 @@ func strPtr(s string) *string  { return &s }
 func f64Ptr(f float64) *float64 { return &f }
 func uintPtr(u uint) *uint     { return &u }
 
+const (
+	addTaskErrFmt      = "AddTask error: %v"
+	getTaskErrFmt      = "GetTask error: %v"
+	getTasksErrFmt     = "GetTasks error: %v"
+	completeTaskErrFmt = "CompleteTask error: %v"
+	date2026Apr01      = "2026-04-01"
+	date2026Mar31      = "2026-03-31"
+)
+
 func TestAddAndGetTask(t *testing.T) {
 	db := setupTestDB(t)
 
@@ -22,7 +31,7 @@ func TestAddAndGetTask(t *testing.T) {
 
 	created, err := AddTask(db, task)
 	if err != nil {
-		t.Fatalf("AddTask error: %v", err)
+		t.Fatalf(addTaskErrFmt, err)
 	}
 	if created.ID == 0 {
 		t.Fatal("expected non-zero ID after add")
@@ -30,7 +39,7 @@ func TestAddAndGetTask(t *testing.T) {
 
 	fetched, err := GetTask(db, created.ID)
 	if err != nil {
-		t.Fatalf("GetTask error: %v", err)
+		t.Fatalf(getTaskErrFmt, err)
 	}
 	if fetched.Label != task.Label {
 		t.Fatalf("expected label %q, got %q", task.Label, fetched.Label)
@@ -51,7 +60,7 @@ func TestGetTasksFilter(t *testing.T) {
 
 	hvacTasks, err := GetTasks(db, 0, "HVAC", false)
 	if err != nil {
-		t.Fatalf("GetTasks error: %v", err)
+		t.Fatalf(getTasksErrFmt, err)
 	}
 	if len(hvacTasks) != 1 {
 		t.Fatalf("expected 1 HVAC task, got %d", len(hvacTasks))
@@ -80,26 +89,26 @@ func TestGetAllActiveTasks(t *testing.T) {
 func TestCompleteNonRecurringTask(t *testing.T) {
 	db := setupTestDB(t)
 
-	due := "2026-04-01"
+	due := date2026Apr01
 	created, err := AddTask(db, &models.Task{
 		Label:   "One-time task",
 		DueDate: &due,
 		UserID:  "1",
 	})
 	if err != nil {
-		t.Fatalf("AddTask error: %v", err)
+		t.Fatalf(addTaskErrFmt, err)
 	}
 
-	completed, err := CompleteTask(db, created.ID, "2026-03-31")
+	completed, err := CompleteTask(db, created.ID, date2026Mar31)
 	if err != nil {
-		t.Fatalf("CompleteTask error: %v", err)
+		t.Fatalf(completeTaskErrFmt, err)
 	}
 
 	if !completed.Checked {
 		t.Fatal("expected task to be marked checked after completion")
 	}
-	if completed.LastCompletedAt == nil || *completed.LastCompletedAt != "2026-03-31" {
-		t.Fatalf("expected LastCompletedAt=2026-03-31, got %v", completed.LastCompletedAt)
+	if completed.LastCompletedAt == nil || *completed.LastCompletedAt != date2026Mar31 {
+		t.Fatalf("expected LastCompletedAt=%s, got %v", date2026Mar31, completed.LastCompletedAt)
 	}
 
 	// Should not appear in active tasks
@@ -114,7 +123,7 @@ func TestCompleteNonRecurringTask(t *testing.T) {
 func TestCompleteRecurringTask_CompletionDateMode(t *testing.T) {
 	db := setupTestDB(t)
 
-	due := "2026-04-01"
+	due := date2026Apr01
 	created, err := AddTask(db, &models.Task{
 		Label:              "Monthly filter check",
 		DueDate:            &due,
@@ -125,12 +134,12 @@ func TestCompleteRecurringTask_CompletionDateMode(t *testing.T) {
 		UserID:             "1",
 	})
 	if err != nil {
-		t.Fatalf("AddTask error: %v", err)
+		t.Fatalf(addTaskErrFmt, err)
 	}
 
 	completed, err := CompleteTask(db, created.ID, "2026-03-15")
 	if err != nil {
-		t.Fatalf("CompleteTask error: %v", err)
+		t.Fatalf(completeTaskErrFmt, err)
 	}
 
 	// For completion_date mode, new due date = completion date + 1 month = 2026-04-15
@@ -145,7 +154,7 @@ func TestCompleteRecurringTask_CompletionDateMode(t *testing.T) {
 func TestCompleteRecurringTask_DueDateMode(t *testing.T) {
 	db := setupTestDB(t)
 
-	due := "2026-04-01"
+	due := date2026Apr01
 	created, err := AddTask(db, &models.Task{
 		Label:              "Quarterly inspection",
 		DueDate:            &due,
@@ -156,12 +165,12 @@ func TestCompleteRecurringTask_DueDateMode(t *testing.T) {
 		UserID:             "1",
 	})
 	if err != nil {
-		t.Fatalf("AddTask error: %v", err)
+		t.Fatalf(addTaskErrFmt, err)
 	}
 
 	completed, err := CompleteTask(db, created.ID, "2026-03-15")
 	if err != nil {
-		t.Fatalf("CompleteTask error: %v", err)
+		t.Fatalf(completeTaskErrFmt, err)
 	}
 
 	// For due_date mode, new due date = original due date + 3 months = 2026-07-01
@@ -175,7 +184,7 @@ func TestUpdateTask(t *testing.T) {
 
 	created, err := AddTask(db, &models.Task{Label: "Fix gutter", UserID: "1"})
 	if err != nil {
-		t.Fatalf("AddTask error: %v", err)
+		t.Fatalf(addTaskErrFmt, err)
 	}
 
 	created.Label = "Clean gutter"
@@ -197,7 +206,7 @@ func TestDeleteTask(t *testing.T) {
 
 	created, err := AddTask(db, &models.Task{Label: "Temp task", UserID: "1"})
 	if err != nil {
-		t.Fatalf("AddTask error: %v", err)
+		t.Fatalf(addTaskErrFmt, err)
 	}
 
 	if err := DeleteTask(db, created.ID); err != nil {
@@ -214,12 +223,12 @@ func TestUncompleteTask(t *testing.T) {
 
 	created, err := AddTask(db, &models.Task{Label: "Paint fence", UserID: "1"})
 	if err != nil {
-		t.Fatalf("AddTask error: %v", err)
+		t.Fatalf(addTaskErrFmt, err)
 	}
 
 	// Complete it first
-	if _, err := CompleteTask(db, created.ID, "2026-03-31"); err != nil {
-		t.Fatalf("CompleteTask error: %v", err)
+	if _, err := CompleteTask(db, created.ID, date2026Mar31); err != nil {
+		t.Fatalf(completeTaskErrFmt, err)
 	}
 
 	// Now uncomplete

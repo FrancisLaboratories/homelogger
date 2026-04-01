@@ -44,12 +44,12 @@ const PRIORITY_ORDER: Record<string, number> = {
 }
 
 function parseDue(dueDate?: string | null): number {
-    if (!dueDate) return Infinity
+    if (dueDate == null) return Infinity
     return new Date(dueDate + 'T00:00:00').getTime()
 }
 
 function isOverdue(task: Task): boolean {
-    if (!task.dueDate || task.checked) return false
+    if (task.dueDate == null || task.checked) return false
     const today = new Date()
     today.setHours(0, 0, 0, 0)
     return new Date(task.dueDate + 'T00:00:00') < today
@@ -69,8 +69,8 @@ const TasksSection: React.FC<TasksSectionProps> = ({ applianceId, spaceType }) =
             const savedFilter = localStorage.getItem('homelogger_tasks_filter')
             if (savedSort) setSortOption(savedSort as SortOption)
             if (savedFilter) setFilterOption(savedFilter as FilterOption)
-        } catch (_) {
-            /* ignore */
+        } catch (err) {
+            console.warn('TasksSection: failed to read localStorage', err)
         }
     }, [])
 
@@ -97,8 +97,8 @@ const TasksSection: React.FC<TasksSectionProps> = ({ applianceId, spaceType }) =
         setSortOption(val)
         try {
             localStorage.setItem('homelogger_tasks_sort', val)
-        } catch (_) {
-            /* ignore */
+        } catch (err) {
+            console.warn('TasksSection: failed to save sort option', err)
         }
     }
 
@@ -106,8 +106,8 @@ const TasksSection: React.FC<TasksSectionProps> = ({ applianceId, spaceType }) =
         setFilterOption(val)
         try {
             localStorage.setItem('homelogger_tasks_filter', val)
-        } catch (_) {
-            /* ignore */
+        } catch (err) {
+            console.warn('TasksSection: failed to save filter option', err)
         }
     }
 
@@ -147,8 +147,8 @@ const TasksSection: React.FC<TasksSectionProps> = ({ applianceId, spaceType }) =
 
     const filtered = tasks.filter((t) => {
         if (filterOption === 'completed') return t.checked
-        if (filterOption === 'upcoming') return !t.checked && !isOverdue(t)
-        if (filterOption === 'overdue') return !t.checked && isOverdue(t)
+        if (filterOption === 'upcoming') return t.checked === false && !isOverdue(t)
+        if (filterOption === 'overdue') return t.checked === false && isOverdue(t)
         return true // 'all'
     })
 
@@ -174,7 +174,7 @@ const TasksSection: React.FC<TasksSectionProps> = ({ applianceId, spaceType }) =
         }
     })
 
-    const overdueCount = tasks.filter((t) => !t.checked && isOverdue(t)).length
+    const overdueCount = tasks.filter((t) => t.checked === false && isOverdue(t)).length
 
     return (
         <div style={{ marginTop: '12px' }}>
@@ -223,19 +223,15 @@ const TasksSection: React.FC<TasksSectionProps> = ({ applianceId, spaceType }) =
             </div>
 
             {overdueCount > 0 && filterOption === 'upcoming' && (
-                <div
-                    className="alert alert-warning py-1 px-2 mb-2"
+                <button
+                    type="button"
+                    className="alert alert-warning py-1 px-2 mb-2 text-start"
                     style={{ fontSize: '0.85rem', cursor: 'pointer' }}
                     onClick={() => handleFilterChange('overdue')}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') handleFilterChange('overdue')
-                    }}
                 >
-                    <i className="bi bi-exclamation-triangle me-1" />
-                    {overdueCount} overdue task{overdueCount !== 1 ? 's' : ''} — click to view
-                </div>
+                    <i className="bi bi-exclamation-triangle me-1" aria-hidden="true" />
+                    {overdueCount} overdue task{overdueCount === 1 ? '' : 's'} — click to view
+                </button>
             )}
 
             {/* Task list */}
