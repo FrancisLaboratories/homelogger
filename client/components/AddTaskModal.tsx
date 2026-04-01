@@ -9,6 +9,7 @@ interface AddTaskModalProps {
     onAdd: (task: Task) => void
     applianceId?: number
     spaceType?: string
+    startDetailed?: boolean
 }
 
 const PRIORITY_OPTIONS = ['', 'low', 'medium', 'high', 'critical']
@@ -20,8 +21,9 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({
     onAdd,
     applianceId,
     spaceType,
+    startDetailed = false,
 }) => {
-    const [quickMode, setQuickMode] = useState(true)
+    const [quickMode, setQuickMode] = useState(!startDetailed)
     const [label, setLabel] = useState('')
     const [notes, setNotes] = useState('')
     const [priority, setPriority] = useState('')
@@ -35,7 +37,9 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({
     const [submitting, setSubmitting] = useState(false)
 
     useEffect(() => {
-        if (!show) {
+        if (show) {
+            setQuickMode(!startDetailed)
+        } else {
             setLabel('')
             setNotes('')
             setPriority('')
@@ -46,7 +50,7 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({
             setRecurrenceUnit('months')
             setRecurrenceMode('completion_date')
             setErrors([])
-            setQuickMode(true)
+            setQuickMode(!startDetailed)
         }
     }, [show])
 

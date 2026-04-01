@@ -219,7 +219,7 @@ const TasksSection: React.FC<TasksSectionProps> = ({ applianceId, spaceType }) =
                     }}
                 >
                     <i className="bi bi-plus-lg me-1" />
-                    Add detailed...
+                    Add Detailed Task
                 </Button>
             </div>
 
@@ -258,7 +258,7 @@ const TasksSection: React.FC<TasksSectionProps> = ({ applianceId, spaceType }) =
                 <Form.Control
                     type="text"
                     size="sm"
-                    placeholder="Quick add — type and press Enter"
+                    placeholder="Add a new task..."
                     value={quickLabel}
                     onChange={(e) => setQuickLabel(e.target.value)}
                     onKeyDown={(e) => {
@@ -279,6 +279,7 @@ const TasksSection: React.FC<TasksSectionProps> = ({ applianceId, spaceType }) =
                 onAdd={(task) => setTasks((prev) => [task, ...prev])}
                 applianceId={applianceId}
                 spaceType={spaceType}
+                startDetailed={showAddDetailed}
             />
         </div>
     )

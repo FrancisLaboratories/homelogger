@@ -203,7 +203,7 @@ const TasksDashboard: React.FC = () => {
                 </h4>
                 <Button variant="outline-primary" size="sm" onClick={() => setShowAddModal(true)}>
                     <i className="bi bi-plus-lg me-1" />
-                    Add detailed...
+                    Add Detailed Task
                 </Button>
             </div>
 
@@ -212,7 +212,7 @@ const TasksDashboard: React.FC = () => {
                 <Form.Control
                     type="text"
                     size="sm"
-                    placeholder="Quick add a task — press Enter"
+                    placeholder="Add a new task..."
                     value={quickLabel}
                     onChange={(e) => setQuickLabel(e.target.value)}
                     onKeyDown={(e) => {
@@ -260,10 +260,7 @@ const TasksDashboard: React.FC = () => {
             <AddTaskModal
                 show={showAddModal}
                 onHide={() => setShowAddModal(false)}
-                onAdd={(task) => {
-                    setTasks((prev) => [...prev, task])
-                    setShowAddModal(false)
-                }}
+                onAdd={(task) => { setTasks((prev) => [...prev, task]); setShowAddModal(false) }}
             />
         </div>
     )
