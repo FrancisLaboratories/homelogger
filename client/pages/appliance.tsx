@@ -30,7 +30,7 @@ const AppliancePage: React.FC = () => {
     // Get id from query string (works with static export)
     const getIdFromQuery = () => {
         if (typeof window !== 'undefined') {
-            const params = new URLSearchParams(window.location.search)
+            const params = new URLSearchParams(globalThis.location.search)
             return params.get('id')
         }
         return null
@@ -63,7 +63,7 @@ const AppliancePage: React.FC = () => {
                     throw new Error('Failed to delete appliance')
                 }
 
-                window.location.href = '/appliances.html'
+                globalThis.location.href = '/appliances.html'
             } catch (error) {
                 console.error('Error deleting appliance:', error)
             }
@@ -181,7 +181,7 @@ const AppliancePage: React.FC = () => {
                     </Tabs>
                     <Button
                         variant="secondary"
-                        onClick={() => (window.location.href = '/appliances.html')}
+                        onClick={() => (globalThis.location.href = '/appliances.html')}
                         style={{ marginTop: '10px' }}
                     >
                         Back
