@@ -73,8 +73,8 @@ const TasksDashboard: React.FC = () => {
                         if (!r.ok) return
                         const a = await r.json()
                         nameMap[id] = a.applianceName || `Appliance ${id}`
-                    } catch (_) {
-                        /* ignore */
+                    } catch (err) {
+                        console.warn(`Failed to fetch appliance ${id}:`, err)
                     }
                 })
             )
@@ -202,7 +202,7 @@ const TasksDashboard: React.FC = () => {
                     )}
                 </h4>
                 <Button variant="outline-primary" size="sm" onClick={() => setShowAddModal(true)}>
-                    <i className="bi bi-plus-lg me-1" />
+                    <i className="bi bi-plus-lg me-1" aria-hidden="true" />{' '}
                     Add Detailed Task
                 </Button>
             </div>
@@ -220,7 +220,7 @@ const TasksDashboard: React.FC = () => {
                     }}
                 />
                 <Button variant="outline-secondary" size="sm" onClick={handleQuickAdd}>
-                    <i className="bi bi-plus-lg" />
+                    <i className="bi bi-plus-lg" aria-hidden="true" />
                 </Button>
             </div>
 
