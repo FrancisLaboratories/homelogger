@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Button, Modal } from 'react-bootstrap'
 import { SERVER_URL } from '@/pages/_app'
 import { Task } from './TasksSection'
-import TaskForm, { PRIORITY_OPTIONS, UNIT_OPTIONS } from './TaskForm'
+import TaskForm from './TaskForm'
 
 interface AddTaskModalProps {
     show: boolean

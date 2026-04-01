@@ -66,7 +66,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
                         type="switch"
                         id="taskform-mode-switch"
                         checked={!quickMode}
-                        onChange={(e) => setQuickMode && setQuickMode(!e.target.checked)}
+                        onChange={(e) => setQuickMode?.(!e.target.checked)}
                         label=""
                     />
                     <span className="text-muted" style={{ fontSize: '0.9rem' }}>
