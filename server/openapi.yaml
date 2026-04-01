@@ -167,9 +167,175 @@ paths:
                   checked:
                     type: boolean
                     example: true
-  /appliances:
+  /task:
     get:
-      summary: Get all appliances
+      summary: Get tasks (optionally filtered by appliance or space)
+      parameters:
+        - name: applianceId
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: spaceType
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: includeCompleted
+          in: query
+          required: false
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: A list of tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+  /task/dashboard:
+    get:
+      summary: Get all active (incomplete) tasks for the dashboard
+      responses:
+        '200':
+          description: All active tasks ordered by due date
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+  /task/add:
+    post:
+      summary: Create a new task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskInput'
+      responses:
+        '201':
+          description: Task created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+  /task/{id}:
+    get:
+      summary: Get a task by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Task record
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '404':
+          description: Not found
+  /task/update/{id}:
+    put:
+      summary: Update all fields of a task
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskInput'
+      responses:
+        '200':
+          description: Updated task
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+  /task/complete/{id}:
+    put:
+      summary: Mark a task complete; optionally create a maintenance or repair record
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - completionDate
+              properties:
+                completionDate:
+                  type: string
+                  format: date
+                  example: "2026-03-31"
+                createRecord:
+                  type: boolean
+                  example: true
+                recordType:
+                  type: string
+                  enum: [maintenance, repair]
+                  example: "maintenance"
+                description:
+                  type: string
+                  example: "Replaced HVAC filter"
+                cost:
+                  type: number
+                  format: float
+                  example: 25.00
+      responses:
+        '200':
+          description: Updated task (with advanced due date if recurring)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+  /task/uncomplete/{id}:
+    put:
+      summary: Mark a non-recurring task as incomplete
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Updated task
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+  /task/delete/{id}:
+    delete:
+      summary: Delete a task
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Task deleted
+
+  /appliances:
       responses:
         '200':
           description: A list of appliances
@@ -1074,3 +1240,104 @@ paths:
       responses:
         '200':
           description: Note deleted
+
+components:
+  schemas:
+    Task:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        label:
+          type: string
+          example: "Replace HVAC filter"
+        notes:
+          type: string
+          example: "Check filter size"
+        checked:
+          type: boolean
+          example: false
+        priority:
+          type: string
+          example: "high"
+        dueDate:
+          type: string
+          format: date
+          nullable: true
+          example: "2026-04-15"
+        estimatedCost:
+          type: number
+          format: float
+          nullable: true
+          example: 25.00
+        isRecurring:
+          type: boolean
+          example: true
+        recurrenceInterval:
+          type: integer
+          example: 3
+        recurrenceUnit:
+          type: string
+          example: "months"
+        recurrenceMode:
+          type: string
+          example: "completion_date"
+        lastCompletedAt:
+          type: string
+          format: date
+          nullable: true
+          example: "2026-01-15"
+        userid:
+          type: string
+          example: "1"
+        applianceId:
+          type: integer
+          nullable: true
+        spaceType:
+          type: string
+          nullable: true
+          example: "HVAC"
+    TaskInput:
+      type: object
+      required:
+        - label
+      properties:
+        label:
+          type: string
+          example: "Replace HVAC filter"
+        notes:
+          type: string
+          example: "Check filter size"
+        priority:
+          type: string
+          example: "high"
+        dueDate:
+          type: string
+          format: date
+          nullable: true
+          example: "2026-04-15"
+        estimatedCost:
+          type: number
+          format: float
+          nullable: true
+          example: 25.00
+        isRecurring:
+          type: boolean
+          example: true
+        recurrenceInterval:
+          type: integer
+          example: 3
+        recurrenceUnit:
+          type: string
+          example: "months"
+        recurrenceMode:
+          type: string
+          example: "completion_date"
+        applianceId:
+          type: integer
+          nullable: true
+        spaceType:
+          type: string
+          nullable: true
+          example: "HVAC"

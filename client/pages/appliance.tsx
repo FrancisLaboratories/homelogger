@@ -8,7 +8,7 @@ import MaintenanceSection, {
 } from '@/components/MaintenanceSection'
 import RepairSection, { RepairReferenceType, RepairSpaceType } from '@/components/RepairSection'
 import DocumentationSection from '@/components/DocumentationSection'
-import TodosSection from '@/components/TodosSection'
+import TasksSection from '@/components/TasksSection'
 import NotesSection from '@/components/NotesSection'
 import MyNavbar from '@/components/Navbar'
 import { SERVER_URL } from '@/pages/_app'
@@ -172,8 +172,8 @@ const AppliancePage: React.FC = () => {
                         <Tab eventKey="documentation" title="Documentation">
                             <DocumentationSection applianceId={appliance.id} />
                         </Tab>
-                        <Tab eventKey="todos" title="To-dos">
-                            <TodosSection applianceId={appliance.id} />
+                        <Tab eventKey="todos" title="Tasks">
+                            <TasksSection applianceId={appliance.id} />
                         </Tab>
                         <Tab eventKey="notes" title="Notes">
                             <NotesSection applianceId={appliance.id} />

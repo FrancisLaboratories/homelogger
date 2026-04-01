@@ -1016,6 +1016,239 @@ func main() {
 		return c.SendStatus(fiber.StatusNoContent)
 	})
 
+	// Task endpoints
+	app.Get("/task", func(c *fiber.Ctx) error {
+		applianceIdStr := c.Query("applianceId")
+		spaceType := c.Query("spaceType")
+		includeCompleted := c.Query("includeCompleted") == "true"
+
+		var applianceId uint = 0
+		if applianceIdStr != "" {
+			if idUint, err := strconv.ParseUint(applianceIdStr, 10, 32); err == nil {
+				applianceId = uint(idUint)
+			}
+		}
+
+		tasks, err := database.GetTasks(db, applianceId, spaceType, includeCompleted)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).SendString("Error getting tasks: " + err.Error())
+		}
+		return c.JSON(tasks)
+	})
+
+	app.Get("/task/dashboard", func(c *fiber.Ctx) error {
+		tasks, err := database.GetAllActiveTasks(db)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).SendString("Error getting tasks: " + err.Error())
+		}
+		return c.JSON(tasks)
+	})
+
+	app.Post("/task/add", func(c *fiber.Ctx) error {
+		var body struct {
+			Label              string   `json:"label"`
+			Notes              string   `json:"notes"`
+			Priority           string   `json:"priority"`
+			DueDate            *string  `json:"dueDate"`
+			EstimatedCost      *float64 `json:"estimatedCost"`
+			IsRecurring        bool     `json:"isRecurring"`
+			RecurrenceInterval int      `json:"recurrenceInterval"`
+			RecurrenceUnit     string   `json:"recurrenceUnit"`
+			RecurrenceMode     string   `json:"recurrenceMode"`
+			ApplianceID        *uint    `json:"applianceId"`
+			SpaceType          *string  `json:"spaceType"`
+		}
+		if err := c.BodyParser(&body); err != nil {
+			return c.Status(fiber.StatusBadRequest).SendString("Error parsing body: " + err.Error())
+		}
+		if body.Label == "" {
+			return c.Status(fiber.StatusBadRequest).SendString("label is required")
+		}
+
+		task := &models.Task{
+			Label:              body.Label,
+			Notes:              body.Notes,
+			Priority:           body.Priority,
+			DueDate:            body.DueDate,
+			EstimatedCost:      body.EstimatedCost,
+			IsRecurring:        body.IsRecurring,
+			RecurrenceInterval: body.RecurrenceInterval,
+			RecurrenceUnit:     body.RecurrenceUnit,
+			RecurrenceMode:     body.RecurrenceMode,
+			ApplianceID:        body.ApplianceID,
+			SpaceType:          body.SpaceType,
+			UserID:             "1",
+		}
+
+		created, err := database.AddTask(db, task)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).SendString("Error adding task: " + err.Error())
+		}
+		return c.Status(fiber.StatusCreated).JSON(created)
+	})
+
+	app.Get("/task/:id", func(c *fiber.Ctx) error {
+		id := c.Params("id")
+		idUint, err := strconv.ParseUint(id, 10, 32)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).SendString("Invalid ID format")
+		}
+		task, err := database.GetTask(db, uint(idUint))
+		if err != nil {
+			return c.Status(fiber.StatusNotFound).SendString("Task not found: " + err.Error())
+		}
+		return c.JSON(task)
+	})
+
+	app.Put("/task/update/:id", func(c *fiber.Ctx) error {
+		id := c.Params("id")
+		idUint, err := strconv.ParseUint(id, 10, 32)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).SendString("Invalid ID format")
+		}
+
+		existing, err := database.GetTask(db, uint(idUint))
+		if err != nil {
+			return c.Status(fiber.StatusNotFound).SendString("Task not found: " + err.Error())
+		}
+
+		var body struct {
+			Label              string   `json:"label"`
+			Notes              string   `json:"notes"`
+			Priority           string   `json:"priority"`
+			DueDate            *string  `json:"dueDate"`
+			EstimatedCost      *float64 `json:"estimatedCost"`
+			IsRecurring        bool     `json:"isRecurring"`
+			RecurrenceInterval int      `json:"recurrenceInterval"`
+			RecurrenceUnit     string   `json:"recurrenceUnit"`
+			RecurrenceMode     string   `json:"recurrenceMode"`
+			ApplianceID        *uint    `json:"applianceId"`
+			SpaceType          *string  `json:"spaceType"`
+		}
+		if err := c.BodyParser(&body); err != nil {
+			return c.Status(fiber.StatusBadRequest).SendString("Error parsing body: " + err.Error())
+		}
+
+		existing.Label = body.Label
+		existing.Notes = body.Notes
+		existing.Priority = body.Priority
+		existing.DueDate = body.DueDate
+		existing.EstimatedCost = body.EstimatedCost
+		existing.IsRecurring = body.IsRecurring
+		existing.RecurrenceInterval = body.RecurrenceInterval
+		existing.RecurrenceUnit = body.RecurrenceUnit
+		existing.RecurrenceMode = body.RecurrenceMode
+		existing.ApplianceID = body.ApplianceID
+		existing.SpaceType = body.SpaceType
+
+		updated, err := database.UpdateTask(db, existing)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).SendString("Error updating task: " + err.Error())
+		}
+		return c.JSON(updated)
+	})
+
+	app.Put("/task/complete/:id", func(c *fiber.Ctx) error {
+		id := c.Params("id")
+		idUint, err := strconv.ParseUint(id, 10, 32)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).SendString("Invalid ID format")
+		}
+
+		var body struct {
+			CompletionDate string  `json:"completionDate"`
+			CreateRecord   bool    `json:"createRecord"`
+			RecordType     string  `json:"recordType"`
+			Description    string  `json:"description"`
+			Cost           float64 `json:"cost"`
+		}
+		if err := c.BodyParser(&body); err != nil {
+			return c.Status(fiber.StatusBadRequest).SendString("Error parsing body: " + err.Error())
+		}
+		if body.CompletionDate == "" {
+			return c.Status(fiber.StatusBadRequest).SendString("completionDate is required")
+		}
+
+		task, err := database.CompleteTask(db, uint(idUint), body.CompletionDate)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).SendString("Error completing task: " + err.Error())
+		}
+
+		// Optionally create a Maintenance or Repair record
+		if body.CreateRecord {
+			description := body.Description
+			if description == "" {
+				description = task.Label
+			}
+
+			// Determine reference type from the task
+			refType := "Space"
+			spaceType := ""
+			var applianceId *uint
+			if task.ApplianceID != nil {
+				refType = "Appliance"
+				applianceId = task.ApplianceID
+			} else if task.SpaceType != nil {
+				spaceType = *task.SpaceType
+			}
+
+			if body.RecordType == "repair" {
+				repair := &models.Repair{
+					Description:   description,
+					Date:          body.CompletionDate,
+					Cost:          body.Cost,
+					Notes:         "",
+					SpaceType:     spaceType,
+					ReferenceType: refType,
+					ApplianceID:   applianceId,
+				}
+				if _, err := database.AddRepair(db, repair); err != nil {
+					return c.Status(fiber.StatusInternalServerError).SendString("Error creating repair record: " + err.Error())
+				}
+			} else {
+				maintenance := &models.Maintenance{
+					Description:   description,
+					Date:          body.CompletionDate,
+					Cost:          body.Cost,
+					Notes:         "",
+					SpaceType:     spaceType,
+					ReferenceType: refType,
+					ApplianceID:   applianceId,
+				}
+				if _, err := database.AddMaintenance(db, maintenance); err != nil {
+					return c.Status(fiber.StatusInternalServerError).SendString("Error creating maintenance record: " + err.Error())
+				}
+			}
+		}
+
+		return c.JSON(task)
+	})
+
+	app.Put("/task/uncomplete/:id", func(c *fiber.Ctx) error {
+		id := c.Params("id")
+		idUint, err := strconv.ParseUint(id, 10, 32)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).SendString("Invalid ID format")
+		}
+		task, err := database.UncompleteTask(db, uint(idUint))
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).SendString("Error uncompleting task: " + err.Error())
+		}
+		return c.JSON(task)
+	})
+
+	app.Delete("/task/delete/:id", func(c *fiber.Ctx) error {
+		id := c.Params("id")
+		idUint, err := strconv.ParseUint(id, 10, 32)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).SendString("Invalid ID format")
+		}
+		if err := database.DeleteTask(db, uint(idUint)); err != nil {
+			return c.Status(fiber.StatusInternalServerError).SendString("Error deleting task: " + err.Error())
+		}
+		return c.SendStatus(fiber.StatusNoContent)
+	})
+
 	// Download a backup ZIP containing the DB and uploads
 	app.Get("/backup/download", func(c *fiber.Ctx) error {
 		pr, pw := io.Pipe()

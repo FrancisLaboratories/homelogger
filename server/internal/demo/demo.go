@@ -13,14 +13,22 @@ import (
 
 // DemoData is the shape of sample_data.json
 type DemoData struct {
-    Appliances   []models.Appliance `json:"appliances"`
-    Todos        []struct {
-        Label         string  `json:"label"`
-        Checked       bool    `json:"checked"`
-        UserID        string  `json:"userID"`
-        ApplianceIndex *int    `json:"applianceIndex,omitempty"`
-        SpaceType     string  `json:"spaceType,omitempty"`
-    } `json:"todos"`
+    Appliances []models.Appliance `json:"appliances"`
+    Tasks      []struct {
+        Label              string   `json:"label"`
+        Notes              string   `json:"notes,omitempty"`
+        Checked            bool     `json:"checked"`
+        Priority           string   `json:"priority,omitempty"`
+        DueDate            *string  `json:"dueDate,omitempty"`
+        EstimatedCost      *float64 `json:"estimatedCost,omitempty"`
+        IsRecurring        bool     `json:"isRecurring"`
+        RecurrenceInterval int      `json:"recurrenceInterval,omitempty"`
+        RecurrenceUnit     string   `json:"recurrenceUnit,omitempty"`
+        RecurrenceMode     string   `json:"recurrenceMode,omitempty"`
+        UserID             string   `json:"userID"`
+        ApplianceIndex     *int     `json:"applianceIndex,omitempty"`
+        SpaceType          string   `json:"spaceType,omitempty"`
+    } `json:"tasks"`
     Notes        []struct {
         Title         string `json:"title"`
         Body          string `json:"body"`
@@ -85,17 +93,34 @@ func Seed(db *gorm.DB, demoFilePath string) error {
         applianceIDs[i] = created.ID
     }
 
-    // todos
-    for i, t := range d.Todos {
-        var aid uint = 0
+    // tasks
+    for i, t := range d.Tasks {
+        task := &models.Task{
+            Label:              t.Label,
+            Notes:              t.Notes,
+            Checked:            t.Checked,
+            Priority:           t.Priority,
+            DueDate:            t.DueDate,
+            EstimatedCost:      t.EstimatedCost,
+            IsRecurring:        t.IsRecurring,
+            RecurrenceInterval: t.RecurrenceInterval,
+            RecurrenceUnit:     t.RecurrenceUnit,
+            RecurrenceMode:     t.RecurrenceMode,
+            UserID:             t.UserID,
+        }
         if t.ApplianceIndex != nil {
             idx := *t.ApplianceIndex
             if idx >= 0 && idx < len(applianceIDs) {
-                aid = applianceIDs[idx]
+                aid := applianceIDs[idx]
+                task.ApplianceID = &aid
             }
         }
-        if _, err := database.AddTodo(db, t.Label, t.Checked, t.UserID, aid, t.SpaceType); err != nil {
-            fmt.Printf("demo: error adding todo %d: %v\n", i, err)
+        if t.SpaceType != "" {
+            st := t.SpaceType
+            task.SpaceType = &st
+        }
+        if _, err := database.AddTask(db, task); err != nil {
+            fmt.Printf("demo: error adding task %d: %v\n", i, err)
         }
     }
 
