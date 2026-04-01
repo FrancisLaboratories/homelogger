@@ -113,7 +113,7 @@ const TasksSection: React.FC<TasksSectionProps> = ({ applianceId, spaceType }) =
 
     const handleQuickAdd = async () => {
         const label = quickLabel.trim()
-        if (!label) return
+        if (label === '') return
         try {
             const body: Record<string, unknown> = { label }
             if (applianceId) body.applianceId = applianceId
@@ -187,7 +187,7 @@ const TasksSection: React.FC<TasksSectionProps> = ({ applianceId, spaceType }) =
                     onChange={(e) => handleFilterChange(e.target.value as FilterOption)}
                     aria-label="Filter tasks"
                 >
-                    <option value="upcoming">Upcoming{overdueCount > 0 ? '' : ''}</option>
+                    <option value="upcoming">Upcoming</option>
                     <option value="overdue">
                         Overdue {overdueCount > 0 ? `(${overdueCount})` : ''}
                     </option>
@@ -218,7 +218,7 @@ const TasksSection: React.FC<TasksSectionProps> = ({ applianceId, spaceType }) =
                         setShowAddModal(true)
                     }}
                 >
-                    <i className="bi bi-plus-lg me-1" />
+                    <i className="bi bi-plus-lg me-1" aria-hidden="true" />{' '}
                     Add Detailed Task
                 </Button>
             </div>
@@ -228,6 +228,11 @@ const TasksSection: React.FC<TasksSectionProps> = ({ applianceId, spaceType }) =
                     className="alert alert-warning py-1 px-2 mb-2"
                     style={{ fontSize: '0.85rem', cursor: 'pointer' }}
                     onClick={() => handleFilterChange('overdue')}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') handleFilterChange('overdue')
+                    }}
                 >
                     <i className="bi bi-exclamation-triangle me-1" />
                     {overdueCount} overdue task{overdueCount !== 1 ? 's' : ''} — click to view
@@ -266,7 +271,7 @@ const TasksSection: React.FC<TasksSectionProps> = ({ applianceId, spaceType }) =
                     }}
                 />
                 <Button variant="outline-secondary" size="sm" onClick={handleQuickAdd}>
-                    <i className="bi bi-plus-lg" />
+                    <i className="bi bi-plus-lg" aria-hidden="true" />
                 </Button>
             </div>
 

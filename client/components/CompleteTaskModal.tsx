@@ -29,13 +29,13 @@ const CompleteTaskModal: React.FC<CompleteTaskModalProps> = ({
             setCompletionDate(today)
             setRecordType('none')
             setDescription(task.label)
-            setCost(task.estimatedCost != null ? String(task.estimatedCost) : '')
+            setCost(task.estimatedCost == null ? '' : String(task.estimatedCost))
             setError('')
         }
     }, [show, task])
 
     const handleConfirm = async () => {
-        if (!task) return
+        if (task == null) return
         setError('')
         setSubmitting(true)
 
@@ -47,7 +47,7 @@ const CompleteTaskModal: React.FC<CompleteTaskModalProps> = ({
             if (recordType !== 'none') {
                 body.recordType = recordType
                 body.description = description
-                body.cost = cost !== '' ? Number(cost) : 0
+                body.cost = cost === '' ? 0 : Number(cost)
             }
 
             const res = await fetch(`${SERVER_URL}/task/complete/${task.id}`, {
