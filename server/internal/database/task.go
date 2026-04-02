@@ -38,8 +38,18 @@ func GetTasks(db *gorm.DB, applianceId uint, spaceType string, includeCompleted 
 // GetAllActiveTasks returns all incomplete tasks across all spaces and appliances,
 // ordered by due date ascending (nulls last). Used for the dashboard.
 func GetAllActiveTasks(db *gorm.DB) ([]models.Task, error) {
+	return GetAllTasks(db, false)
+}
+
+// GetAllTasks returns tasks across all spaces and appliances.
+// Pass includeCompleted=true to include tasks where checked=true.
+func GetAllTasks(db *gorm.DB, includeCompleted bool) ([]models.Task, error) {
 	var tasks []models.Task
-	result := db.Where("checked = ?", false).
+	query := db.Model(&models.Task{})
+	if !includeCompleted {
+		query = query.Where("checked = ?", false)
+	}
+	result := query.
 		Order("CASE WHEN due_date IS NULL THEN 1 ELSE 0 END, due_date ASC, created_at ASC").
 		Find(&tasks)
 	if result.Error != nil {

@@ -1041,7 +1041,8 @@ func main() {
 	})
 
 	app.Get("/task/dashboard", func(c *fiber.Ctx) error {
-		tasks, err := database.GetAllActiveTasks(db)
+		includeCompleted := c.QueryBool("includeCompleted", false)
+		tasks, err := database.GetAllTasks(db, includeCompleted)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).SendString("Error getting tasks: " + err.Error())
 		}

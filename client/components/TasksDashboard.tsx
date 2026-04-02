@@ -58,6 +58,18 @@ function parseDue(dueDate?: string | null): number {
     return new Date(dueDate + 'T00:00:00').getTime()
 }
 
+function getCookie(name: string): string | null {
+    if (typeof document === 'undefined') return null
+    const match = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'))
+    return match ? decodeURIComponent(match[1]) : null
+}
+
+function setCookie(name: string, value: string) {
+    const expires = new Date()
+    expires.setFullYear(expires.getFullYear() + 1)
+    document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires.toUTCString()}; path=/`
+}
+
 interface TaskGroup {
     label: string
     tasks: Task[]
@@ -69,12 +81,19 @@ const TasksDashboard: React.FC = () => {
     const [applianceNames, setApplianceNames] = useState<Record<number, string>>({})
     const [quickLabel, setQuickLabel] = useState('')
     const [showAddModal, setShowAddModal] = useState(false)
-    const [sortOption, setSortOption] = useState<SortOption>('due_asc')
-    const [filterOption, setFilterOption] = useState<FilterOption>('active')
+    const [sortOption, setSortOption] = useState<SortOption>(
+        () => (getCookie('hl_dashboard_sort') as SortOption) || 'due_asc'
+    )
+    const [filterOption, setFilterOption] = useState<FilterOption>(
+        () => (getCookie('hl_dashboard_filter') as FilterOption) || 'active'
+    )
+    const [groupBySource, setGroupBySource] = useState<boolean>(
+        () => getCookie('hl_dashboard_group') === 'true'
+    )
 
     const fetchTasks = useCallback(async () => {
         try {
-            const res = await fetch(`${SERVER_URL}/task?includeCompleted=true`)
+            const res = await fetch(`${SERVER_URL}/task/dashboard?includeCompleted=true`)
             if (!res.ok) return
             const data: Task[] = await res.json()
             setTasks(data)
@@ -272,7 +291,10 @@ const TasksDashboard: React.FC = () => {
                     size="sm"
                     style={{ width: 'auto' }}
                     value={filterOption}
-                    onChange={(e) => setFilterOption(e.target.value as FilterOption)}
+                    onChange={(e) => {
+                        setFilterOption(e.target.value as FilterOption)
+                        setCookie('hl_dashboard_filter', e.target.value)
+                    }}
                     aria-label="Filter tasks"
                 >
                     <option value="active">Active</option>
@@ -287,7 +309,10 @@ const TasksDashboard: React.FC = () => {
                     size="sm"
                     style={{ width: 'auto' }}
                     value={sortOption}
-                    onChange={(e) => setSortOption(e.target.value as SortOption)}
+                    onChange={(e) => {
+                        setSortOption(e.target.value as SortOption)
+                        setCookie('hl_dashboard_sort', e.target.value)
+                    }}
                     aria-label="Sort tasks"
                 >
                     <option value="due_asc">Due date ↑</option>
@@ -296,6 +321,19 @@ const TasksDashboard: React.FC = () => {
                     <option value="label_asc">Label A–Z</option>
                     <option value="created_desc">Recently added</option>
                 </Form.Select>
+
+                <Form.Check
+                    type="switch"
+                    id="group-by-source-switch"
+                    label="Group by source"
+                    checked={groupBySource}
+                    onChange={(e) => {
+                        setGroupBySource(e.target.checked)
+                        setCookie('hl_dashboard_group', String(e.target.checked))
+                    }}
+                    className="ms-1"
+                    style={{ fontSize: '0.9rem' }}
+                />
             </div>
 
             {/* Quick-add */}
@@ -323,36 +361,84 @@ const TasksDashboard: React.FC = () => {
                 </div>
             )}
 
-            {groups.map((group) => {
-                if (group.tasks.length === 0) return null
-                return (
-                    <div key={group.label} className="mb-3">
-                        <h6 className={`${group.headerClass} mb-1`} style={{ fontWeight: 600 }}>
-                            {group.label}
-                            <span
-                                className="ms-2 text-muted fw-normal"
-                                style={{ fontSize: '0.85rem' }}
-                            >
-                                ({group.tasks.length})
-                            </span>
-                        </h6>
-                        <ListGroup>
-                            {group.tasks.map((task) => (
-                                <TaskItem
-                                    key={task.id}
-                                    task={task}
-                                    onComplete={handleComplete}
-                                    onDelete={handleDelete}
-                                    onEdit={handleEdit}
-                                    showSource
-                                    sourceLabel={getSourceLabel(task)}
-                                    sourceHref={getSourceHref(task)}
-                                />
-                            ))}
-                        </ListGroup>
-                    </div>
-                )
-            })}
+            {groupBySource
+                ? // Group by source (space / appliance)
+                  (() => {
+                      const sourceKeys = Array.from(
+                          new Set(filtered.map((t) => getSourceLabel(t)))
+                      ).sort()
+                      return sourceKeys.map((src) => {
+                          const sourceTasks = applySort(
+                              filtered.filter((t) => getSourceLabel(t) === src)
+                          )
+                          if (sourceTasks.length === 0) return null
+                          const href = getSourceHref(sourceTasks[0])
+                          return (
+                              <div key={src} className="mb-3">
+                                  <h6 className="mb-1" style={{ fontWeight: 600 }}>
+                                      {href ? (
+                                          <a href={href} className="text-decoration-none">
+                                              {src}
+                                          </a>
+                                      ) : (
+                                          src
+                                      )}
+                                      <span
+                                          className="ms-2 text-muted fw-normal"
+                                          style={{ fontSize: '0.85rem' }}
+                                      >
+                                          ({sourceTasks.length})
+                                      </span>
+                                  </h6>
+                                  <ListGroup>
+                                      {sourceTasks.map((task) => (
+                                          <TaskItem
+                                              key={task.id}
+                                              task={task}
+                                              onComplete={handleComplete}
+                                              onDelete={handleDelete}
+                                              onEdit={handleEdit}
+                                          />
+                                      ))}
+                                  </ListGroup>
+                              </div>
+                          )
+                      })
+                  })()
+                : // Group by due date window
+                  groups.map((group) => {
+                      if (group.tasks.length === 0) return null
+                      return (
+                          <div key={group.label} className="mb-3">
+                              <h6
+                                  className={`${group.headerClass} mb-1`}
+                                  style={{ fontWeight: 600 }}
+                              >
+                                  {group.label}
+                                  <span
+                                      className="ms-2 text-muted fw-normal"
+                                      style={{ fontSize: '0.85rem' }}
+                                  >
+                                      ({group.tasks.length})
+                                  </span>
+                              </h6>
+                              <ListGroup>
+                                  {group.tasks.map((task) => (
+                                      <TaskItem
+                                          key={task.id}
+                                          task={task}
+                                          onComplete={handleComplete}
+                                          onDelete={handleDelete}
+                                          onEdit={handleEdit}
+                                          showSource
+                                          sourceLabel={getSourceLabel(task)}
+                                          sourceHref={getSourceHref(task)}
+                                      />
+                                  ))}
+                              </ListGroup>
+                          </div>
+                      )
+                  })}
 
             <AddTaskModal
                 show={showAddModal}
