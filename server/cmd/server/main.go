@@ -57,6 +57,10 @@ func main() {
 		panic("Error migrating GORM")
 	}
 
+	if err := database.MigrateTodosToTasks(db); err != nil {
+		fmt.Printf("Warning: todo→task migration failed: %v\n", err)
+	}
+
 	// Demo mode: optionally seed the DB from sample JSON when DEMO_MODE env var is true
 	if dm := os.Getenv("DEMO_MODE"); dm == "true" || dm == "1" {
 		demoPath := os.Getenv("DEMO_FILE_PATH")

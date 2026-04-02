@@ -155,3 +155,55 @@ func advanceDate(base, unit string, interval int) (string, error) {
 
 	return next.Format("2006-01-02"), nil
 }
+
+// MigrateTodosToTasks copies any rows from the todos table that have not yet
+// been migrated into tasks. It uses a migration-tracking table
+// (todo_task_migrations) to record which todo IDs have already been converted,
+// so it is safe to call on every startup.
+func MigrateTodosToTasks(db *gorm.DB) error {
+	// Ensure the tracking table exists.
+	if err := db.Exec(`CREATE TABLE IF NOT EXISTS todo_task_migrations (todo_id INTEGER PRIMARY KEY)`).Error; err != nil {
+		return fmt.Errorf("create migration tracking table: %w", err)
+	}
+
+	// Load all todos that haven't been migrated yet.
+	var todos []models.Todo
+	if err := db.Raw(`
+		SELECT * FROM todos
+		WHERE deleted_at IS NULL
+		  AND id NOT IN (SELECT todo_id FROM todo_task_migrations)
+	`).Scan(&todos).Error; err != nil {
+		return fmt.Errorf("query pending todos: %w", err)
+	}
+
+	for _, t := range todos {
+		task := &models.Task{
+			Label:   t.Label,
+			Checked: t.Checked,
+			UserID:  t.UserID,
+		}
+		if t.ApplianceID != nil {
+			aid := *t.ApplianceID
+			task.ApplianceID = &aid
+		}
+		if t.SpaceType != nil {
+			st := *t.SpaceType
+			task.SpaceType = &st
+		}
+
+		if err := db.Create(task).Error; err != nil {
+			fmt.Printf("MigrateTodosToTasks: skipping todo %d: %v\n", t.ID, err)
+			continue
+		}
+
+		// Record as migrated.
+		if err := db.Exec(`INSERT INTO todo_task_migrations (todo_id) VALUES (?)`, t.ID).Error; err != nil {
+			fmt.Printf("MigrateTodosToTasks: failed to record migration for todo %d: %v\n", t.ID, err)
+		}
+	}
+
+	if len(todos) > 0 {
+		fmt.Printf("MigrateTodosToTasks: migrated %d todo(s) to tasks\n", len(todos))
+	}
+	return nil
+}
