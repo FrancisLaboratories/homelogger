@@ -160,7 +160,8 @@ const TasksDashboard: React.FC = () => {
         if (filterOption === 'active') result = result.filter((t) => !t.checked)
         else if (filterOption === 'completed') result = result.filter((t) => t.checked)
         // secondary filters
-        else if (filterOption === 'priority_high') result = result.filter((t) => t.priority === 'high' || t.priority === 'critical')
+        else if (filterOption === 'priority_high')
+            result = result.filter((t) => t.priority === 'high' || t.priority === 'critical')
         else if (filterOption === 'recurring') result = result.filter((t) => t.isRecurring)
         else if (filterOption === 'no_date') result = result.filter((t) => !t.dueDate)
         return result
@@ -207,28 +208,34 @@ const TasksDashboard: React.FC = () => {
         {
             label: 'Due Next 7 Days',
             headerClass: 'text-warning',
-            tasks: applySort(filtered.filter((t) => {
-                if (!t.dueDate) return false
-                const d = new Date(t.dueDate + 'T00:00:00')
-                return d >= today && d < in7
-            })),
+            tasks: applySort(
+                filtered.filter((t) => {
+                    if (!t.dueDate) return false
+                    const d = new Date(t.dueDate + 'T00:00:00')
+                    return d >= today && d < in7
+                })
+            ),
         },
         {
             label: 'Due Next 30 Days',
             headerClass: 'text-primary',
-            tasks: applySort(filtered.filter((t) => {
-                if (!t.dueDate) return false
-                const d = new Date(t.dueDate + 'T00:00:00')
-                return d >= in7 && d < in30
-            })),
+            tasks: applySort(
+                filtered.filter((t) => {
+                    if (!t.dueDate) return false
+                    const d = new Date(t.dueDate + 'T00:00:00')
+                    return d >= in7 && d < in30
+                })
+            ),
         },
         {
             label: 'Later',
             headerClass: 'text-muted',
-            tasks: applySort(filtered.filter((t) => {
-                if (!t.dueDate) return false
-                return new Date(t.dueDate + 'T00:00:00') >= in30
-            })),
+            tasks: applySort(
+                filtered.filter((t) => {
+                    if (!t.dueDate) return false
+                    return new Date(t.dueDate + 'T00:00:00') >= in30
+                })
+            ),
         },
         {
             label: 'No Due Date',
@@ -310,7 +317,9 @@ const TasksDashboard: React.FC = () => {
 
             {totalFiltered === 0 && (
                 <div className="text-muted">
-                    {filterOption === 'active' ? 'No active tasks. Great work!' : 'No tasks match the current filter.'}
+                    {filterOption === 'active'
+                        ? 'No active tasks. Great work!'
+                        : 'No tasks match the current filter.'}
                 </div>
             )}
 
