@@ -8,6 +8,17 @@ import { Task } from './TasksSection'
 import TaskItem from './TaskItem'
 import AddTaskModal from './AddTaskModal'
 
+type SortOption = 'due_asc' | 'due_desc' | 'priority' | 'created_desc' | 'label_asc'
+type FilterOption = 'active' | 'completed' | 'all' | 'priority_high' | 'recurring' | 'no_date'
+
+const PRIORITY_ORDER: Record<string, number> = {
+    critical: 0,
+    high: 1,
+    medium: 2,
+    low: 3,
+    '': 4,
+}
+
 const SPACE_URLS: Record<string, string> = {
     BuildingExterior: '/building-exterior.html',
     BuildingInterior: '/building-interior.html',
@@ -42,6 +53,11 @@ function isBeforeToday(dueDate: string): boolean {
     return new Date(dueDate + 'T00:00:00') < today
 }
 
+function parseDue(dueDate?: string | null): number {
+    if (dueDate == null) return Infinity
+    return new Date(dueDate + 'T00:00:00').getTime()
+}
+
 interface TaskGroup {
     label: string
     tasks: Task[]
@@ -53,10 +69,12 @@ const TasksDashboard: React.FC = () => {
     const [applianceNames, setApplianceNames] = useState<Record<number, string>>({})
     const [quickLabel, setQuickLabel] = useState('')
     const [showAddModal, setShowAddModal] = useState(false)
+    const [sortOption, setSortOption] = useState<SortOption>('due_asc')
+    const [filterOption, setFilterOption] = useState<FilterOption>('active')
 
     const fetchTasks = useCallback(async () => {
         try {
-            const res = await fetch(`${SERVER_URL}/task/dashboard`)
+            const res = await fetch(`${SERVER_URL}/task?includeCompleted=true`)
             if (!res.ok) return
             const data: Task[] = await res.json()
             setTasks(data)
@@ -89,12 +107,8 @@ const TasksDashboard: React.FC = () => {
     }, [fetchTasks])
 
     const handleComplete = (updated: Task) => {
-        setTasks((prev) =>
-            prev
-                .map((t) => (t.id === updated.id ? updated : t))
-                .filter((t) => !t.checked || t.isRecurring)
-        )
-        // refresh to pick up any new due date for recurring
+        setTasks((prev) => prev.map((t) => (t.id === updated.id ? updated : t)))
+        // refresh to pick up any new due date for recurring tasks
         fetchTasks()
     }
 
@@ -140,52 +154,91 @@ const TasksDashboard: React.FC = () => {
         return undefined
     }
 
+    function applyFilter(list: Task[]): Task[] {
+        let result = list
+        // completion status filter
+        if (filterOption === 'active') result = result.filter((t) => !t.checked)
+        else if (filterOption === 'completed') result = result.filter((t) => t.checked)
+        // secondary filters
+        else if (filterOption === 'priority_high') result = result.filter((t) => t.priority === 'high' || t.priority === 'critical')
+        else if (filterOption === 'recurring') result = result.filter((t) => t.isRecurring)
+        else if (filterOption === 'no_date') result = result.filter((t) => !t.dueDate)
+        return result
+    }
+
+    function applySort(list: Task[]): Task[] {
+        return [...list].sort((a, b) => {
+            switch (sortOption) {
+                case 'due_asc':
+                    return parseDue(a.dueDate) - parseDue(b.dueDate)
+                case 'due_desc':
+                    return parseDue(b.dueDate) - parseDue(a.dueDate)
+                case 'priority':
+                    return (
+                        (PRIORITY_ORDER[a.priority || ''] ?? 4) -
+                        (PRIORITY_ORDER[b.priority || ''] ?? 4)
+                    )
+                case 'label_asc':
+                    return a.label.localeCompare(b.label)
+                case 'created_desc':
+                default: {
+                    const aDate = a.CreatedAt || a.createdAt || ''
+                    const bDate = b.CreatedAt || b.createdAt || ''
+                    return bDate.localeCompare(aDate)
+                }
+            }
+        })
+    }
+
     // Group tasks by due date
     const today = new Date()
     today.setHours(0, 0, 0, 0)
     const in7 = addDays(today, 7)
     const in30 = addDays(today, 30)
 
+    const filtered = applyFilter(tasks)
+
     const groups: TaskGroup[] = [
         {
             label: 'Overdue',
             headerClass: 'text-danger',
-            tasks: tasks.filter((t) => t.dueDate && isBeforeToday(t.dueDate)),
+            tasks: applySort(filtered.filter((t) => t.dueDate && isBeforeToday(t.dueDate))),
         },
         {
             label: 'Due Next 7 Days',
             headerClass: 'text-warning',
-            tasks: tasks.filter((t) => {
+            tasks: applySort(filtered.filter((t) => {
                 if (!t.dueDate) return false
                 const d = new Date(t.dueDate + 'T00:00:00')
                 return d >= today && d < in7
-            }),
+            })),
         },
         {
             label: 'Due Next 30 Days',
             headerClass: 'text-primary',
-            tasks: tasks.filter((t) => {
+            tasks: applySort(filtered.filter((t) => {
                 if (!t.dueDate) return false
                 const d = new Date(t.dueDate + 'T00:00:00')
                 return d >= in7 && d < in30
-            }),
+            })),
         },
         {
             label: 'Later',
             headerClass: 'text-muted',
-            tasks: tasks.filter((t) => {
+            tasks: applySort(filtered.filter((t) => {
                 if (!t.dueDate) return false
                 return new Date(t.dueDate + 'T00:00:00') >= in30
-            }),
+            })),
         },
         {
             label: 'No Due Date',
             headerClass: 'text-muted',
-            tasks: tasks.filter((t) => !t.dueDate),
+            tasks: applySort(filtered.filter((t) => !t.dueDate)),
         },
     ]
 
-    const totalActive = tasks.length
+    const totalActive = tasks.filter((t) => !t.checked).length
+    const totalFiltered = groups.reduce((sum, g) => sum + g.tasks.length, 0)
 
     return (
         <div>
@@ -206,6 +259,38 @@ const TasksDashboard: React.FC = () => {
                 </Button>
             </div>
 
+            {/* Sort / Filter controls */}
+            <div className="d-flex flex-wrap gap-2 mb-2 align-items-center">
+                <Form.Select
+                    size="sm"
+                    style={{ width: 'auto' }}
+                    value={filterOption}
+                    onChange={(e) => setFilterOption(e.target.value as FilterOption)}
+                    aria-label="Filter tasks"
+                >
+                    <option value="active">Active</option>
+                    <option value="completed">Completed</option>
+                    <option value="all">All</option>
+                    <option value="priority_high">High / Critical priority</option>
+                    <option value="recurring">Recurring only</option>
+                    <option value="no_date">No due date</option>
+                </Form.Select>
+
+                <Form.Select
+                    size="sm"
+                    style={{ width: 'auto' }}
+                    value={sortOption}
+                    onChange={(e) => setSortOption(e.target.value as SortOption)}
+                    aria-label="Sort tasks"
+                >
+                    <option value="due_asc">Due date ↑</option>
+                    <option value="due_desc">Due date ↓</option>
+                    <option value="priority">Priority</option>
+                    <option value="label_asc">Label A–Z</option>
+                    <option value="created_desc">Recently added</option>
+                </Form.Select>
+            </div>
+
             {/* Quick-add */}
             <div className="d-flex gap-2 mb-3">
                 <Form.Control
@@ -223,7 +308,11 @@ const TasksDashboard: React.FC = () => {
                 </Button>
             </div>
 
-            {totalActive === 0 && <div className="text-muted">No active tasks. Great work!</div>}
+            {totalFiltered === 0 && (
+                <div className="text-muted">
+                    {filterOption === 'active' ? 'No active tasks. Great work!' : 'No tasks match the current filter.'}
+                </div>
+            )}
 
             {groups.map((group) => {
                 if (group.tasks.length === 0) return null
