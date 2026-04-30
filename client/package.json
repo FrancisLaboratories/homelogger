@@ -11,7 +11,7 @@
     "dependencies": {
         "bootstrap": "^5.3.8",
         "bootstrap-icons": "^1.11.3",
-        "next": "^16.2.2",
+        "next": "^16.2.3",
         "react": "^18.3.1",
         "react-bootstrap": "^2.10.10",
         "react-dom": "^18.3.1",
