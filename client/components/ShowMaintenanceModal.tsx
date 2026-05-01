@@ -316,10 +316,10 @@ const ShowMaintenanceModal: React.FC<ShowMaintenanceModalProps> = ({
                         </>
                     ) : (
                         <>
-                            <Button variant="outline-secondary" onClick={() => setEditing(true)}>
+                            <Button variant="secondary" onClick={() => setEditing(true)}>
                                 <i className="bi bi-pencil me-1"></i>Edit
                             </Button>
-                            <Button variant="secondary" onClick={handleClose}>
+                            <Button variant="primary" onClick={handleClose}>
                                 Close
                             </Button>
                         </>
