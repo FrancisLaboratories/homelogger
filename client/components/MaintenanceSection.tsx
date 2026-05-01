@@ -85,6 +85,11 @@ const MaintenanceSection: React.FC<MaintenanceProps> = ({
         setMaintenanceRecords(maintenanceRecords.filter((record) => record.id !== id))
     }
 
+    const handleUpdateMaintenance = (updated: MaintenanceRecord) => {
+        setMaintenanceRecords((prev) => prev.map((r) => (r.id === updated.id ? updated : r)))
+        setSelectedRecord(updated)
+    }
+
     const totalCost = maintenanceRecords.reduce((sum, record) => sum + record.cost, 0)
 
     return (
@@ -151,6 +156,7 @@ const MaintenanceSection: React.FC<MaintenanceProps> = ({
                     handleClose={handleCloseViewModal}
                     maintenanceRecord={selectedRecord}
                     handleDeleteMaintenance={handleDeleteMaintenance}
+                    handleUpdateMaintenance={handleUpdateMaintenance}
                 />
             )}
         </Card>

@@ -580,6 +580,28 @@ func main() {
 		return c.SendStatus(fiber.StatusNoContent)
 	})
 
+	app.Put("/maintenance/update/:id", func(c *fiber.Ctx) error {
+		id := c.Params("id")
+		idUint, err := strconv.ParseUint(id, 10, 32)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).SendString("Invalid ID format")
+		}
+		var body struct {
+			Description string  `json:"description"`
+			Date        string  `json:"date"`
+			Cost        float64 `json:"cost"`
+			Notes       string  `json:"notes"`
+		}
+		if err := c.BodyParser(&body); err != nil {
+			return c.Status(fiber.StatusBadRequest).SendString("Error parsing body: " + err.Error())
+		}
+		updated, err := database.UpdateMaintenance(db, uint(idUint), body.Description, body.Date, body.Cost, body.Notes)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).SendString("Error updating maintenance record: " + err.Error())
+		}
+		return c.JSON(updated)
+	})
+
 	// Repair endpoints
 	app.Get("/repair", func(c *fiber.Ctx) error {
 		applianceId := c.Query("applianceId")
@@ -660,6 +682,28 @@ func main() {
 			return c.Status(fiber.StatusInternalServerError).SendString("Error deleting repair record: " + err.Error())
 		}
 		return c.SendStatus(fiber.StatusNoContent)
+	})
+
+	app.Put("/repair/update/:id", func(c *fiber.Ctx) error {
+		id := c.Params("id")
+		idUint, err := strconv.ParseUint(id, 10, 32)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).SendString("Invalid ID format")
+		}
+		var body struct {
+			Description string  `json:"description"`
+			Date        string  `json:"date"`
+			Cost        float64 `json:"cost"`
+			Notes       string  `json:"notes"`
+		}
+		if err := c.BodyParser(&body); err != nil {
+			return c.Status(fiber.StatusBadRequest).SendString("Error parsing body: " + err.Error())
+		}
+		updated, err := database.UpdateRepair(db, uint(idUint), body.Description, body.Date, body.Cost, body.Notes)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).SendString("Error updating repair record: " + err.Error())
+		}
+		return c.JSON(updated)
 	})
 
 	// Upload a new file

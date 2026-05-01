@@ -744,6 +744,52 @@ paths:
       responses:
         "204":
           description: Maintenance record deleted
+  /maintenance/update/{id}:
+    put:
+      summary: Update a maintenance record
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - description
+                - date
+              properties:
+                description:
+                  type: string
+                  example: "Replace air filter"
+                date:
+                  type: string
+                  format: date
+                  example: "2026-04-01"
+                cost:
+                  type: number
+                  example: 75.0
+                notes:
+                  type: string
+                  example: "Updated notes"
+      responses:
+        "200":
+          description: Updated maintenance record
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MaintenanceRecord"
+        "400":
+          description: Invalid request
+        "404":
+          description: Maintenance record not found
+        "500":
+          description: Server error
   /repair:
     get:
       summary: Get all repair records
@@ -928,6 +974,52 @@ paths:
       responses:
         "204":
           description: Repair record deleted
+  /repair/update/{id}:
+    put:
+      summary: Update a repair record
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - description
+                - date
+              properties:
+                description:
+                  type: string
+                  example: "Fix leak"
+                date:
+                  type: string
+                  format: date
+                  example: "2026-04-15"
+                cost:
+                  type: number
+                  example: 200.0
+                notes:
+                  type: string
+                  example: "Updated repair notes"
+      responses:
+        "200":
+          description: Updated repair record
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RepairRecord"
+        "400":
+          description: Invalid request
+        "404":
+          description: Repair record not found
+        "500":
+          description: Server error
   /files/upload:
     post:
       summary: Upload a new file
@@ -1341,3 +1433,61 @@ components:
           type: string
           nullable: true
           example: "HVAC"
+    MaintenanceRecord:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        description:
+          type: string
+          example: "Replace air filter"
+        date:
+          type: string
+          format: date
+          example: "2026-04-01"
+        cost:
+          type: number
+          example: 75.0
+        notes:
+          type: string
+          example: "Annual filter change"
+        spaceType:
+          type: string
+          example: "HVAC"
+        referenceType:
+          type: string
+          example: "Space"
+        applianceId:
+          type: integer
+          nullable: true
+          example: null
+    RepairRecord:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        description:
+          type: string
+          example: "Fix leak"
+        date:
+          type: string
+          format: date
+          example: "2026-04-15"
+        cost:
+          type: number
+          example: 200.0
+        notes:
+          type: string
+          example: "Kitchen sink P-trap replaced"
+        spaceType:
+          type: string
+          example: "Plumbing"
+        referenceType:
+          type: string
+          example: "Space"
+        applianceId:
+          type: integer
+          nullable: true
+          example: null

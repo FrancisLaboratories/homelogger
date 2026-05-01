@@ -81,6 +81,11 @@ const RepairSection: React.FC<RepairProps> = ({ applianceId, referenceType, spac
         setRepairRecords(repairRecords.filter((record) => record.id !== id))
     }
 
+    const handleUpdateRepair = (updated: RepairRecord) => {
+        setRepairRecords((prev) => prev.map((r) => (r.id === updated.id ? updated : r)))
+        setSelectedRecord(updated)
+    }
+
     const totalCost = repairRecords.reduce((sum, record) => sum + record.cost, 0)
 
     return (
@@ -147,6 +152,7 @@ const RepairSection: React.FC<RepairProps> = ({ applianceId, referenceType, spac
                     handleClose={handleCloseViewModal}
                     repairRecord={selectedRecord}
                     handleDeleteRepair={handleDeleteRepair}
+                    handleUpdateRepair={handleUpdateRepair}
                 />
             )}
         </Card>

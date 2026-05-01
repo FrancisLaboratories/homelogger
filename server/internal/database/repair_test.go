@@ -67,3 +67,39 @@ func TestGetRepairsSpaceFilter(t *testing.T) {
         t.Fatalf("expected 1 repair for space, got %d", len(res))
     }
 }
+
+func TestUpdateRepair(t *testing.T) {
+    db := testDB(t)
+
+    r := &models.Repair{Description: "original", ReferenceType: "Space", SpaceType: "Basement", Date: "2026-01-02", Cost: 20.0, Notes: "old notes"}
+    added, err := AddRepair(db, r)
+    if err != nil {
+        t.Fatalf("AddRepair failed: %v", err)
+    }
+
+    updated, err := UpdateRepair(db, added.ID, "updated desc", "2026-07-01", 149.99, "new notes")
+    if err != nil {
+        t.Fatalf("UpdateRepair failed: %v", err)
+    }
+    if updated.Description != "updated desc" {
+        t.Errorf("expected description 'updated desc', got %q", updated.Description)
+    }
+    if updated.Date != "2026-07-01" {
+        t.Errorf("expected date '2026-07-01', got %q", updated.Date)
+    }
+    if updated.Cost != 149.99 {
+        t.Errorf("expected cost 149.99, got %v", updated.Cost)
+    }
+    if updated.Notes != "new notes" {
+        t.Errorf("expected notes 'new notes', got %q", updated.Notes)
+    }
+
+    // Verify persisted
+    got, err := GetRepair(db, added.ID)
+    if err != nil {
+        t.Fatalf("GetRepair failed: %v", err)
+    }
+    if got.Description != "updated desc" {
+        t.Errorf("persisted description mismatch: %q", got.Description)
+    }
+}
