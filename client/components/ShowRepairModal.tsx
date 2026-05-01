@@ -261,39 +261,45 @@ const ShowRepairModal: React.FC<ShowRepairModalProps> = ({
                                     >
                                         {att.originalName || `File ${att.id}`}
                                     </a>{' '}
-                                    <Button
-                                        variant="danger"
-                                        size="sm"
-                                        onClick={() => handleDeleteAttachment(att.id)}
-                                        style={{ marginLeft: '8px' }}
-                                    >
-                                        Delete
-                                    </Button>
+                                    {editing && (
+                                        <Button
+                                            variant="danger"
+                                            size="sm"
+                                            onClick={() => handleDeleteAttachment(att.id)}
+                                            style={{ marginLeft: '8px' }}
+                                        >
+                                            Delete
+                                        </Button>
+                                    )}
                                 </li>
                             ))}
                         </ul>
                     </div>
                 )}
 
-                <Form.Group controlId="formAddFiles" className="mt-3">
-                    <Form.Label>Add attachments</Form.Label>
-                    <Form.Control
-                        ref={fileInputRef}
-                        type="file"
-                        multiple
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                            handleAddFiles(e.target.files)
-                        }
-                    />
-                    {uploadMessage && (
-                        <div style={{ color: 'green', marginTop: '6px' }}>{uploadMessage}</div>
-                    )}
-                </Form.Group>
+                {editing && (
+                    <Form.Group controlId="formAddFiles" className="mt-3">
+                        <Form.Label>Add attachments</Form.Label>
+                        <Form.Control
+                            ref={fileInputRef}
+                            type="file"
+                            multiple
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                                handleAddFiles(e.target.files)
+                            }
+                        />
+                        {uploadMessage && (
+                            <div style={{ color: 'green', marginTop: '6px' }}>{uploadMessage}</div>
+                        )}
+                    </Form.Group>
+                )}
             </Modal.Body>
-            <Modal.Footer className="d-flex justify-content-between">
-                <Button variant="danger" onClick={handleDelete} disabled={editing}>
-                    <i className="bi bi-trash"></i>
-                </Button>
+            <Modal.Footer className={`d-flex ${editing ? 'justify-content-between' : 'justify-content-end'}`}>
+                {editing && (
+                    <Button variant="danger" onClick={handleDelete}>
+                        <i className="bi bi-trash"></i>
+                    </Button>
+                )}
                 <div className="d-flex gap-2">
                     {editing ? (
                         <>

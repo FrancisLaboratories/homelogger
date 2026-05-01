@@ -1,10 +1,10 @@
 package database
 
 import (
-    "os"
-    "testing"
+	"os"
+	"testing"
 
-    "github.com/masoncfrancis/homelogger/server/internal/models"
+	"github.com/masoncfrancis/homelogger/server/internal/models"
 )
 
 func TestAddGetDeleteMaintenance(t *testing.T) {
