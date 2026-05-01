@@ -47,5 +47,15 @@ func MigrateGorm(db *gorm.DB) error {
 		return err
 	}
 
+	// Drop legacy associated_id column from saved_files if it still exists.
+	// This column was removed from the model but AutoMigrate never drops columns.
+	var count int64
+	db.Raw("SELECT COUNT(*) FROM pragma_table_info('saved_files') WHERE name = 'associated_id'").Scan(&count)
+	if count > 0 {
+		if err := db.Exec("ALTER TABLE saved_files DROP COLUMN associated_id").Error; err != nil {
+			return err
+		}
+	}
+
 	return nil
 }

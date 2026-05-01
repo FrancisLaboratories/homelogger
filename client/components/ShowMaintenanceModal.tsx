@@ -25,6 +25,7 @@ const ShowMaintenanceModal: React.FC<ShowMaintenanceModalProps> = ({
 }) => {
     const [attachments, setAttachments] = useState<AttachmentInfo[]>([])
     const [uploadMessage, setUploadMessage] = useState<string>('')
+    const [uploadError, setUploadError] = useState<string>('')
     const fileInputRef = useRef<HTMLInputElement | null>(null)
 
     // Edit state
@@ -88,6 +89,8 @@ const ShowMaintenanceModal: React.FC<ShowMaintenanceModalProps> = ({
 
     const handleAddFiles = async (files: FileList | null) => {
         if (!files || files.length === 0) return
+        setUploadMessage('')
+        setUploadError('')
         for (const f of Array.from(files)) {
             try {
                 const formData = new FormData()
@@ -98,11 +101,11 @@ const ShowMaintenanceModal: React.FC<ShowMaintenanceModalProps> = ({
                     method: 'POST',
                     body: formData,
                 })
-                if (!uploadResp.ok) throw new Error('Upload failed')
+                if (!uploadResp.ok) throw new Error(await uploadResp.text())
                 const uploadData = await uploadResp.json()
 
                 // attach to maintenance
-                await fetch(`${SERVER_URL}/files/attach`, {
+                const attachResp = await fetch(`${SERVER_URL}/files/attach`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -110,6 +113,7 @@ const ShowMaintenanceModal: React.FC<ShowMaintenanceModalProps> = ({
                         maintenanceId: maintenanceRecord.id,
                     }),
                 })
+                if (!attachResp.ok) throw new Error('Failed to attach file')
 
                 setAttachments((prev) => [
                     ...prev,
@@ -120,9 +124,11 @@ const ShowMaintenanceModal: React.FC<ShowMaintenanceModalProps> = ({
                 ])
             } catch (err) {
                 console.error('Error adding file', err)
+                setUploadError(`Upload failed: ${String(err)}`)
+                if (fileInputRef.current) fileInputRef.current.value = ''
+                return
             }
         }
-        // notify and clear file input
         setUploadMessage('Upload successful')
         if (fileInputRef.current) fileInputRef.current.value = ''
         setTimeout(() => setUploadMessage(''), 3000)
@@ -295,6 +301,9 @@ const ShowMaintenanceModal: React.FC<ShowMaintenanceModalProps> = ({
                         />
                         {uploadMessage && (
                             <div style={{ color: 'green', marginTop: '6px' }}>{uploadMessage}</div>
+                        )}
+                        {uploadError && (
+                            <div style={{ color: 'red', marginTop: '6px' }}>{uploadError}</div>
                         )}
                     </Form.Group>
                 )}
