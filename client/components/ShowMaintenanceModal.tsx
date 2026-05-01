@@ -297,7 +297,9 @@ const ShowMaintenanceModal: React.FC<ShowMaintenanceModalProps> = ({
                     </Form.Group>
                 )}
             </Modal.Body>
-            <Modal.Footer className={`d-flex ${editing ? 'justify-content-between' : 'justify-content-end'}`}>
+            <Modal.Footer
+                className={`d-flex ${editing ? 'justify-content-between' : 'justify-content-end'}`}
+            >
                 {editing && (
                     <Button variant="danger" onClick={handleDelete}>
                         <i className="bi bi-trash"></i>
