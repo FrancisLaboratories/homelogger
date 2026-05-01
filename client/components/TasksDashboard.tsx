@@ -129,6 +129,10 @@ const TasksDashboard: React.FC = () => {
         setTasks((prev) => prev.map((t) => (t.id === updated.id ? updated : t)))
         // refresh to pick up any new due date for recurring tasks
         fetchTasks()
+        if (!updated.isRecurring && filterOption === 'active') {
+            setFilterOption('all')
+            setCookie('hl_dashboard_filter', 'all')
+        }
     }
 
     const handleDelete = (id: number) => {

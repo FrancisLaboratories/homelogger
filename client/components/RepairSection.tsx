@@ -67,7 +67,7 @@ const RepairSection: React.FC<RepairProps> = ({ applianceId, referenceType, spac
     const handleShowAddModal = () => setShowAddModal(true)
     const handleCloseAddModal = () => setShowAddModal(false)
     const handleSaveRepair = (newRepair: RepairRecord) => {
-        setRepairRecords([...repairRecords, newRepair])
+        setRepairRecords((prev) => [...prev, newRepair])
     }
 
     const handleRowClick = (record: RepairRecord) => {

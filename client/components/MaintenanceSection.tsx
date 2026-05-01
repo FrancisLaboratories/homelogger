@@ -71,7 +71,7 @@ const MaintenanceSection: React.FC<MaintenanceProps> = ({
     const handleShowAddModal = () => setShowAddModal(true)
     const handleCloseAddModal = () => setShowAddModal(false)
     const handleSaveMaintenance = (newMaintenance: MaintenanceRecord) => {
-        setMaintenanceRecords([...maintenanceRecords, newMaintenance])
+        setMaintenanceRecords((prev) => [...prev, newMaintenance])
     }
 
     const handleRowClick = (record: MaintenanceRecord) => {

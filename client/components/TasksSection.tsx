@@ -135,6 +135,10 @@ const TasksSection: React.FC<TasksSectionProps> = ({ applianceId, spaceType }) =
 
     const handleComplete = (updated: Task) => {
         setTasks((prev) => prev.map((t) => (t.id === updated.id ? updated : t)))
+        fetchTasks()
+        if (!updated.isRecurring && (filterOption === 'upcoming' || filterOption === 'overdue')) {
+            handleFilterChange('all')
+        }
     }
 
     const handleDelete = (id: number) => {
