@@ -42,9 +42,19 @@ func ConnectGorm() (*gorm.DB, error) {
 
 // MigrateGorm migrates the database
 func MigrateGorm(db *gorm.DB) error {
-	err := db.AutoMigrate(&models.Todo{}, &models.Appliance{}, &models.Maintenance{}, &models.Repair{}, &models.SavedFile{}, &models.Note{})
+	err := db.AutoMigrate(&models.Todo{}, &models.Appliance{}, &models.Maintenance{}, &models.Repair{}, &models.SavedFile{}, &models.Note{}, &models.Task{})
 	if err != nil {
 		return err
+	}
+
+	// Drop legacy associated_id column from saved_files if it still exists.
+	// This column was removed from the model but AutoMigrate never drops columns.
+	var count int64
+	db.Raw("SELECT COUNT(*) FROM pragma_table_info('saved_files') WHERE name = 'associated_id'").Scan(&count)
+	if count > 0 {
+		if err := db.Exec("ALTER TABLE saved_files DROP COLUMN associated_id").Error; err != nil {
+			return err
+		}
 	}
 
 	return nil
