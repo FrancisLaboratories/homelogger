@@ -240,21 +240,23 @@ const ShowMaintenanceModal: React.FC<ShowMaintenanceModalProps> = ({
                         <p>
                             <strong>Cost:</strong> ${maintenanceRecord.cost}
                         </p>
-                        {maintenanceRecord.notes && (
-                            <Form.Group>
-                                <Form.Label>
-                                    <strong>Notes:</strong>
-                                </Form.Label>
-                                <div className="form-control">{maintenanceRecord.notes}</div>
-                            </Form.Group>
-                        )}
+                        <Form.Group>
+                            <Form.Label>
+                                <strong>Notes:</strong>
+                            </Form.Label>
+                            <div className="form-control text-muted">
+                                {maintenanceRecord.notes || 'None'}
+                            </div>
+                        </Form.Group>
                     </>
                 )}
 
-                {attachments.length > 0 && (
-                    <div className="mt-3">
-                        <strong>Attachments:</strong>
-                        <ul>
+                <div className="mt-3">
+                    <strong>Attachments:</strong>
+                    {attachments.length === 0 && !editing ? (
+                        <p className="text-muted mb-0">None</p>
+                    ) : (
+                        <ul className="mb-0">
                             {attachments.map((att) => (
                                 <li key={att.id}>
                                     <a
@@ -277,8 +279,8 @@ const ShowMaintenanceModal: React.FC<ShowMaintenanceModalProps> = ({
                                 </li>
                             ))}
                         </ul>
-                    </div>
-                )}
+                    )}
+                </div>
 
                 {editing && (
                     <Form.Group controlId="formAddFiles" className="mt-3">

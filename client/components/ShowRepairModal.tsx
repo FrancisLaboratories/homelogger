@@ -237,21 +237,23 @@ const ShowRepairModal: React.FC<ShowRepairModalProps> = ({
                         <p>
                             <strong>Cost:</strong> ${repairRecord.cost}
                         </p>
-                        {repairRecord.notes && (
-                            <Form.Group>
-                                <Form.Label>
-                                    <strong>Notes:</strong>
-                                </Form.Label>
-                                <div className="form-control">{repairRecord.notes}</div>
-                            </Form.Group>
-                        )}
+                        <Form.Group>
+                            <Form.Label>
+                                <strong>Notes:</strong>
+                            </Form.Label>
+                            <div className="form-control text-muted">
+                                {repairRecord.notes || 'None'}
+                            </div>
+                        </Form.Group>
                     </>
                 )}
 
-                {attachments.length > 0 && (
-                    <div className="mt-3">
-                        <strong>Attachments:</strong>
-                        <ul>
+                <div className="mt-3">
+                    <strong>Attachments:</strong>
+                    {attachments.length === 0 && !editing ? (
+                        <p className="text-muted mb-0">None</p>
+                    ) : (
+                        <ul className="mb-0">
                             {attachments.map((att) => (
                                 <li key={att.id}>
                                     <a
@@ -274,8 +276,8 @@ const ShowRepairModal: React.FC<ShowRepairModalProps> = ({
                                 </li>
                             ))}
                         </ul>
-                    </div>
-                )}
+                    )}
+                </div>
 
                 {editing && (
                     <Form.Group controlId="formAddFiles" className="mt-3">
