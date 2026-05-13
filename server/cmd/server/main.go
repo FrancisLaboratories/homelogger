@@ -202,133 +202,6 @@ func main() {
 		return c.Status(fiber.StatusOK).JSON(status)
 	})
 
-	app.Get("/todo", func(c *fiber.Ctx) error {
-		// Connect to gorm
-		db, err := database.ConnectGorm()
-		if err != nil {
-			return c.SendString("Error connecting GORM to db")
-		}
-
-		// Get optional filters
-		applianceIdStr := c.Query("applianceId")
-		spaceType := c.Query("spaceType")
-		var applianceId uint = 0
-		if applianceIdStr != "" {
-			if idUint, err := strconv.ParseUint(applianceIdStr, 10, 32); err == nil {
-				applianceId = uint(idUint)
-			}
-		}
-
-		// Get todos with optional filters
-		todos, err := database.GetTodos(db, applianceId, spaceType)
-		if err != nil {
-			return c.SendString("Error getting todos:" + err.Error())
-		}
-
-		return c.JSON(todos)
-	})
-
-	app.Put("/todo/update/:id", func(c *fiber.Ctx) error {
-		// Connect to gorm
-		db, err := database.ConnectGorm()
-		if err != nil {
-			return c.SendString("Error connecting GORM to db")
-		}
-
-		// Get the id from the URL
-		id := c.Params("id")
-
-		// Get the checked status from the body
-		var body struct {
-			Checked bool `json:"checked"`
-		}
-		err = c.BodyParser(&body)
-		if err != nil {
-			return c.SendString("Error parsing body")
-		}
-
-		// Convert id to uint
-		idUint, err := strconv.ParseUint(id, 10, 32)
-		if err != nil {
-			return c.SendString("Invalid ID format")
-		}
-
-		// Change the checked status of the todo
-		err = database.ChangeTodoChecked(db, uint(idUint), body.Checked)
-		if err != nil {
-			return c.SendString("Error changing todo checked status:" + err.Error())
-		}
-
-		return c.SendString("Todo updated")
-	})
-
-	app.Post("/todo/add", func(c *fiber.Ctx) error {
-		// Connect to gorm
-		db, err := database.ConnectGorm()
-		if err != nil {
-			return c.SendString("Error connecting GORM to db")
-		}
-
-		// Get the label, checked status, and userid from the body
-		var body struct {
-			Label   string `json:"label"`
-			Checked bool   `json:"checked"`
-			UserID  string `json:"userid"`
-		}
-		err = c.BodyParser(&body)
-		if err != nil {
-			return c.SendString("Error parsing body")
-		}
-
-		// Add a todo (may include optional applianceId/spaceType)
-		var applianceId uint = 0
-		if bodyMap := c.Body(); len(bodyMap) > 0 {
-			// body parsed into struct already; we'll parse optional fields separately below
-		}
-		// parse optional fields from a secondary struct
-		var opt struct {
-			ApplianceID uint   `json:"applianceId"`
-			SpaceType   string `json:"spaceType"`
-		}
-		_ = c.BodyParser(&opt)
-
-		if opt.ApplianceID != 0 {
-			applianceId = opt.ApplianceID
-		}
-
-		todo, err := database.AddTodo(db, body.Label, body.Checked, body.UserID, applianceId, opt.SpaceType)
-		if err != nil {
-			return c.SendString("Error adding todo:" + err.Error())
-		}
-
-		return c.JSON(todo)
-	})
-
-	app.Delete("/todo/delete/:id", func(c *fiber.Ctx) error {
-		// Connect to gorm
-		db, err := database.ConnectGorm()
-		if err != nil {
-			return c.SendString("Error connecting GORM to db")
-		}
-
-		// Get the id from the URL
-		id := c.Params("id")
-
-		// Convert id to uint
-		idUint, err := strconv.ParseUint(id, 10, 32)
-		if err != nil {
-			return c.SendString("Invalid ID format")
-		}
-
-		// Delete the todo
-		err = database.DeleteTodo(db, uint(idUint))
-		if err != nil {
-			return c.SendString("Error deleting todo:" + err.Error())
-		}
-
-		return c.SendString("Todo deleted")
-	})
-
 	// Get all appliances
 	app.Get("/appliances", func(c *fiber.Ctx) error {
 		// Connect to gorm
@@ -736,6 +609,7 @@ func main() {
 		file := files[0]
 		savedFile := &models.SavedFile{
 			OriginalName: file.Filename,
+			Type:         "",
 			UserID:       userID,
 		}
 
