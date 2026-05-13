@@ -451,6 +451,7 @@ const TasksDashboard: React.FC = () => {
                     setTasks((prev) => [...prev, task])
                     setShowAddModal(false)
                 }}
+                startDetailed={true}
             />
         </div>
     )
