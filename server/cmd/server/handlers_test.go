@@ -143,7 +143,28 @@ func TestTodoEndpoints(t *testing.T) {
 func createAppWithMaintenanceRepair(db *gorm.DB) *fiber.App {
     app := fiber.New()
 
-    app.Post("/maintenance/add", func(c *fiber.Ctx) error {
+    app.Post("/maintenance/add", maintenanceAddHandler(db))
+    app.Put("/maintenance/update/:id", maintenanceUpdateHandler(db))
+    app.Delete("/maintenance/delete/:id", maintenanceDeleteHandler(db))
+
+    app.Post("/repair/add", repairAddHandler(db))
+    app.Put("/repair/update/:id", repairUpdateHandler(db))
+    app.Delete("/repair/delete/:id", repairDeleteHandler(db))
+
+    return app
+}
+
+// parseIDParam parses a numeric :id param and returns it as uint
+func parseIDParam(c *fiber.Ctx) (uint, error) {
+    id, err := strconv.ParseUint(c.Params("id"), 10, 32)
+    if err != nil {
+        return 0, err
+    }
+    return uint(id), nil
+}
+
+func maintenanceAddHandler(db *gorm.DB) func(c *fiber.Ctx) error {
+    return func(c *fiber.Ctx) error {
         var body struct {
             models.Maintenance
             AttachmentIDs []uint `json:"attachmentIds"`
@@ -156,10 +177,12 @@ func createAppWithMaintenanceRepair(db *gorm.DB) *fiber.App {
             return c.Status(fiber.StatusInternalServerError).SendString("err")
         }
         return c.Status(fiber.StatusCreated).JSON(m)
-    })
+    }
+}
 
-    app.Put("/maintenance/update/:id", func(c *fiber.Ctx) error {
-        id, err := strconv.ParseUint(c.Params("id"), 10, 32)
+func maintenanceUpdateHandler(db *gorm.DB) func(c *fiber.Ctx) error {
+    return func(c *fiber.Ctx) error {
+        id, err := parseIDParam(c)
         if err != nil {
             return c.Status(fiber.StatusBadRequest).SendString("invalid id")
         }
@@ -172,25 +195,29 @@ func createAppWithMaintenanceRepair(db *gorm.DB) *fiber.App {
         if err := c.BodyParser(&body); err != nil {
             return c.Status(fiber.StatusBadRequest).SendString("bad")
         }
-        updated, err := database.UpdateMaintenance(db, uint(id), body.Description, body.Date, body.Cost, body.Notes)
+        updated, err := database.UpdateMaintenance(db, id, body.Description, body.Date, body.Cost, body.Notes)
         if err != nil {
             return c.Status(fiber.StatusInternalServerError).SendString("err")
         }
         return c.JSON(updated)
-    })
+    }
+}
 
-    app.Delete("/maintenance/delete/:id", func(c *fiber.Ctx) error {
-        id, err := strconv.ParseUint(c.Params("id"), 10, 32)
+func maintenanceDeleteHandler(db *gorm.DB) func(c *fiber.Ctx) error {
+    return func(c *fiber.Ctx) error {
+        id, err := parseIDParam(c)
         if err != nil {
             return c.Status(fiber.StatusBadRequest).SendString("invalid id")
         }
-        if err := database.DeleteMaintenance(db, uint(id)); err != nil {
+        if err := database.DeleteMaintenance(db, id); err != nil {
             return c.Status(fiber.StatusInternalServerError).SendString("err")
         }
         return c.SendStatus(fiber.StatusNoContent)
-    })
+    }
+}
 
-    app.Post("/repair/add", func(c *fiber.Ctx) error {
+func repairAddHandler(db *gorm.DB) func(c *fiber.Ctx) error {
+    return func(c *fiber.Ctx) error {
         var body struct {
             models.Repair
             AttachmentIDs []uint `json:"attachmentIds"`
@@ -203,10 +230,12 @@ func createAppWithMaintenanceRepair(db *gorm.DB) *fiber.App {
             return c.Status(fiber.StatusInternalServerError).SendString("err")
         }
         return c.Status(fiber.StatusCreated).JSON(r)
-    })
+    }
+}
 
-    app.Put("/repair/update/:id", func(c *fiber.Ctx) error {
-        id, err := strconv.ParseUint(c.Params("id"), 10, 32)
+func repairUpdateHandler(db *gorm.DB) func(c *fiber.Ctx) error {
+    return func(c *fiber.Ctx) error {
+        id, err := parseIDParam(c)
         if err != nil {
             return c.Status(fiber.StatusBadRequest).SendString("invalid id")
         }
@@ -219,25 +248,25 @@ func createAppWithMaintenanceRepair(db *gorm.DB) *fiber.App {
         if err := c.BodyParser(&body); err != nil {
             return c.Status(fiber.StatusBadRequest).SendString("bad")
         }
-        updated, err := database.UpdateRepair(db, uint(id), body.Description, body.Date, body.Cost, body.Notes)
+        updated, err := database.UpdateRepair(db, id, body.Description, body.Date, body.Cost, body.Notes)
         if err != nil {
             return c.Status(fiber.StatusInternalServerError).SendString("err")
         }
         return c.JSON(updated)
-    })
+    }
+}
 
-    app.Delete("/repair/delete/:id", func(c *fiber.Ctx) error {
-        id, err := strconv.ParseUint(c.Params("id"), 10, 32)
+func repairDeleteHandler(db *gorm.DB) func(c *fiber.Ctx) error {
+    return func(c *fiber.Ctx) error {
+        id, err := parseIDParam(c)
         if err != nil {
             return c.Status(fiber.StatusBadRequest).SendString("invalid id")
         }
-        if err := database.DeleteRepair(db, uint(id)); err != nil {
+        if err := database.DeleteRepair(db, id); err != nil {
             return c.Status(fiber.StatusInternalServerError).SendString("err")
         }
         return c.SendStatus(fiber.StatusNoContent)
-    })
-
-    return app
+    }
 }
 
 func TestMaintenanceEndpoints(t *testing.T) {
