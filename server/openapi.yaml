@@ -28,7 +28,8 @@ paths:
                     type: boolean
                     example: true
 
-  /todo:
+# ALL todo endpoints are deprecated as of v 0.3.0 in favor of /task, but keeping them for backward compatibility
+  /todo: 
     get:
       summary: Get todos (optionally filter by appliance or space)
       parameters:
