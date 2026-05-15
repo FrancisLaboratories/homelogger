@@ -8,6 +8,7 @@ interface ShowRepairModalProps {
     handleClose: () => void
     repairRecord: RepairRecord
     handleDeleteRepair: (id: number) => void
+    handleUpdateRepair?: (updated: RepairRecord) => void
 }
 
 interface AttachmentInfo {
@@ -20,10 +21,21 @@ const ShowRepairModal: React.FC<ShowRepairModalProps> = ({
     handleClose,
     repairRecord,
     handleDeleteRepair,
+    handleUpdateRepair,
 }) => {
     const [attachments, setAttachments] = useState<AttachmentInfo[]>([])
     const [uploadMessage, setUploadMessage] = useState<string>('')
+    const [uploadError, setUploadError] = useState<string>('')
     const fileInputRef = useRef<HTMLInputElement | null>(null)
+
+    // Edit state
+    const [editing, setEditing] = useState(false)
+    const [editDescription, setEditDescription] = useState('')
+    const [editDate, setEditDate] = useState('')
+    const [editCost, setEditCost] = useState(0)
+    const [editNotes, setEditNotes] = useState('')
+    const [isSaving, setIsSaving] = useState(false)
+    const [saveError, setSaveError] = useState('')
 
     useEffect(() => {
         const loadAttachments = async () => {
@@ -49,6 +61,19 @@ const ShowRepairModal: React.FC<ShowRepairModalProps> = ({
         if (show) loadAttachments()
     }, [show, repairRecord.id])
 
+    // Reset edit state when record changes or modal closes
+    useEffect(() => {
+        if (!show) {
+            setEditing(false)
+            setSaveError('')
+        } else {
+            setEditDescription(repairRecord.description)
+            setEditDate(repairRecord.date)
+            setEditCost(repairRecord.cost)
+            setEditNotes(repairRecord.notes)
+        }
+    }, [show, repairRecord])
+
     const handleDeleteAttachment = async (fileId: number) => {
         if (!window.confirm('Delete attachment?')) return
         try {
@@ -64,6 +89,8 @@ const ShowRepairModal: React.FC<ShowRepairModalProps> = ({
 
     const handleAddFiles = async (files: FileList | null) => {
         if (!files || files.length === 0) return
+        setUploadMessage('')
+        setUploadError('')
         for (const f of Array.from(files)) {
             try {
                 const formData = new FormData()
@@ -74,11 +101,11 @@ const ShowRepairModal: React.FC<ShowRepairModalProps> = ({
                     method: 'POST',
                     body: formData,
                 })
-                if (!uploadResp.ok) throw new Error('Upload failed')
+                if (!uploadResp.ok) throw new Error(await uploadResp.text())
                 const uploadData = await uploadResp.json()
 
                 // attach to repair
-                await fetch(`${SERVER_URL}/files/attach`, {
+                const attachResp = await fetch(`${SERVER_URL}/files/attach`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -86,6 +113,7 @@ const ShowRepairModal: React.FC<ShowRepairModalProps> = ({
                         repairId: repairRecord.id,
                     }),
                 })
+                if (!attachResp.ok) throw new Error('Failed to attach file')
 
                 setAttachments((prev) => [
                     ...prev,
@@ -96,13 +124,48 @@ const ShowRepairModal: React.FC<ShowRepairModalProps> = ({
                 ])
             } catch (err) {
                 console.error('Error adding file', err)
+                setUploadError(`Upload failed: ${String(err)}`)
+                if (fileInputRef.current) fileInputRef.current.value = ''
+                return
             }
         }
-        // notify and clear file input
         setUploadMessage('Upload successful')
         if (fileInputRef.current) fileInputRef.current.value = ''
         setTimeout(() => setUploadMessage(''), 3000)
     }
+    const handleSaveEdit = async () => {
+        setSaveError('')
+        if (!editDescription.trim()) {
+            setSaveError('Description is required')
+            return
+        }
+        if (!editDate) {
+            setSaveError('Date is required')
+            return
+        }
+        setIsSaving(true)
+        try {
+            const res = await fetch(`${SERVER_URL}/repair/update/${repairRecord.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    description: editDescription.trim(),
+                    date: editDate,
+                    cost: editCost,
+                    notes: editNotes,
+                }),
+            })
+            if (!res.ok) throw new Error(await res.text())
+            const updated: RepairRecord = await res.json()
+            handleUpdateRepair?.(updated)
+            setEditing(false)
+        } catch (err) {
+            setSaveError(String(err))
+        } finally {
+            setIsSaving(false)
+        }
+    }
+
     const handleDelete = async () => {
         if (window.confirm('Are you sure you want to delete this?')) {
             try {
@@ -129,19 +192,74 @@ const ShowRepairModal: React.FC<ShowRepairModalProps> = ({
                 <Modal.Title>Repair Record Details</Modal.Title>
             </Modal.Header>
             <Modal.Body>
-                <p>
-                    <strong>Description:</strong> {repairRecord.description}
-                </p>
-                <p>
-                    <strong>Date:</strong> {repairRecord.date}
-                </p>
-                <p>
-                    <strong>Cost:</strong> ${repairRecord.cost}
-                </p>
-                {attachments.length > 0 && (
-                    <div>
-                        <strong>Attachments:</strong>
-                        <ul>
+                {saveError && <div className="alert alert-danger py-2">{saveError}</div>}
+
+                {editing ? (
+                    <>
+                        <Form.Group className="mb-3" controlId="editDescription">
+                            <Form.Label>Description</Form.Label>
+                            <Form.Control
+                                type="text"
+                                value={editDescription}
+                                onChange={(e) => setEditDescription(e.target.value)}
+                            />
+                        </Form.Group>
+                        <Form.Group className="mb-3" controlId="editDate">
+                            <Form.Label>Date</Form.Label>
+                            <Form.Control
+                                type="date"
+                                value={editDate}
+                                onChange={(e) => setEditDate(e.target.value)}
+                            />
+                        </Form.Group>
+                        <Form.Group className="mb-3" controlId="editCost">
+                            <Form.Label>Cost ($)</Form.Label>
+                            <Form.Control
+                                type="number"
+                                min={0}
+                                step="0.01"
+                                value={editCost}
+                                onChange={(e) => setEditCost(parseFloat(e.target.value) || 0)}
+                            />
+                        </Form.Group>
+                        <Form.Group className="mb-3" controlId="editNotes">
+                            <Form.Label>Notes</Form.Label>
+                            <Form.Control
+                                as="textarea"
+                                rows={3}
+                                value={editNotes}
+                                onChange={(e) => setEditNotes(e.target.value)}
+                            />
+                        </Form.Group>
+                    </>
+                ) : (
+                    <>
+                        <p>
+                            <strong>Description:</strong> {repairRecord.description}
+                        </p>
+                        <p>
+                            <strong>Date:</strong> {repairRecord.date}
+                        </p>
+                        <p>
+                            <strong>Cost:</strong> ${repairRecord.cost}
+                        </p>
+                        <Form.Group>
+                            <Form.Label>
+                                <strong>Notes:</strong>
+                            </Form.Label>
+                            <div className="form-control text-muted">
+                                {repairRecord.notes || 'None'}
+                            </div>
+                        </Form.Group>
+                    </>
+                )}
+
+                <div className="mt-3">
+                    <strong>Attachments:</strong>
+                    {attachments.length === 0 && !editing ? (
+                        <p className="text-muted mb-0">None</p>
+                    ) : (
+                        <ul className="mb-0">
                             {attachments.map((att) => (
                                 <li key={att.id}>
                                     <a
@@ -151,48 +269,78 @@ const ShowRepairModal: React.FC<ShowRepairModalProps> = ({
                                     >
                                         {att.originalName || `File ${att.id}`}
                                     </a>{' '}
-                                    <Button
-                                        variant="danger"
-                                        size="sm"
-                                        onClick={() => handleDeleteAttachment(att.id)}
-                                        style={{ marginLeft: '8px' }}
-                                    >
-                                        Delete
-                                    </Button>
+                                    {editing && (
+                                        <Button
+                                            variant="danger"
+                                            size="sm"
+                                            onClick={() => handleDeleteAttachment(att.id)}
+                                            style={{ marginLeft: '8px' }}
+                                        >
+                                            Delete
+                                        </Button>
+                                    )}
                                 </li>
                             ))}
                         </ul>
-                    </div>
-                )}
-
-                <Form.Group controlId="formAddFiles">
-                    <Form.Label>Add attachments</Form.Label>
-                    <Form.Control
-                        ref={fileInputRef}
-                        type="file"
-                        multiple
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                            handleAddFiles(e.target.files)
-                        }
-                    />
-                    {uploadMessage && (
-                        <div style={{ color: 'green', marginTop: '6px' }}>{uploadMessage}</div>
                     )}
-                </Form.Group>
-                <Form.Group>
-                    <Form.Label>
-                        <strong>Notes:</strong>
-                    </Form.Label>
-                    <div className="form-control">{repairRecord.notes}</div>
-                </Form.Group>
+                </div>
+
+                {editing && (
+                    <Form.Group controlId="formAddFiles" className="mt-3">
+                        <Form.Label>Add attachments</Form.Label>
+                        <Form.Control
+                            ref={fileInputRef}
+                            type="file"
+                            multiple
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                                handleAddFiles(e.target.files)
+                            }
+                        />
+                        {uploadMessage && (
+                            <div style={{ color: 'green', marginTop: '6px' }}>{uploadMessage}</div>
+                        )}
+                        {uploadError && (
+                            <div style={{ color: 'red', marginTop: '6px' }}>{uploadError}</div>
+                        )}
+                    </Form.Group>
+                )}
             </Modal.Body>
-            <Modal.Footer className="d-flex justify-content-between">
-                <Button variant="danger" onClick={handleDelete}>
-                    <i className="bi bi-trash"></i>
-                </Button>
-                <Button variant="secondary" onClick={handleClose}>
-                    Close
-                </Button>
+            <Modal.Footer
+                className={`d-flex ${editing ? 'justify-content-between' : 'justify-content-end'}`}
+            >
+                {editing && (
+                    <Button variant="danger" onClick={handleDelete}>
+                        <i className="bi bi-trash"></i>
+                    </Button>
+                )}
+                <div className="d-flex gap-2">
+                    {editing ? (
+                        <>
+                            <Button
+                                variant="secondary"
+                                onClick={() => {
+                                    setEditing(false)
+                                    setSaveError('')
+                                }}
+                                disabled={isSaving}
+                            >
+                                Cancel
+                            </Button>
+                            <Button variant="primary" onClick={handleSaveEdit} disabled={isSaving}>
+                                {isSaving ? 'Saving…' : 'Save'}
+                            </Button>
+                        </>
+                    ) : (
+                        <>
+                            <Button variant="outline-secondary" onClick={() => setEditing(true)}>
+                                <i className="bi bi-pencil me-1"></i>Edit
+                            </Button>
+                            <Button variant="secondary" onClick={handleClose}>
+                                Close
+                            </Button>
+                        </>
+                    )}
+                </div>
             </Modal.Footer>
         </Modal>
     )

@@ -21,161 +21,262 @@
       "type": "Appliance"
     }
   ],
-  "todos": [
+  "tasks": [
     {
       "label": "Clean refrigerator coils",
+      "notes": "Vacuum dust from coils beneath or behind unit. Dirty coils raise energy use.",
       "checked": false,
+      "priority": "medium",
+      "dueDate": "2026-05-01",
+      "estimatedCost": 0,
+      "isRecurring": true,
+      "recurrenceInterval": 6,
+      "recurrenceUnit": "months",
+      "recurrenceMode": "completion_date",
       "userID": "1",
       "applianceIndex": 0
     },
     {
-      "label": "Check refrigerator temperature",
+      "label": "Check refrigerator door seals",
+      "notes": "Run the dollar-bill test on all door gaskets. Replace if seals are cracked or loose.",
       "checked": false,
+      "priority": "low",
+      "dueDate": "2026-06-15",
+      "isRecurring": true,
+      "recurrenceInterval": 1,
+      "recurrenceUnit": "years",
+      "recurrenceMode": "due_date",
       "userID": "1",
       "applianceIndex": 0
     },
-
     {
-      "label": "Inspect water heater pressure relief valve",
+      "label": "Run maintenance wash cycle",
+      "notes": "Use a washer-cleaning tablet or a cup of white vinegar on a hot cycle.",
       "checked": false,
-      "userID": "1",
-      "spaceType": "Plumbing"
-    },
-    {
-      "label": "Drain a quarter tank from water heater to remove sediment",
-      "checked": false,
-      "userID": "1",
-      "spaceType": "Plumbing"
-    },
-
-    {
-      "label": "Clean washer lint trap and door seal",
-      "checked": false,
+      "priority": "low",
+      "dueDate": "2026-04-15",
+      "isRecurring": true,
+      "recurrenceInterval": 1,
+      "recurrenceUnit": "months",
+      "recurrenceMode": "completion_date",
       "userID": "1",
       "applianceIndex": 1
     },
     {
-      "label": "Run maintenance wash cycle with cleaning solution",
+      "label": "Clean washer door seal and lint trap",
       "checked": false,
+      "priority": "medium",
+      "dueDate": "2026-04-15",
+      "estimatedCost": 0,
+      "isRecurring": true,
+      "recurrenceInterval": 3,
+      "recurrenceUnit": "months",
+      "recurrenceMode": "completion_date",
       "userID": "1",
       "applianceIndex": 1
-    },
-
-    {
-      "label": "Check HVAC vents for blockages",
-      "checked": false,
-      "userID": "1",
-      "spaceType": "HVAC"
     },
     {
       "label": "Replace central HVAC filter",
+      "notes": "Use a MERV-11 or higher filter. Check static pressure if filter is restricted.",
       "checked": false,
+      "priority": "high",
+      "dueDate": "2026-04-10",
+      "estimatedCost": 25,
+      "isRecurring": true,
+      "recurrenceInterval": 3,
+      "recurrenceUnit": "months",
+      "recurrenceMode": "due_date",
       "userID": "1",
       "spaceType": "HVAC"
     },
-
     {
-      "label": "Trim front yard hedges",
+      "label": "Check HVAC vents and returns for blockages",
       "checked": false,
+      "priority": "low",
+      "dueDate": "2026-07-01",
+      "isRecurring": true,
+      "recurrenceInterval": 6,
+      "recurrenceUnit": "months",
+      "recurrenceMode": "completion_date",
       "userID": "1",
-      "spaceType": "Yard"
+      "spaceType": "HVAC"
     },
     {
-      "label": "Inspect sprinkler heads for clogs",
+      "label": "Schedule annual HVAC tune-up",
+      "notes": "Book before summer cooling season begins. Ask tech to check refrigerant charge.",
       "checked": false,
+      "priority": "medium",
+      "dueDate": "2026-05-01",
+      "estimatedCost": 120,
+      "isRecurring": true,
+      "recurrenceInterval": 1,
+      "recurrenceUnit": "years",
+      "recurrenceMode": "due_date",
       "userID": "1",
-      "spaceType": "Yard"
-    },
-
-    {
-      "label": "Test all smoke and CO detectors",
-      "checked": false,
-      "userID": "1",
-      "spaceType": "BuildingInterior"
-    },
-    {
-      "label": "Replace interior lightbulbs as needed",
-      "checked": false,
-      "userID": "1",
-      "spaceType": "BuildingInterior"
-    },
-
-    {
-      "label": "Clear gutters and downspouts",
-      "checked": false,
-      "userID": "1",
-      "spaceType": "BuildingExterior"
+      "spaceType": "HVAC"
     },
     {
-      "label": "Inspect exterior trim and caulking",
+      "label": "Inspect water heater pressure relief valve",
+      "notes": "Lift the test lever briefly to ensure it opens and reseats. Replace valve if it drips afterward.",
       "checked": false,
+      "priority": "high",
+      "dueDate": "2026-04-20",
+      "estimatedCost": 0,
+      "isRecurring": true,
+      "recurrenceInterval": 1,
+      "recurrenceUnit": "years",
+      "recurrenceMode": "due_date",
       "userID": "1",
-      "spaceType": "BuildingExterior"
+      "spaceType": "Plumbing"
     },
-
     {
-      "label": "Test GFCI outlets around exterior",
+      "label": "Drain sediment from water heater",
+      "notes": "Drain a quarter tank into a bucket until water runs clear. Extends tank life.",
       "checked": false,
+      "priority": "medium",
+      "dueDate": "2026-06-01",
+      "isRecurring": true,
+      "recurrenceInterval": 6,
+      "recurrenceUnit": "months",
+      "recurrenceMode": "due_date",
       "userID": "1",
-      "spaceType": "Electrical"
+      "spaceType": "Plumbing"
     },
-    {
-      "label": "Verify breaker labels in panel",
-      "checked": false,
-      "userID": "1",
-      "spaceType": "Electrical"
-    },
-
     {
       "label": "Inspect visible plumbing for leaks",
       "checked": false,
+      "priority": "medium",
+      "dueDate": "2026-04-30",
+      "isRecurring": true,
+      "recurrenceInterval": 6,
+      "recurrenceUnit": "months",
+      "recurrenceMode": "completion_date",
       "userID": "1",
       "spaceType": "Plumbing"
     },
     {
       "label": "Test main water shutoff valve",
+      "notes": "Close fully and reopen to prevent seizing. Note any stiffness for future replacement.",
       "checked": false,
+      "priority": "low",
+      "dueDate": "2026-09-01",
+      "isRecurring": true,
+      "recurrenceInterval": 1,
+      "recurrenceUnit": "years",
+      "recurrenceMode": "due_date",
       "userID": "1",
       "spaceType": "Plumbing"
     },
-
+    {
+      "label": "Test all smoke and CO detectors",
+      "notes": "Press test button on each unit. Replace any that fail or are 10+ years old.",
+      "checked": false,
+      "priority": "critical",
+      "dueDate": "2026-04-05",
+      "estimatedCost": 0,
+      "isRecurring": true,
+      "recurrenceInterval": 6,
+      "recurrenceUnit": "months",
+      "recurrenceMode": "due_date",
+      "userID": "1",
+      "spaceType": "BuildingInterior"
+    },
     {
       "label": "Touch-up scuffed paint in hallway",
       "checked": false,
+      "priority": "low",
+      "estimatedCost": 15,
+      "isRecurring": false,
       "userID": "1",
-      "spaceType": "Interior"
+      "spaceType": "BuildingInterior"
     },
     {
-      "label": "Inspect attic insulation for settling",
+      "label": "Clear gutters and downspouts",
+      "notes": "Use a scoop and garden hose. Check that downspouts direct water at least 3 ft from foundation.",
       "checked": false,
+      "priority": "high",
+      "dueDate": "2026-04-08",
+      "estimatedCost": 0,
+      "isRecurring": true,
+      "recurrenceInterval": 6,
+      "recurrenceUnit": "months",
+      "recurrenceMode": "due_date",
       "userID": "1",
-      "spaceType": "Interior"
+      "spaceType": "BuildingExterior"
     },
-
+    {
+      "label": "Inspect exterior caulking and trim",
+      "notes": "Check around windows, doors, and siding joints. Re-caulk any cracked or missing sections.",
+      "checked": false,
+      "priority": "medium",
+      "dueDate": "2026-05-15",
+      "estimatedCost": 20,
+      "isRecurring": true,
+      "recurrenceInterval": 1,
+      "recurrenceUnit": "years",
+      "recurrenceMode": "due_date",
+      "userID": "1",
+      "spaceType": "BuildingExterior"
+    },
     {
       "label": "Power-wash front siding",
       "checked": false,
+      "priority": "low",
+      "dueDate": "2026-05-20",
+      "estimatedCost": 50,
+      "isRecurring": true,
+      "recurrenceInterval": 1,
+      "recurrenceUnit": "years",
+      "recurrenceMode": "due_date",
       "userID": "1",
-      "spaceType": "Exterior"
+      "spaceType": "BuildingExterior"
     },
     {
-      "label": "Check chimney flashing after storms",
+      "label": "Test GFCI outlets",
+      "notes": "Test and reset all GFCI outlets in bathrooms, kitchen, garage, and exterior.",
       "checked": false,
-      "userID": "1",
-      "spaceType": "Exterior"
-    },
-
-    {
-      "label": "Test whole-home surge protector",
-      "checked": false,
+      "priority": "high",
+      "dueDate": "2026-04-05",
+      "isRecurring": true,
+      "recurrenceInterval": 6,
+      "recurrenceUnit": "months",
+      "recurrenceMode": "due_date",
       "userID": "1",
       "spaceType": "Electrical"
     },
     {
-      "label": "Verify outlet polarity in kitchen",
+      "label": "Verify and update breaker panel labels",
       "checked": false,
+      "priority": "low",
+      "isRecurring": false,
       "userID": "1",
       "spaceType": "Electrical"
+    },
+    {
+      "label": "Trim front yard hedges",
+      "checked": false,
+      "priority": "low",
+      "dueDate": "2026-04-25",
+      "isRecurring": true,
+      "recurrenceInterval": 6,
+      "recurrenceUnit": "weeks",
+      "recurrenceMode": "completion_date",
+      "userID": "1",
+      "spaceType": "Yard"
+    },
+    {
+      "label": "Inspect and clean sprinkler heads",
+      "notes": "Check for clogged or misdirected heads. Run each zone manually to test coverage.",
+      "checked": false,
+      "priority": "medium",
+      "dueDate": "2026-04-20",
+      "estimatedCost": 0,
+      "isRecurring": true,
+      "recurrenceInterval": 1,
+      "recurrenceUnit": "years",
+      "recurrenceMode": "due_date",
+      "userID": "1",
+      "spaceType": "Yard"
     }
   ],
   "notes": [

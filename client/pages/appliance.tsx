@@ -8,7 +8,7 @@ import MaintenanceSection, {
 } from '@/components/MaintenanceSection'
 import RepairSection, { RepairReferenceType, RepairSpaceType } from '@/components/RepairSection'
 import DocumentationSection from '@/components/DocumentationSection'
-import TodosSection from '@/components/TodosSection'
+import TasksSection from '@/components/TasksSection'
 import NotesSection from '@/components/NotesSection'
 import MyNavbar from '@/components/Navbar'
 import { SERVER_URL } from '@/pages/_app'
@@ -30,7 +30,7 @@ const AppliancePage: React.FC = () => {
     // Get id from query string (works with static export)
     const getIdFromQuery = () => {
         if (typeof window !== 'undefined') {
-            const params = new URLSearchParams(window.location.search)
+            const params = new URLSearchParams(globalThis.location.search)
             return params.get('id')
         }
         return null
@@ -63,7 +63,7 @@ const AppliancePage: React.FC = () => {
                     throw new Error('Failed to delete appliance')
                 }
 
-                window.location.href = '/appliances.html'
+                globalThis.location.href = '/appliances.html'
             } catch (error) {
                 console.error('Error deleting appliance:', error)
             }
@@ -172,8 +172,8 @@ const AppliancePage: React.FC = () => {
                         <Tab eventKey="documentation" title="Documentation">
                             <DocumentationSection applianceId={appliance.id} />
                         </Tab>
-                        <Tab eventKey="todos" title="To-dos">
-                            <TodosSection applianceId={appliance.id} />
+                        <Tab eventKey="todos" title="Tasks">
+                            <TasksSection applianceId={appliance.id} />
                         </Tab>
                         <Tab eventKey="notes" title="Notes">
                             <NotesSection applianceId={appliance.id} />
@@ -181,7 +181,7 @@ const AppliancePage: React.FC = () => {
                     </Tabs>
                     <Button
                         variant="secondary"
-                        onClick={() => (window.location.href = '/appliances.html')}
+                        onClick={() => (globalThis.location.href = '/appliances.html')}
                         style={{ marginTop: '10px' }}
                     >
                         Back

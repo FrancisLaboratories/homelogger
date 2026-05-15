@@ -27,6 +27,11 @@ func setupTestDB(t *testing.T) *gorm.DB {
         t.Fatalf("MigrateGorm error: %v", err)
     }
 
+    // Ensure underlying sql.DB is closed when the test ends to avoid file locks on Windows
+    if sqlDB, err := db.DB(); err == nil {
+        t.Cleanup(func() { _ = sqlDB.Close() })
+    }
+
     return db
 }
 

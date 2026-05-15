@@ -39,14 +39,14 @@ func TestSeedLoadsSampleData(t *testing.T) {
         t.Fatalf("expected 2 appliances from demo data, got %d", len(apps))
     }
 
-    // todos for first appliance should include a known label
+    // tasks for first appliance should include a known label
     aid := apps[0].ID
-    todos, err := database.GetTodos(db, aid, "")
+    tasks, err := database.GetTasks(db, aid, "", true)
     if err != nil {
-        t.Fatalf("GetTodos error: %v", err)
+        t.Fatalf("GetTasks error: %v", err)
     }
-    if len(todos) == 0 {
-        t.Fatalf("expected todos for appliance %d, got 0", aid)
+    if len(tasks) == 0 {
+        t.Fatalf("expected tasks for appliance %d, got 0", aid)
     }
 
     // notes for first appliance

@@ -47,6 +47,23 @@ func GetMaintenance(db *gorm.DB, id uint) (*models.Maintenance, error) {
 	return &maintenance, nil
 }
 
+// UpdateMaintenance updates the editable fields of an existing maintenance record.
+func UpdateMaintenance(db *gorm.DB, id uint, description, date string, cost float64, notes string) (*models.Maintenance, error) {
+	maintenance, err := GetMaintenance(db, id)
+	if err != nil {
+		return nil, err
+	}
+	maintenance.Description = description
+	maintenance.Date = date
+	maintenance.Cost = cost
+	maintenance.Notes = notes
+	result := db.Save(maintenance)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return maintenance, nil
+}
+
 // DeleteMaintenance deletes a maintenance record by ID
 func DeleteMaintenance(db *gorm.DB, id uint) error {
 	// Remove associated files (disk + DB)

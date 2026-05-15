@@ -47,6 +47,23 @@ func GetRepair(db *gorm.DB, id uint) (*models.Repair, error) {
 	return &repair, nil
 }
 
+// UpdateRepair updates the editable fields of an existing repair record.
+func UpdateRepair(db *gorm.DB, id uint, description, date string, cost float64, notes string) (*models.Repair, error) {
+	repair, err := GetRepair(db, id)
+	if err != nil {
+		return nil, err
+	}
+	repair.Description = description
+	repair.Date = date
+	repair.Cost = cost
+	repair.Notes = notes
+	result := db.Save(repair)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return repair, nil
+}
+
 // DeleteRepair deletes a repair record by ID
 func DeleteRepair(db *gorm.DB, id uint) error {
 	// Remove associated files (disk + DB)
