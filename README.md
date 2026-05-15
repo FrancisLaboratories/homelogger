@@ -124,6 +124,8 @@ Notes & safety
 	- the `data/uploads/` directory with all uploaded files.
 - Client settings: open the web UI and go to `Settings` to use the "Download Backup" button which calls the endpoint and triggers a browser download.
 
+Information about **restoring a backup** is found in the Wiki: [Restoring a backup](https://github.com/FrancisLaboratories/homelogger/wiki/How-To-Restore-from-a-Backup)
+
 Security note: the backup endpoint is unauthenticated in this version — if you expose the server to untrusted networks, add authentication or restrict access.
 
 Development tips
