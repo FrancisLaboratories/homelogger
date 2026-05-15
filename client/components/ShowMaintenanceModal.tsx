@@ -63,14 +63,14 @@ const ShowMaintenanceModal: React.FC<ShowMaintenanceModalProps> = ({
 
     // Reset edit state when record changes or modal closes
     useEffect(() => {
-        if (!show) {
-            setEditing(false)
-            setSaveError('')
-        } else {
+        if (show) {
             setEditDescription(maintenanceRecord.description)
             setEditDate(maintenanceRecord.date)
             setEditCost(maintenanceRecord.cost)
             setEditNotes(maintenanceRecord.notes)
+        } else {
+            setEditing(false)
+            setSaveError('')
         }
     }, [show, maintenanceRecord])
 

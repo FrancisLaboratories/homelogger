@@ -7,6 +7,7 @@ import { SERVER_URL } from '@/pages/_app'
 import { Task } from './TasksSection'
 import TaskItem from './TaskItem'
 import AddTaskModal from './AddTaskModal'
+import applySort from '../utils/taskSort'
 
 type SortOption = 'due_asc' | 'due_desc' | 'priority' | 'created_desc' | 'label_asc'
 type FilterOption = 'active' | 'completed' | 'all' | 'priority_high' | 'recurring' | 'no_date'
@@ -190,29 +191,7 @@ const TasksDashboard: React.FC = () => {
         return result
     }
 
-    function applySort(list: Task[]): Task[] {
-        return [...list].sort((a, b) => {
-            switch (sortOption) {
-                case 'due_asc':
-                    return parseDue(a.dueDate) - parseDue(b.dueDate)
-                case 'due_desc':
-                    return parseDue(b.dueDate) - parseDue(a.dueDate)
-                case 'priority':
-                    return (
-                        (PRIORITY_ORDER[a.priority || ''] ?? 4) -
-                        (PRIORITY_ORDER[b.priority || ''] ?? 4)
-                    )
-                case 'label_asc':
-                    return a.label.localeCompare(b.label)
-                case 'created_desc':
-                default: {
-                    const aDate = a.CreatedAt || a.createdAt || ''
-                    const bDate = b.CreatedAt || b.createdAt || ''
-                    return bDate.localeCompare(aDate)
-                }
-            }
-        })
-    }
+    // applySort is implemented in client/utils/taskSort.ts and imported above
 
     // Group tasks by due date
     const today = new Date()
@@ -226,7 +205,7 @@ const TasksDashboard: React.FC = () => {
         {
             label: 'Overdue',
             headerClass: 'text-danger',
-            tasks: applySort(filtered.filter((t) => t.dueDate && isBeforeToday(t.dueDate))),
+            tasks: applySort(filtered.filter((t) => t.dueDate && isBeforeToday(t.dueDate)), sortOption),
         },
         {
             label: 'Due Next 7 Days',
@@ -237,7 +216,7 @@ const TasksDashboard: React.FC = () => {
                     const d = new Date(t.dueDate + 'T00:00:00')
                     return d >= today && d < in7
                 })
-            ),
+            , sortOption),
         },
         {
             label: 'Due Next 30 Days',
@@ -248,7 +227,7 @@ const TasksDashboard: React.FC = () => {
                     const d = new Date(t.dueDate + 'T00:00:00')
                     return d >= in7 && d < in30
                 })
-            ),
+            , sortOption),
         },
         {
             label: 'Later',
@@ -258,12 +237,12 @@ const TasksDashboard: React.FC = () => {
                     if (!t.dueDate) return false
                     return new Date(t.dueDate + 'T00:00:00') >= in30
                 })
-            ),
+            , sortOption),
         },
         {
             label: 'No Due Date',
             headerClass: 'text-muted',
-            tasks: applySort(filtered.filter((t) => !t.dueDate)),
+            tasks: applySort(filtered.filter((t) => !t.dueDate), sortOption),
         },
     ]
 
@@ -373,7 +352,8 @@ const TasksDashboard: React.FC = () => {
                       ).sort()
                       return sourceKeys.map((src) => {
                           const sourceTasks = applySort(
-                              filtered.filter((t) => getSourceLabel(t) === src)
+                              filtered.filter((t) => getSourceLabel(t) === src),
+                              sortOption
                           )
                           if (sourceTasks.length === 0) return null
                           const href = getSourceHref(sourceTasks[0])
