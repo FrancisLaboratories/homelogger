@@ -16,7 +16,8 @@ function parseDue(dueDate?: string | null): number {
 }
 
 export function applySort(list: Task[], sortOption: SortOption): Task[] {
-    const safeLabel = (s?: string | null) => (s || '')
+    console.debug('applySort called', { sortOption, count: list.length })
+    const safeLabel = (s?: string | null) => s || ''
     return [...list].sort((a, b) => {
         switch (sortOption) {
             case 'due_asc': {

@@ -88,8 +88,9 @@ const TasksDashboard: React.FC = () => {
     const [filterOption, setFilterOption] = useState<FilterOption>(
         () => (getCookie('hl_dashboard_filter') as FilterOption) || 'active'
     )
-    const [groupBySource, setGroupBySource] = useState<boolean>(
-        () => getCookie('hl_dashboard_group') === 'true'
+    type GroupMode = 'due' | 'source' | 'priority' | 'none'
+    const [groupMode, setGroupMode] = useState<GroupMode>(
+        () => (getCookie('hl_dashboard_group_mode') as GroupMode) || 'due'
     )
 
     const fetchTasks = useCallback(async () => {
@@ -205,7 +206,10 @@ const TasksDashboard: React.FC = () => {
         {
             label: 'Overdue',
             headerClass: 'text-danger',
-            tasks: applySort(filtered.filter((t) => t.dueDate && isBeforeToday(t.dueDate)), sortOption),
+            tasks: applySort(
+                filtered.filter((t) => t.dueDate && isBeforeToday(t.dueDate)),
+                sortOption
+            ),
         },
         {
             label: 'Due Next 7 Days',
@@ -215,8 +219,9 @@ const TasksDashboard: React.FC = () => {
                     if (!t.dueDate) return false
                     const d = new Date(t.dueDate + 'T00:00:00')
                     return d >= today && d < in7
-                })
-            , sortOption),
+                }),
+                sortOption
+            ),
         },
         {
             label: 'Due Next 30 Days',
@@ -226,8 +231,9 @@ const TasksDashboard: React.FC = () => {
                     if (!t.dueDate) return false
                     const d = new Date(t.dueDate + 'T00:00:00')
                     return d >= in7 && d < in30
-                })
-            , sortOption),
+                }),
+                sortOption
+            ),
         },
         {
             label: 'Later',
@@ -236,18 +242,22 @@ const TasksDashboard: React.FC = () => {
                 filtered.filter((t) => {
                     if (!t.dueDate) return false
                     return new Date(t.dueDate + 'T00:00:00') >= in30
-                })
-            , sortOption),
+                }),
+                sortOption
+            ),
         },
         {
             label: 'No Due Date',
             headerClass: 'text-muted',
-            tasks: applySort(filtered.filter((t) => !t.dueDate), sortOption),
+            tasks: applySort(
+                filtered.filter((t) => !t.dueDate),
+                sortOption
+            ),
         },
     ]
 
     const totalActive = tasks.filter((t) => !t.checked).length
-    const totalFiltered = groups.reduce((sum, g) => sum + g.tasks.length, 0)
+    const totalFiltered = filtered.length
 
     return (
         <div>
@@ -293,8 +303,9 @@ const TasksDashboard: React.FC = () => {
                     style={{ width: 'auto' }}
                     value={sortOption}
                     onChange={(e) => {
-                        setSortOption(e.target.value as SortOption)
-                        setCookie('hl_dashboard_sort', e.target.value)
+                        const v = e.target.value as SortOption
+                        setSortOption(v)
+                        setCookie('hl_dashboard_sort', v)
                     }}
                     aria-label="Sort tasks"
                 >
@@ -305,18 +316,22 @@ const TasksDashboard: React.FC = () => {
                     <option value="created_desc">Recently added</option>
                 </Form.Select>
 
-                <Form.Check
-                    type="switch"
-                    id="group-by-source-switch"
-                    label="Group by source"
-                    checked={groupBySource}
+                <Form.Select
+                    size="sm"
+                    style={{ width: 'auto' }}
+                    value={groupMode}
                     onChange={(e) => {
-                        setGroupBySource(e.target.checked)
-                        setCookie('hl_dashboard_group', String(e.target.checked))
+                        const v = e.target.value as GroupMode
+                        setGroupMode(v)
+                        setCookie('hl_dashboard_group_mode', v)
                     }}
-                    className="ms-1"
-                    style={{ fontSize: '0.9rem' }}
-                />
+                    aria-label="Group tasks"
+                >
+                    <option value="due">Group by due date</option>
+                    <option value="source">Group by source</option>
+                    <option value="priority">Group by priority</option>
+                    <option value="none">No grouping</option>
+                </Form.Select>
             </div>
 
             {/* Quick-add */}
@@ -343,86 +358,148 @@ const TasksDashboard: React.FC = () => {
                         : 'No tasks match the current filter.'}
                 </div>
             )}
-
-            {groupBySource
-                ? // Group by source (space / appliance)
+            {groupMode === 'none'
+                ? // flat, no grouping
                   (() => {
-                      const sourceKeys = Array.from(
-                          new Set(filtered.map((t) => getSourceLabel(t)))
-                      ).sort()
-                      return sourceKeys.map((src) => {
-                          const sourceTasks = applySort(
-                              filtered.filter((t) => getSourceLabel(t) === src),
-                              sortOption
+                      const flat = applySort(filtered, sortOption)
+                      if (flat.length === 0) return null
+                      return (
+                          <ListGroup className="mb-2">
+                              {flat.map((task) => (
+                                  <TaskItem
+                                      key={task.id}
+                                      task={task}
+                                      onComplete={handleComplete}
+                                      onDelete={handleDelete}
+                                      onEdit={handleEdit}
+                                      showSource
+                                      sourceLabel={getSourceLabel(task)}
+                                      sourceHref={getSourceHref(task)}
+                                  />
+                              ))}
+                          </ListGroup>
+                      )
+                  })()
+                : groupMode === 'source'
+                  ? // Group by source (space / appliance)
+                    (() => {
+                        const sourceKeys = Array.from(
+                            new Set(filtered.map((t) => getSourceLabel(t)))
+                        ).sort()
+                        return sourceKeys.map((src) => {
+                            const sourceTasks = applySort(
+                                filtered.filter((t) => getSourceLabel(t) === src),
+                                sortOption
+                            )
+                            if (sourceTasks.length === 0) return null
+                            const href = getSourceHref(sourceTasks[0])
+                            return (
+                                <div key={src} className="mb-3">
+                                    <h6 className="mb-1" style={{ fontWeight: 600 }}>
+                                        {href ? (
+                                            <a href={href} className="text-decoration-none">
+                                                {src}
+                                            </a>
+                                        ) : (
+                                            src
+                                        )}
+                                        <span
+                                            className="ms-2 text-muted fw-normal"
+                                            style={{ fontSize: '0.85rem' }}
+                                        >
+                                            ({sourceTasks.length})
+                                        </span>
+                                    </h6>
+                                    <ListGroup>
+                                        {sourceTasks.map((task) => (
+                                            <TaskItem
+                                                key={task.id}
+                                                task={task}
+                                                onComplete={handleComplete}
+                                                onDelete={handleDelete}
+                                                onEdit={handleEdit}
+                                            />
+                                        ))}
+                                    </ListGroup>
+                                </div>
+                            )
+                        })
+                    })()
+                  : groupMode === 'priority'
+                    ? // Group by priority levels
+                      (() => {
+                          const prioKeys = Object.keys(PRIORITY_ORDER).sort(
+                              (a, b) => PRIORITY_ORDER[a] - PRIORITY_ORDER[b]
                           )
-                          if (sourceTasks.length === 0) return null
-                          const href = getSourceHref(sourceTasks[0])
+                          return prioKeys.map((key) => {
+                              const label = key
+                                  ? key.charAt(0).toUpperCase() + key.slice(1)
+                                  : 'No priority'
+                              const prioTasks = applySort(
+                                  filtered.filter((t) => (t.priority || '') === key),
+                                  sortOption
+                              )
+                              if (prioTasks.length === 0) return null
+                              return (
+                                  <div key={key || 'none'} className="mb-3">
+                                      <h6 className="mb-1" style={{ fontWeight: 600 }}>
+                                          {label}
+                                          <span
+                                              className="ms-2 text-muted fw-normal"
+                                              style={{ fontSize: '0.85rem' }}
+                                          >
+                                              ({prioTasks.length})
+                                          </span>
+                                      </h6>
+                                      <ListGroup>
+                                          {prioTasks.map((task) => (
+                                              <TaskItem
+                                                  key={task.id}
+                                                  task={task}
+                                                  onComplete={handleComplete}
+                                                  onDelete={handleDelete}
+                                                  onEdit={handleEdit}
+                                              />
+                                          ))}
+                                      </ListGroup>
+                                  </div>
+                              )
+                          })
+                      })()
+                    : // Default: group by due date window
+                      groups.map((group) => {
+                          if (group.tasks.length === 0) return null
                           return (
-                              <div key={src} className="mb-3">
-                                  <h6 className="mb-1" style={{ fontWeight: 600 }}>
-                                      {href ? (
-                                          <a href={href} className="text-decoration-none">
-                                              {src}
-                                          </a>
-                                      ) : (
-                                          src
-                                      )}
+                              <div key={group.label} className="mb-3">
+                                  <h6
+                                      className={`${group.headerClass} mb-1`}
+                                      style={{ fontWeight: 600 }}
+                                  >
+                                      {group.label}
                                       <span
                                           className="ms-2 text-muted fw-normal"
                                           style={{ fontSize: '0.85rem' }}
                                       >
-                                          ({sourceTasks.length})
+                                          ({group.tasks.length})
                                       </span>
                                   </h6>
                                   <ListGroup>
-                                      {sourceTasks.map((task) => (
+                                      {group.tasks.map((task) => (
                                           <TaskItem
                                               key={task.id}
                                               task={task}
                                               onComplete={handleComplete}
                                               onDelete={handleDelete}
                                               onEdit={handleEdit}
+                                              showSource
+                                              sourceLabel={getSourceLabel(task)}
+                                              sourceHref={getSourceHref(task)}
                                           />
                                       ))}
                                   </ListGroup>
                               </div>
                           )
-                      })
-                  })()
-                : // Group by due date window
-                  groups.map((group) => {
-                      if (group.tasks.length === 0) return null
-                      return (
-                          <div key={group.label} className="mb-3">
-                              <h6
-                                  className={`${group.headerClass} mb-1`}
-                                  style={{ fontWeight: 600 }}
-                              >
-                                  {group.label}
-                                  <span
-                                      className="ms-2 text-muted fw-normal"
-                                      style={{ fontSize: '0.85rem' }}
-                                  >
-                                      ({group.tasks.length})
-                                  </span>
-                              </h6>
-                              <ListGroup>
-                                  {group.tasks.map((task) => (
-                                      <TaskItem
-                                          key={task.id}
-                                          task={task}
-                                          onComplete={handleComplete}
-                                          onDelete={handleDelete}
-                                          onEdit={handleEdit}
-                                          showSource
-                                          sourceLabel={getSourceLabel(task)}
-                                          sourceHref={getSourceHref(task)}
-                                      />
-                                  ))}
-                              </ListGroup>
-                          </div>
-                      )
-                  })}
+                      })}
 
             <AddTaskModal
                 show={showAddModal}
