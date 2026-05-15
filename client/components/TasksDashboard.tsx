@@ -385,7 +385,7 @@ const TasksDashboard: React.FC = () => {
                     (() => {
                         const sourceKeys = Array.from(
                             new Set(filtered.map((t) => getSourceLabel(t)))
-                        ).sort()
+                        ).sort((a, b) => a.localeCompare(b))
                         return sourceKeys.map((src) => {
                             const sourceTasks = applySort(
                                 filtered.filter((t) => getSourceLabel(t) === src),

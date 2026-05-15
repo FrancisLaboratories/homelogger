@@ -35,13 +35,7 @@ interface TasksSectionProps {
 type SortOption = 'due_asc' | 'due_desc' | 'priority' | 'created_desc' | 'label_asc'
 type FilterOption = 'upcoming' | 'overdue' | 'all' | 'completed'
 
-const SORT_OPTIONS: SortOption[] = [
-    'due_asc',
-    'due_desc',
-    'priority',
-    'created_desc',
-    'label_asc',
-]
+const SORT_OPTIONS: SortOption[] = ['due_asc', 'due_desc', 'priority', 'created_desc', 'label_asc']
 
 const FILTER_OPTIONS: FilterOption[] = ['upcoming', 'overdue', 'all', 'completed']
 
