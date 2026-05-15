@@ -18,40 +18,58 @@ function parseDue(dueDate?: string | null): number {
 export function applySort(list: Task[], sortOption: SortOption): Task[] {
     console.debug('applySort called', { sortOption, count: list.length })
     const safeLabel = (s?: string | null) => s || ''
-    return [...list].sort((a, b) => {
+
+    const tieByLabel = (x: Task, y: Task) => safeLabel(x.label).localeCompare(safeLabel(y.label))
+
+    const cmpDueAsc = (x: Task, y: Task) => {
+        const av = parseDue(x.dueDate)
+        const bv = parseDue(y.dueDate)
+        if (av === bv) return tieByLabel(x, y)
+        return av < bv ? -1 : 1
+    }
+
+    const cmpDueDesc = (x: Task, y: Task) => {
+        const avRaw = parseDue(x.dueDate)
+        const bvRaw = parseDue(y.dueDate)
+        const av = avRaw === Infinity ? -Infinity : avRaw
+        const bv = bvRaw === Infinity ? -Infinity : bvRaw
+        if (av === bv) return tieByLabel(x, y)
+        return av > bv ? -1 : 1
+    }
+
+    const cmpPriority = (x: Task, y: Task) => {
+        const ap = PRIORITY_ORDER[x.priority || ''] ?? 4
+        const bp = PRIORITY_ORDER[y.priority || ''] ?? 4
+        if (ap === bp) return tieByLabel(x, y)
+        return ap < bp ? -1 : 1
+    }
+
+    const cmpLabelAsc = (x: Task, y: Task) => safeLabel(x.label).localeCompare(safeLabel(y.label))
+
+    const cmpCreatedDesc = (x: Task, y: Task) => {
+        const aDate = x.CreatedAt || x.createdAt || ''
+        const bDate = y.CreatedAt || y.createdAt || ''
+        if (aDate === bDate) return tieByLabel(x, y)
+        return bDate.localeCompare(aDate)
+    }
+
+    const comparator = (() => {
         switch (sortOption) {
-            case 'due_asc': {
-                const av = parseDue(a.dueDate)
-                const bv = parseDue(b.dueDate)
-                if (av === bv) return safeLabel(a.label).localeCompare(safeLabel(b.label))
-                return av < bv ? -1 : 1
-            }
-            case 'due_desc': {
-                // Ensure items with no due date are treated as "latest" and come last
-                const avRaw = parseDue(a.dueDate)
-                const bvRaw = parseDue(b.dueDate)
-                const av = avRaw === Infinity ? -Infinity : avRaw
-                const bv = bvRaw === Infinity ? -Infinity : bvRaw
-                if (av === bv) return safeLabel(a.label).localeCompare(safeLabel(b.label))
-                return av > bv ? -1 : 1
-            }
-            case 'priority': {
-                const ap = PRIORITY_ORDER[a.priority || ''] ?? 4
-                const bp = PRIORITY_ORDER[b.priority || ''] ?? 4
-                if (ap === bp) return safeLabel(a.label).localeCompare(safeLabel(b.label))
-                return ap < bp ? -1 : 1
-            }
+            case 'due_asc':
+                return cmpDueAsc
+            case 'due_desc':
+                return cmpDueDesc
+            case 'priority':
+                return cmpPriority
             case 'label_asc':
-                return safeLabel(a.label).localeCompare(safeLabel(b.label))
+                return cmpLabelAsc
             case 'created_desc':
-            default: {
-                const aDate = a.CreatedAt || a.createdAt || ''
-                const bDate = b.CreatedAt || b.createdAt || ''
-                if (aDate === bDate) return safeLabel(a.label).localeCompare(safeLabel(b.label))
-                return bDate.localeCompare(aDate)
-            }
+            default:
+                return cmpCreatedDesc
         }
-    })
+    })()
+
+    return [...list].sort(comparator)
 }
 
 export default applySort
