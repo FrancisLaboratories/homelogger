@@ -35,6 +35,24 @@ interface TasksSectionProps {
 type SortOption = 'due_asc' | 'due_desc' | 'priority' | 'created_desc' | 'label_asc'
 type FilterOption = 'upcoming' | 'overdue' | 'all' | 'completed'
 
+const SORT_OPTIONS: SortOption[] = [
+    'due_asc',
+    'due_desc',
+    'priority',
+    'created_desc',
+    'label_asc',
+]
+
+const FILTER_OPTIONS: FilterOption[] = ['upcoming', 'overdue', 'all', 'completed']
+
+function isSortOption(val: string): val is SortOption {
+    return SORT_OPTIONS.includes(val as SortOption)
+}
+
+function isFilterOption(val: string): val is FilterOption {
+    return FILTER_OPTIONS.includes(val as FilterOption)
+}
+
 const PRIORITY_ORDER: Record<string, number> = {
     critical: 0,
     high: 1,
@@ -67,8 +85,8 @@ const TasksSection: React.FC<TasksSectionProps> = ({ applianceId, spaceType }) =
         try {
             const savedSort = localStorage.getItem('homelogger_tasks_sort')
             const savedFilter = localStorage.getItem('homelogger_tasks_filter')
-            if (savedSort) setSortOption(savedSort as SortOption)
-            if (savedFilter) setFilterOption(savedFilter as FilterOption)
+            if (savedSort && isSortOption(savedSort)) setSortOption(savedSort)
+            if (savedFilter && isFilterOption(savedFilter)) setFilterOption(savedFilter)
         } catch (err) {
             console.warn('TasksSection: failed to read localStorage', err)
         }
