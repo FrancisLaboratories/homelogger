@@ -7,9 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview",
-    "copy-public": "node scripts/copy-public.cjs",
-    "postinstall": "npm run copy-public"
+    "preview": "vite preview"
   },
   "dependencies": {
     "react": "^18.2.0",
