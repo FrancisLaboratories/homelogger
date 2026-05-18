@@ -1,7 +1,0 @@
-node_modules/
-.vscode
-.idea
-.env.local
-.next/
-nginx.conf
-out/
