@@ -12,7 +12,7 @@ COPY client/ .
 
 ARG NEXT_TELEMETRY_DISABLED=1
 
-# Build the Next.js app (expects build to produce `out` or the static export)
+# Build the Vite app
 RUN npm run build
 
 # Stage 2: Build the Go binary
@@ -35,16 +35,15 @@ ENV CGO_ENABLED=1
 RUN go build -o main ./cmd/server
 
 # Stage 3: Final image based on Alpine, running nginx + the Go server
-FROM alpine:latest as final
+FROM alpine:latest AS final
 
 RUN apk add --no-cache ca-certificates nginx bash curl
 
 # Ensure the runtime working directory matches expectations in server code
 WORKDIR /root
 
-# Copy the built static site (from client build). If your Next.js build exports static files
-# they should be in /client/out; adjust if your build places them elsewhere.
-COPY --from=client-builder /client/out /usr/share/nginx/html
+# Copy the built static site (from client build).
+COPY --from=client-builder /client/dist /usr/share/nginx/html
 
 # Overwrite nginx main config with a minimal one that includes conf.d/*.conf
 COPY nginx-main.conf /etc/nginx/nginx.conf

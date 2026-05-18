@@ -10,8 +10,6 @@ RUN npm install
 # Copy the rest of the application code
 COPY . .
 
-ARG NEXT_TELEMETRY_DISABLED=1
-
 # Build the Next.js app
 RUN npm run build
 
@@ -19,7 +17,7 @@ RUN npm run build
 FROM nginx:stable-alpine
 
 # Copy the built app to the Nginx HTML directory
-COPY --from=builder /app/out /usr/share/nginx/html
+COPY --from=builder /app/dist /usr/share/nginx/html
 
 # Expose port 3000
 EXPOSE 3000

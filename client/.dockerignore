@@ -5,3 +5,4 @@ node_modules/
 .next/
 nginx.conf
 out/
+dist/
