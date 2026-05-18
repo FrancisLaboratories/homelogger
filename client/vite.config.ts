@@ -1,10 +1,13 @@
 import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
-import tsconfigPaths from "vite-tsconfig-paths";
+import react, { reactCompilerPreset } from "@vitejs/plugin-react";
+import babel from "@rolldown/plugin-babel";
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [tsconfigPaths(), react()],
+  plugins: [
+    react(),
+    babel({ presets: [reactCompilerPreset()] }),
+  ],
   resolve: {
     // Use Vite's built-in support for tsconfig path resolution
     tsconfigPaths: true,
