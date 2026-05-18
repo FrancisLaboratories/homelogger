@@ -45,7 +45,9 @@ const ShowMaintenanceModal: React.FC<Props> = ({
         if (!resp.ok) return;
         const data: Array<{ id: number; originalName: string }> =
           await resp.json();
-        setAttachments(data.map((f) => ({ id: f.id, originalName: f.originalName })));
+        setAttachments(
+          data.map((f) => ({ id: f.id, originalName: f.originalName })),
+        );
       } catch (err) {
         console.error("Error loading attachments", err);
       }
@@ -284,7 +286,9 @@ const ShowMaintenanceModal: React.FC<Props> = ({
               </div>
             )}
             {uploadError && (
-              <div style={{ color: "red", marginTop: "6px" }}>{uploadError}</div>
+              <div style={{ color: "red", marginTop: "6px" }}>
+                {uploadError}
+              </div>
             )}
           </Form.Group>
         )}
@@ -322,10 +326,7 @@ const ShowMaintenanceModal: React.FC<Props> = ({
             </>
           ) : (
             <>
-              <Button
-                variant="secondary"
-                onClick={() => setEditing(true)}
-              >
+              <Button variant="secondary" onClick={() => setEditing(true)}>
                 <i className="bi bi-pencil me-1"></i>Edit
               </Button>
               <Button variant="primary" onClick={handleClose}>
