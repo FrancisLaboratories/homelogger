@@ -11,6 +11,7 @@ client/.vercel
 client/.cache
 client/.env.*
 client/nginx.conf
+client/dist
 !client/.env.production
 
 # Server runtime data
