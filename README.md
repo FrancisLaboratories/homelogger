@@ -27,8 +27,8 @@ This repository contains a Next.js React client and a Go (Fiber + GORM) server w
 - Provide a simple, local-first experience with optional Docker support
 
 **Tech Stack**
-- Client: Node, Next.js, React, Bootstrap
-- Server: Go, Fiber web framework, GORM ORM
+- Client: Node, React, Bootstrap built with Vite
+- Server: Go,Go Fiber web framework, GORM ORM
 - Database: SQLite
 
 **Repository Layout (high level)**
