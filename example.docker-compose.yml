@@ -6,4 +6,6 @@ services:
       - ./server/data:/root/data
     ports:
       - "3005:80"
+    environment:
+      - DB_DIALECT=sqlite
     restart: unless-stopped

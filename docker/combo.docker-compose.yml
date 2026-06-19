@@ -6,6 +6,8 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ../server/data:/root/data
+    environment:
+      - DB_DIALECT=sqlite
     ports:
       - "3005:80"
     restart: unless-stopped
