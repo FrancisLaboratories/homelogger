@@ -2,12 +2,10 @@ package main
 
 import (
 	"archive/zip"
-	"context"
 	"flag"
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"os/signal"
 	"path/filepath"
 	"strconv"
@@ -1192,142 +1190,55 @@ func main() {
 				_ = pw.Close()
 			}()
 
-			// Copy fallback helper
-			copyFile := func(src, dst string) error {
-				in, err := os.Open(src)
-				if err != nil {
-					return err
-				}
-				defer in.Close()
-				out, err := os.Create(dst)
-				if err != nil {
-					return err
-				}
-				defer out.Close()
-				if _, err := io.Copy(out, in); err != nil {
-					return err
-				}
-				return out.Sync()
-			}
-
-			// Serialize backups to avoid multiple concurrent backup attempts
 			backupMu.Lock()
 			defer backupMu.Unlock()
 
-			dialect := "sqlite"
-			if db != nil {
-				dialect = db.Dialector.Name()
+			// ponytail: Remove DB-specific backup (pg_dump, sqlite vacuum/copy). Universal JSON export.
+
+			jsonData, err := database.ExportDataToJson(db)
+			if err != nil {
+				_ = pw.CloseWithError(fmt.Errorf("failed to export data to JSON: %w", err))
+				return
 			}
 
-			var tmpBackup string
-			var zipDBName string
-
-			switch dialect {
-			case "postgres":
-				tmpBackup = filepath.Join("./data/db", fmt.Sprintf("homelogger-backup-%d.sql", time.Now().UnixNano()))
-				dumpCtx, dumpCancel := context.WithTimeout(context.Background(), 30*time.Second)
-				defer dumpCancel()
-
-				args := []string{"--no-owner", "--no-privileges", "--format=plain", "--file", tmpBackup}
-				databaseURL := strings.TrimSpace(os.Getenv("DATABASE_URL"))
-				if databaseURL != "" {
-					args = append(args, databaseURL)
-				} else {
-					host := strings.TrimSpace(os.Getenv("DB_HOST"))
-					if host == "" {
-						host = "localhost"
-					}
-					port := strings.TrimSpace(os.Getenv("DB_PORT"))
-					if port == "" {
-						port = "5432"
-					}
-					user := strings.TrimSpace(os.Getenv("DB_USER"))
-					dbName := strings.TrimSpace(os.Getenv("DB_NAME"))
-					if dbName == "" {
-						_ = pw.CloseWithError(fmt.Errorf("DB_NAME must be set for PostgreSQL backup when DATABASE_URL is not provided"))
-						return
-					}
-
-					args = append(args, "--host", host, "--port", port)
-					if user != "" {
-						args = append(args, "--username", user)
-					}
-					args = append(args, dbName)
-				}
-
-				cmd := exec.CommandContext(dumpCtx, "pg_dump", args...)
-				if databaseURL == "" {
-					if password := os.Getenv("DB_PASSWORD"); password != "" {
-						cmd.Env = append(os.Environ(), "PGPASSWORD="+password)
-					}
-				}
-
-				if out, err := cmd.CombinedOutput(); err != nil {
-					_ = pw.CloseWithError(fmt.Errorf("pg_dump failed: %w: %s", err, strings.TrimSpace(string(out))))
-					return
-				}
-				zipDBName = "db/" + filepath.Base(tmpBackup)
-
-			case "sqlite":
-				fallthrough
-			default:
-				dbPath := strings.TrimSpace(os.Getenv("DEMO_DB_PATH"))
-				if dbPath == "" {
-					dbPath = strings.TrimSpace(os.Getenv("DATABASE_URL"))
-				}
-				if dbPath == "" {
-					dbPath = "./data/db/homelogger.db"
-				}
-
-				tmpBackup = filepath.Join("./data/db", fmt.Sprintf("homelogger-backup-%d.db", time.Now().UnixNano()))
-
-				// Attempt to create a consistent DB copy using SQLite's "VACUUM INTO" SQL.
-				backedUp := false
-				if db != nil {
-					if dbSQL, err := db.DB(); err == nil {
-						vacCtx, vacCancel := context.WithTimeout(context.Background(), 15*time.Second)
-						defer vacCancel()
-						vacuumSQL := fmt.Sprintf("VACUUM INTO '%s'", tmpBackup)
-						if _, err := dbSQL.ExecContext(vacCtx, vacuumSQL); err == nil {
-							backedUp = true
-						}
-					}
-				}
-
-				if !backedUp {
-					if err := copyFile(dbPath, tmpBackup); err != nil {
-						_ = pw.CloseWithError(err)
-						return
-					}
-				}
-
-				zipDBName = "db/" + filepath.Base(tmpBackup)
+			// Create a temporary file for the JSON data
+			tmpJSONFile, err := os.CreateTemp("", fmt.Sprintf("homelogger-backup-%d-*.json", time.Now().UnixNano()))
+			if err != nil {
+				_ = pw.CloseWithError(fmt.Errorf("failed to create temporary JSON file: %w", err))
+				return
 			}
-
-			// Ensure tmpBackup is removed after adding
 			defer func() {
-				_ = os.Remove(tmpBackup)
+				_ = tmpJSONFile.Close()
+				_ = os.Remove(tmpJSONFile.Name()) // Clean up the temporary file
 			}()
 
-			// Add the DB backup file into the ZIP
-			if info, err := os.Stat(tmpBackup); err == nil && !info.IsDir() {
-				f, err := os.Open(tmpBackup)
-				if err != nil {
-					_ = pw.CloseWithError(err)
-					return
-				}
-				func() {
-					defer f.Close()
-					dst, err := zw.Create(zipDBName)
-					if err != nil {
-						_ = pw.CloseWithError(err)
-						return
-					}
-					if _, err := io.Copy(dst, f); err != nil {
-						_ = pw.CloseWithError(err)
-						return
-					}
-				}()
+			if _, err := tmpJSONFile.Write(jsonData); err != nil {
+				_ = pw.CloseWithError(fmt.Errorf("failed to write JSON data to temporary file: %w", err))
+				return
+			}
+			if err := tmpJSONFile.Close(); err != nil {
+				_ = pw.CloseWithError(fmt.Errorf("failed to close temporary JSON file: %w", err))
+				return
+			}
+
+			// Add the JSON data file to the ZIP
+			jsonFileName := "data.json" // Fixed name in the zip
+			jsonFileWriter, err := zw.Create(jsonFileName)
+			if err != nil {
+				_ = pw.CloseWithError(fmt.Errorf("failed to create zip entry for data.json: %w", err))
+				return
+			}
+			jsonFileToZip, err := os.Open(tmpJSONFile.Name())
+			if err != nil {
+				_ = pw.CloseWithError(fmt.Errorf("failed to open temporary JSON file for zipping: %w", err))
+				return
+			}
+			defer func() {
+				_ = jsonFileToZip.Close()
+			}()
+			if _, err := io.Copy(jsonFileWriter, jsonFileToZip); err != nil {
+				_ = pw.CloseWithError(fmt.Errorf("failed to copy JSON data to zip: %w", err))
+				return
 			}
 
 			// Walk uploads directory and add files preserving relative paths
