@@ -7,6 +7,6 @@ services:
     volumes:
       - ./server/data:/root/data
     ports:
-      - "3005:80"
+      - "3005:3005"
     restart: unless-stopped
  
