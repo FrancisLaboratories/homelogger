@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"os/signal"
 	"path/filepath"
 	"strconv"
@@ -48,7 +49,8 @@ func main() {
 	// Connect to GORM
 	db, err := database.ConnectGorm()
 	if err != nil {
-		panic("Error connecting GORM to db")
+		fmt.Fprintf(os.Stderr, "Error connecting to database: %v\n", err)
+		os.Exit(1)
 	}
 
 	// Migrate GORM
@@ -61,8 +63,13 @@ func main() {
 		fmt.Printf("Warning: todo→task migration failed: %v\n", err)
 	}
 
-	// Demo mode: optionally seed the DB from sample JSON when DEMO_MODE env var is true
-	if dm := os.Getenv("DEMO_MODE"); dm == "true" || dm == "1" {
+	if demoMode && db != nil && db.Dialector.Name() == "postgres" {
+		fmt.Println("Warning: DEMO_MODE is only supported with SQLite; disabling demo mode for PostgreSQL")
+		demoMode = false
+	}
+
+	// Demo mode: optionally seed the DB from sample JSON when enabled.
+	if demoMode {
 		demoPath := os.Getenv("DEMO_FILE_PATH")
 		if err := demo.Seed(db, demoPath); err != nil {
 			fmt.Printf("Error seeding demo data: %v\n", err)
@@ -1185,10 +1192,6 @@ func main() {
 				_ = pw.Close()
 			}()
 
-			// Create a consistent DB backup using the sqlite3 online backup API.
-			dbPath := "./data/db/homelogger.db"
-			tmpBackup := filepath.Join("./data/db", fmt.Sprintf("homelogger-backup-%d.db", time.Now().UnixNano()))
-
 			// Copy fallback helper
 			copyFile := func(src, dst string) error {
 				in, err := os.Open(src)
@@ -1211,28 +1214,94 @@ func main() {
 			backupMu.Lock()
 			defer backupMu.Unlock()
 
-			// Attempt to create a consistent DB copy using SQLite's "VACUUM INTO" SQL
-			// Use ExecContext with a short timeout so we don't block indefinitely.
-			backedUp := false
+			dialect := "sqlite"
 			if db != nil {
-				if dbSQL, err := db.DB(); err == nil {
-					vacCtx, vacCancel := context.WithTimeout(context.Background(), 15*time.Second)
-					defer vacCancel()
-					// Use VACUUM INTO which creates a consistent copy of the DB
-					// Note: VACUUM INTO requires SQLite 3.27+
-					vacuumSQL := fmt.Sprintf("VACUUM INTO '%s'", tmpBackup)
-					if _, err := dbSQL.ExecContext(vacCtx, vacuumSQL); err == nil {
-						backedUp = true
-					}
-				}
+				dialect = db.Dialector.Name()
 			}
 
-			if !backedUp {
-				// fallback to copying the file
-				if err := copyFile(dbPath, tmpBackup); err != nil {
-					_ = pw.CloseWithError(err)
+			var tmpBackup string
+			var zipDBName string
+
+			switch dialect {
+			case "postgres":
+				tmpBackup = filepath.Join("./data/db", fmt.Sprintf("homelogger-backup-%d.sql", time.Now().UnixNano()))
+				dumpCtx, dumpCancel := context.WithTimeout(context.Background(), 30*time.Second)
+				defer dumpCancel()
+
+				args := []string{"--no-owner", "--no-privileges", "--format=plain", "--file", tmpBackup}
+				databaseURL := strings.TrimSpace(os.Getenv("DATABASE_URL"))
+				if databaseURL != "" {
+					args = append(args, databaseURL)
+				} else {
+					host := strings.TrimSpace(os.Getenv("DB_HOST"))
+					if host == "" {
+						host = "localhost"
+					}
+					port := strings.TrimSpace(os.Getenv("DB_PORT"))
+					if port == "" {
+						port = "5432"
+					}
+					user := strings.TrimSpace(os.Getenv("DB_USER"))
+					dbName := strings.TrimSpace(os.Getenv("DB_NAME"))
+					if dbName == "" {
+						_ = pw.CloseWithError(fmt.Errorf("DB_NAME must be set for PostgreSQL backup when DATABASE_URL is not provided"))
+						return
+					}
+
+					args = append(args, "--host", host, "--port", port)
+					if user != "" {
+						args = append(args, "--username", user)
+					}
+					args = append(args, dbName)
+				}
+
+				cmd := exec.CommandContext(dumpCtx, "pg_dump", args...)
+				if databaseURL == "" {
+					if password := os.Getenv("DB_PASSWORD"); password != "" {
+						cmd.Env = append(os.Environ(), "PGPASSWORD="+password)
+					}
+				}
+
+				if out, err := cmd.CombinedOutput(); err != nil {
+					_ = pw.CloseWithError(fmt.Errorf("pg_dump failed: %w: %s", err, strings.TrimSpace(string(out))))
 					return
 				}
+				zipDBName = "db/" + filepath.Base(tmpBackup)
+
+			case "sqlite":
+				fallthrough
+			default:
+				dbPath := strings.TrimSpace(os.Getenv("DEMO_DB_PATH"))
+				if dbPath == "" {
+					dbPath = strings.TrimSpace(os.Getenv("DATABASE_URL"))
+				}
+				if dbPath == "" {
+					dbPath = "./data/db/homelogger.db"
+				}
+
+				tmpBackup = filepath.Join("./data/db", fmt.Sprintf("homelogger-backup-%d.db", time.Now().UnixNano()))
+
+				// Attempt to create a consistent DB copy using SQLite's "VACUUM INTO" SQL.
+				backedUp := false
+				if db != nil {
+					if dbSQL, err := db.DB(); err == nil {
+						vacCtx, vacCancel := context.WithTimeout(context.Background(), 15*time.Second)
+						defer vacCancel()
+						vacuumSQL := fmt.Sprintf("VACUUM INTO '%s'", tmpBackup)
+						if _, err := dbSQL.ExecContext(vacCtx, vacuumSQL); err == nil {
+							backedUp = true
+						}
+					}
+				}
+
+				if !backedUp {
+					if err := copyFile(dbPath, tmpBackup); err != nil {
+						_ = pw.CloseWithError(err)
+						return
+					}
+				}
+
+				zipDBName = "db/" + filepath.Base(tmpBackup)
 			}
 
 			// Ensure tmpBackup is removed after adding
@@ -1249,7 +1318,7 @@ func main() {
 				}
 				func() {
 					defer f.Close()
-					dst, err := zw.Create("db/" + filepath.Base(tmpBackup))
+					dst, err := zw.Create(zipDBName)
 					if err != nil {
 						_ = pw.CloseWithError(err)
 						return

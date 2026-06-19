@@ -1,0 +1,36 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: homelogger
+      POSTGRES_PASSWORD: ChangeMe
+      POSTGRES_DB: homelogger
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  server:
+    build:
+      context: ../server
+      dockerfile: Dockerfile
+    environment:
+      - DB_DIALECT=postgres
+      - DATABASE_URL=postgresql://homelogger:ChangeMe@postgres:5432/homelogger?sslmode=disable
+      - PORT=8083
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8083:8083"
+    volumes:
+      - server_data:/root/data
+
+volumes:
+  postgres_data:
+  server_data:
