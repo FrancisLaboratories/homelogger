@@ -1,0 +1,31 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: homelogger
+      POSTGRES_PASSWORD: homelogger
+      POSTGRES_DB: homelogger
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    depends_on:
+      - db
+    environment:
+      DB_TYPE: postgres
+      DATABASE_URL: postgres://homelogger:homelogger@db:5432/homelogger?sslmode=disable
+      PORT: 8083
+    ports:
+      - "8083:8083"
+    volumes:
+      - ./server/data:/root/data
+
+volumes:
+  postgres-data: []

@@ -1,0 +1,30 @@
+version: "3.9"
+
+services:
+  db:
+    image: mysql:8.1
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: homelogger
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    depends_on:
+      - db
+    environment:
+      DB_TYPE: mysql
+      DATABASE_URL: root:root@tcp(db:3306)/homelogger?parseTime=True&loc=Local
+      PORT: 8083
+    ports:
+      - "8083:8083"
+    volumes:
+      - ./server/data:/root/data
+
+volumes:
+  mysql-data: []

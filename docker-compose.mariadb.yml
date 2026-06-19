@@ -1,0 +1,30 @@
+version: "3.9"
+
+services:
+  db:
+    image: mariadb:11.1
+    environment:
+      MARIADB_ROOT_PASSWORD: root
+      MARIADB_DATABASE: homelogger
+    ports:
+      - "3306:3306"
+    volumes:
+      - mariadb-data:/var/lib/mysql
+
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    depends_on:
+      - db
+    environment:
+      DB_TYPE: mariadb
+      DATABASE_URL: root:root@tcp(db:3306)/homelogger?parseTime=True&loc=Local
+      PORT: 8083
+    ports:
+      - "8083:8083"
+    volumes:
+      - ./server/data:/root/data
+
+volumes:
+  mariadb-data: []
