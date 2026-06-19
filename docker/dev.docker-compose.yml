@@ -8,6 +8,8 @@ services:
     volumes:
       - ./server/data/db:/root/data/db
       - ./server/data/uploads:/root/data/uploads
+    environment:
+      - DB_DIALECT=sqlite
     networks:
       - homeloggerNetwork
     restart: unless-stopped
