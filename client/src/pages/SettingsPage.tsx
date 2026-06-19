@@ -8,7 +8,8 @@ const SettingsPage: React.FC = () => {
   const [importLoading, setImportLoading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [showFileSelectionModal, setShowFileSelectionModal] = useState(false);
-  const [showOverwriteConfirmModal, setShowOverwriteConfirmModal] = useState(false);
+  const [showOverwriteConfirmModal, setShowOverwriteConfirmModal] =
+    useState(false);
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
@@ -62,7 +63,9 @@ const SettingsPage: React.FC = () => {
       setSelectedFile(null);
     } catch (err: any) {
       console.error(err);
-      alert(`Error importing backup: ${err.message || "See console for details."}`);
+      alert(
+        `Error importing backup: ${err.message || "See console for details."}`,
+      );
     } finally {
       setImportLoading(false);
     }
@@ -116,21 +119,30 @@ const SettingsPage: React.FC = () => {
       </div>
 
       <div style={{ marginTop: "2rem" }}>
-        <p>Import a backup ZIP file to restore your database and uploaded files. This will wipe and replace all existing data.</p>
-        <Button
-          onClick={handleOpenImportModal}
-          variant="danger"
-        >
+        <p>
+          Import a backup ZIP file to restore your database and uploaded files.
+          This will wipe and replace all existing data.
+        </p>
+        <Button onClick={handleOpenImportModal} variant="danger">
           Import Backup
         </Button>
       </div>
 
-      <Modal show={showOverwriteConfirmModal} onHide={handleCancelImport} backdrop="static" keyboard={false}>
+      <Modal
+        show={showOverwriteConfirmModal}
+        onHide={handleCancelImport}
+        backdrop="static"
+        keyboard={false}
+      >
         <Modal.Header closeButton>
           <Modal.Title>Confirm Backup Import</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <p><strong>Warning:</strong> Importing a backup will irreversibly delete ALL existing database records and uploaded files, replacing them with the contents of the backup.</p>
+          <p>
+            <strong>Warning:</strong> Importing a backup will irreversibly
+            delete ALL existing database records and uploaded files, replacing
+            them with the contents of the backup.
+          </p>
           <p>Are you sure you want to proceed?</p>
         </Modal.Body>
         <Modal.Footer>
@@ -143,12 +155,20 @@ const SettingsPage: React.FC = () => {
         </Modal.Footer>
       </Modal>
 
-      <Modal show={showFileSelectionModal} onHide={handleCloseFileSelectionModal} backdrop="static" keyboard={false}>
+      <Modal
+        show={showFileSelectionModal}
+        onHide={handleCloseFileSelectionModal}
+        backdrop="static"
+        keyboard={false}
+      >
         <Modal.Header closeButton>
           <Modal.Title>Upload Backup File</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <p>Select a backup ZIP file to import. This will replace all existing data.</p>
+          <p>
+            Select a backup ZIP file to import. This will replace all existing
+            data.
+          </p>
           <input type="file" accept=".zip" onChange={handleFileChange} />
         </Modal.Body>
         <Modal.Footer>
