@@ -45,10 +45,16 @@ func main() {
 		_ = os.Setenv("DEMO_DB_PATH", demoDBPath)
 	}
 
+	// Load database config and pin the engine on first startup
+	dbConfig, err := database.GetDatabaseConfig()
+	if err != nil {
+		panic("Error configuring database: " + err.Error())
+	}
+
 	// Connect to GORM
 	db, err := database.ConnectGorm()
 	if err != nil {
-		panic("Error connecting GORM to db")
+		panic("Error connecting GORM to db: " + err.Error())
 	}
 
 	// Migrate GORM
@@ -161,7 +167,7 @@ func main() {
 
 	// Create new fiber server with larger body limit for file uploads
 	app := fiber.New(fiber.Config{
-		AppName: fmt.Sprintf("HomeLogger Server %s", version.Version),
+		AppName:   fmt.Sprintf("HomeLogger Server %s", version.Version),
 		BodyLimit: 100 * 1024 * 1024, // 100 MB
 	})
 
@@ -1175,6 +1181,15 @@ func main() {
 
 	// Download a backup ZIP containing the DB and uploads
 	app.Get("/backup/download", func(c *fiber.Ctx) error {
+		if dbConfig.Driver != "sqlite" {
+			return c.Status(fiber.StatusBadRequest).SendString("backup is only supported for sqlite when using the current backup endpoint")
+		}
+
+		dbPath := dbConfig.DSN
+		if strings.HasPrefix(dbPath, "file:") {
+			return c.Status(fiber.StatusBadRequest).SendString("SQLite backup is only supported for file-based SQLite paths, not SQLite URI or in-memory DSNs")
+		}
+
 		pr, pw := io.Pipe()
 
 		go func() {
@@ -1185,8 +1200,6 @@ func main() {
 				_ = pw.Close()
 			}()
 
-			// Create a consistent DB backup using the sqlite3 online backup API.
-			dbPath := "./data/db/homelogger.db"
 			tmpBackup := filepath.Join("./data/db", fmt.Sprintf("homelogger-backup-%d.db", time.Now().UnixNano()))
 
 			// Copy fallback helper

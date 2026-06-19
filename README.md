@@ -1,4 +1,3 @@
-
 <p align="center">
 	<img src="client/public/logoname.png" alt="HomeLogger wordmark" width="320" />
 </p>
@@ -17,37 +16,40 @@ There is a demo available at [homelogger-demo.francislaboratories.com](https://h
 This repository contains a Next.js React client and a Go (Fiber + GORM) server with an SQLite database. The project is early-stage but includes a working client and server and a small REST API defined in [server/openapi.yaml](server/openapi.yaml).
 
 **Contents**
+
 - **Client:** web UI built with Next.js and React ([client](client/))
 - **Server:** Go API server using Fiber and GORM ([server](server/))
 - **Database:** SQLite database stored in [server/data/db](server/data/db)
 
 **Goals**
+
 - Track appliances, repairs and maintenance history
 - Attach files (receipts/photos) to records
 - Provide a simple, local-first experience with optional Docker support
 
 **Tech Stack**
+
 - Client: Node, React, Bootstrap built with Vite
 - Server: Go,Go Fiber web framework, GORM ORM
 - Database: SQLite
 
 **Repository Layout (high level)**
+
 - [client](client/) — Next.js app and frontend components
 - [server](server/) — Go server, internal packages, and OpenAPI spec
-	- [server/cmd/server/main.go](server/cmd/server/main.go)
-	- [server/openapi.yaml](server/openapi.yaml)
-	- [server/internal/models](server/internal/models)
+  - [server/cmd/server/main.go](server/cmd/server/main.go)
+  - [server/openapi.yaml](server/openapi.yaml)
+  - [server/internal/models](server/internal/models)
 
-Getting started
----------------
+## Getting started
 
 Prerequisites
- - Go (>= 1.20 recommended) for running the server locally
- - Node.js (24+) and npm for the client
- - Docker & Docker Compose (optional, for containerized runs)
 
- Docker Compose (recommended for quick start)
-----------------------------------
+- Go (>= 1.20 recommended) for running the server locally
+- Node.js (24+) and npm for the client
+- Docker & Docker Compose (optional, for containerized runs)
+
+## Docker Compose (recommended for quick start)
 
 This repo includes an example `docker-compose.yml` for running both services together.
 
@@ -60,15 +62,14 @@ docker compose up
 The client will be available at http://localhost:3005
 
 Stop and remove containers with:
- 
+
 ```bash
 docker compose down
 ```
 
- Local development
-----------------------------------
+## Local development
 
-1) Start the API server
+1. Start the API server
 
 ```bash
 cd server
@@ -77,7 +78,7 @@ go run ./cmd/server
 
 The server uses an SQLite file under `server/data/db`. On first run it will create the DB and necessary tables via GORM migrations in the code.
 
-2) Start the client
+2. Start the client
 
 ```bash
 cd client
@@ -87,53 +88,56 @@ npm run dev
 
 Open http://localhost:3000 to view the Next.js app. The client expects the API to be running at the default address configured in the client environment (see `client/.env` or client code for API URL locations).
 
-Environment configuration
--------------------------
+## Environment configuration
 
 Server environment variables (create `.env` at `server/` if needed)
+
 - `PORT` — port to run the API (default 8080)
-- `DATABASE_URL` — (optional) path or DSN for SQLite; default is `server/data/db/homelogger.db` or similar used by code
+- `DB_TYPE` — database engine type: `sqlite` (default), `postgres`, or `mariadb`
+- `DATABASE_URL` — connection path or DSN. For `sqlite`, this can be a file path or SQLite DSN; for `postgres` or `mariadb`, this must be a valid connection string.
+- `DEMO_MODE` — if `true` or `1`, runs in demo mode using SQLite and ignores non-sqlite `DB_TYPE`.
+- `DEMO_DB_PATH` — optional override for the demo SQLite database file location.
+
+> `DB_TYPE` is pinned on first startup. Once the server has initialized with an engine, later starts cannot change it for the same data directory.
 
 Client environment variables
+
 - The client uses Next.js environment patterns if required (check `client/next.config.js` or `client/.env.local`)
 
-API and docs
-------------
+## API and docs
 
 The server exposes a REST API. The OpenAPI spec is available at [server/openapi.yaml](server/openapi.yaml). Use it to generate clients, inspect endpoints, or run API docs tools (Swagger UI / Redoc).
 
-Data and uploads
-----------------
+## Data and uploads
 
 - SQLite DB file is stored under [server/data/db](server/data/db)
 - Uploaded files are stored under [server/data/uploads](server/data/uploads)
 
-Backup & export
-----------------
+## Backup & export
 
 - The app includes a server endpoint and a client settings page to download a full backup.
 - The backup endpoint: `GET /backup/download` on the API server. It streams a ZIP containing:
-	- the SQLite database file
-	- the uploads directory with all files
+  - the SQLite database file
+  - the uploads directory with all files
 
 Notes & safety
+
 - Always keep an additional copy of the original DB before overwriting.
 - If your server is behind Docker with volumes, restore the files into the host path used by the volume or restore directly inside the running container (use `docker cp` or mount the volume and replace files), then restart the container.
 - Restores can fail if versions mismatch; ensure your server code and SQLite driver versions are compatible with the DB file.
-	- the SQLite database file (under `data/db/`), and
-	- the `data/uploads/` directory with all uploaded files.
+  - the SQLite database file (under `data/db/`), and
+  - the `data/uploads/` directory with all uploaded files.
 - Client settings: open the web UI and go to `Settings` to use the "Download Backup" button which calls the endpoint and triggers a browser download.
 
 Information about **restoring a backup** is found in the Wiki: [Restoring a backup](https://github.com/FrancisLaboratories/homelogger/wiki/How-To-Restore-from-a-Backup)
 
 Security note: the backup endpoint is unauthenticated in this version — if you expose the server to untrusted networks, add authentication or restrict access.
 
-Development tips
-----------------
+## Development tips
+
 - When changing server models, GORM auto-migrations will apply on startup (see `server/internal/database/gorm.go`).
 
-Contributing
-------------
+## Contributing
 
 Contributions are welcome. Please read the following guidelines before submitting a PR:
 
@@ -141,22 +145,19 @@ Contributions are welcome. Please read the following guidelines before submittin
 - AI Policy [AI_POLICY.md](AI_POLICY.md)
 - Code of Conduct [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
 
-License
--------
+## License
 
 This project is available under the terms of the MIT license, as shown in the [LICENSE](LICENSE) file in this repository.
 
-Contact
--------
+## Contact
 
 For questions or feedback, open an issue or discussion post in this repo. To privately report security vulnerabilities, please follow the guidelines in the [SECURITY.md](SECURITY.md) document.
 
-Further work / Roadmap
-----------------------
+## Further work / Roadmap
+
 Development is ongoing. Planned features include:
 
 - Planning/scheduling tools for seasonal maintenance and repairs
 - Report creation and export functionality
 - Much more to come. Also open to suggestions and contributions!
   - Please don't submit a PR for a major feature without discussing it first via an issue or discussion post.
-
