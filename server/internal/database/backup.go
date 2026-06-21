@@ -1,54 +1,45 @@
 package database
 
 import (
-	"encoding/json"
 	"fmt"
-	"reflect"
+	"time"
 
 	"github.com/masoncfrancis/homelogger/server/internal/models"
 	"gorm.io/gorm"
 )
 
-// exportDataToJson fetches all data for registered models and marshals it into a JSON byte array.
-func ExportDataToJson(db *gorm.DB) ([]byte, error) {
-	data := make(map[string]interface{})
+const BackupVersion = "1.0"
 
-	// List of models to back up. This should match `MigrateGorm` in gorm.go
-	modelsToBackup := []interface{}{
-		&models.Todo{},
-		&models.Appliance{},
-		&models.Maintenance{},
-		&models.Repair{},
-		&models.SavedFile{},
-		&models.Note{},
-		&models.Task{},
+// ExportToJSON fetches all data and returns a typed BackupPayload.
+// Works with any GORM dialect — no raw SQL, no dialect-specific logic.
+func ExportToJSON(db *gorm.DB, dbType string) (*models.BackupPayload, error) {
+	payload := &models.BackupPayload{
+		Version:      BackupVersion,
+		ExportedAt:   time.Now().UTC(),
+		DatabaseType: dbType,
 	}
 
-	for _, model := range modelsToBackup {
-		modelType := reflect.TypeOf(model).Elem()
-		modelName := modelType.Name()
-
-		// Create a slice to hold records of the current model type
-		sliceType := reflect.SliceOf(modelType)
-		records := reflect.New(sliceType).Interface()
-
-		if err := db.Find(records).Error; err != nil {
-			return nil, fmt.Errorf("failed to fetch %s records: %w", modelName, err)
-		}
-		data[modelName] = reflect.ValueOf(records).Elem().Interface()
+	if err := db.Find(&payload.Entities.Appliances).Error; err != nil {
+		return nil, fmt.Errorf("fetch Appliance: %w", err)
+	}
+	if err := db.Find(&payload.Entities.Tasks).Error; err != nil {
+		return nil, fmt.Errorf("fetch Task: %w", err)
+	}
+	if err := db.Find(&payload.Entities.Maintenance).Error; err != nil {
+		return nil, fmt.Errorf("fetch Maintenance: %w", err)
+	}
+	if err := db.Find(&payload.Entities.Repairs).Error; err != nil {
+		return nil, fmt.Errorf("fetch Repair: %w", err)
+	}
+	if err := db.Find(&payload.Entities.SavedFiles).Error; err != nil {
+		return nil, fmt.Errorf("fetch SavedFile: %w", err)
+	}
+	if err := db.Find(&payload.Entities.Notes).Error; err != nil {
+		return nil, fmt.Errorf("fetch Note: %w", err)
+	}
+	if err := db.Find(&payload.Entities.Todos).Error; err != nil {
+		return nil, fmt.Errorf("fetch Todo: %w", err)
 	}
 
-	backupContent := map[string]interface{}{
-		"version": "1.0",
-		"data":    data,
-	}
-
-	jsonData, err := json.MarshalIndent(backupContent, "", "  ")
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal backup data to JSON: %w", err)
-	}
-
-	return jsonData, nil
+	return payload, nil
 }
-
-// ponytail: No generic GORM GetAll function. Create a specific backup file.
