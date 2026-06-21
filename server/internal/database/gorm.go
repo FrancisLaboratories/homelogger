@@ -16,6 +16,10 @@ const (
 	dialectSQLite   = "sqlite"
 	dialectPostgres = "postgres"
 
+	// Exported aliases for use in tests and external packages.
+	DialectSQLite   = dialectSQLite
+	DialectPostgres = dialectPostgres
+
 	defaultDialectLockPath = "./data/db/.db_dialect"
 )
 

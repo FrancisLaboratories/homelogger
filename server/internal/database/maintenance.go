@@ -28,6 +28,10 @@ func GetMaintenances(db *gorm.DB, applianceId uint, referenceType, spaceType str
 
 // AddMaintenance creates a new maintenance record
 func AddMaintenance(db *gorm.DB, maintenance *models.Maintenance) (*models.Maintenance, error) {
+	// ponytail: nil out zero ApplianceID — Postgres enforces FK, 0 is not a valid appliance id
+	if maintenance.ApplianceID != nil && *maintenance.ApplianceID == 0 {
+		maintenance.ApplianceID = nil
+	}
 	result := db.Create(maintenance)
 	if result.Error != nil {
 		return nil, result.Error

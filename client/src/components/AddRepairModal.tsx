@@ -92,7 +92,7 @@ const AddRepairModal: React.FC<AddRepairModalProps> = ({
       notes: string;
       spaceType: RepairSpaceType;
       referenceType: RepairReferenceType;
-      applianceId: number;
+      applianceId: number | null;
       attachmentIds: number[];
     } = {
       description,
@@ -101,7 +101,7 @@ const AddRepairModal: React.FC<AddRepairModalProps> = ({
       notes,
       spaceType,
       referenceType,
-      applianceId: applianceId || 0,
+      applianceId: applianceId || null,
       attachmentIds,
     };
 

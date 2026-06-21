@@ -54,7 +54,7 @@ func TestConnectGorm_LocksDialectOnFirstSuccessfulRun(t *testing.T) {
 	withEnv(t, "DB_DIALECT", "postgres")
 	if _, err := ConnectGorm(); err == nil {
 		t.Fatalf("expected lock mismatch error")
-	} else if !strings.Contains(err.Error(), "locked to") {
+	} else if !strings.Contains(err.Error(), "cannot be changed after first run") {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }

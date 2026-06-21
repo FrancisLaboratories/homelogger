@@ -165,8 +165,8 @@ func TestExportToJSONPostgres(t *testing.T) {
 }
 
 
-// TestImportFromJSON tests the import functionality with merge semantics
-// TODO: Fix test fixtures - currently has GORM reflection issues
+// TestImportFromJSON tests replace-all import semantics:
+// pre-existing DB data is wiped; payload records are inserted fresh.
 func TestImportFromJSON(t *testing.T) {
 	db, err := setupTestDB(database.DialectSQLite)
 	if err != nil {
@@ -174,8 +174,8 @@ func TestImportFromJSON(t *testing.T) {
 	}
 	defer cleanupTestDB(db, database.DialectSQLite)
 
-	// Create an initial appliance
-	initialAppliance := &models.Appliance{
+	// Seed a record that should be gone after import
+	preExisting := &models.Appliance{
 		ApplianceName: "Old Fridge",
 		Manufacturer:  "OldCo",
 		ModelNumber:   "OLD123",
@@ -185,53 +185,41 @@ func TestImportFromJSON(t *testing.T) {
 		Location:      "Garage",
 		Type:          "Refrigerator",
 	}
-	if err := db.Create(initialAppliance).Error; err != nil {
-		t.Fatalf("failed to create initial appliance: %v", err)
+	if err := db.Create(preExisting).Error; err != nil {
+		t.Fatalf("failed to create pre-existing appliance: %v", err)
 	}
 
-	// Fetch initialAppliance to get its actual UpdatedAt value after GORM processing
-	var fetchedInitialAppliance models.Appliance
-	if err := db.First(&fetchedInitialAppliance, initialAppliance.ID).Error; err != nil {
-		t.Fatalf("failed to fetch initial appliance: %v", err)
-	}
-
-	// Calculate a time for the payload entities that is guaranteed to be newer
-	payloadUpdatedAt := fetchedInitialAppliance.UpdatedAt.Add(time.Second)
-
-	// Create a backup payload with a new appliance and an updated existing appliance
-	newAppliance := &models.Appliance{
-		Model:         gorm.Model{UpdatedAt: payloadUpdatedAt}, // Set UpdatedAt here
-		ApplianceName: "New Dishwasher",
-		Manufacturer:  "NewCo",
-		ModelNumber:   "NEW456",
-		SerialNumber:  "NEWSN",
-		YearPurchased: "2023",
-		PurchasePrice: "1000",
-		Location:      "Kitchen",
-		Type:          "Dishwasher",
-	}
-	updatedAppliance := &models.Appliance{
-		Model:         gorm.Model{ID: initialAppliance.ID, UpdatedAt: payloadUpdatedAt}, // Set ID and UpdatedAt
-		ApplianceName: "Updated Fridge",
-		Manufacturer:  "NewOldCo",
-		ModelNumber:   "UPD123",
-		SerialNumber:  "OLDSN",
-		YearPurchased: "2010",
-		PurchasePrice: "600",
-		Location:      "Kitchen",
-		Type:          "Refrigerator",
-	}
-
+	// Payload contains two appliances (neither is "Old Fridge")
 	payload := &models.BackupPayload{
 		Version:      database.BackupVersion,
-		ExportedAt:   time.Now().UTC(), // This should be fine, as it's just metadata
+		ExportedAt:   time.Now().UTC(),
 		DatabaseType: "sqlite",
 		Entities: models.Entities{
-			Appliances: []models.Appliance{*newAppliance, *updatedAppliance},
+			Appliances: []models.Appliance{
+				{
+					ApplianceName: "New Dishwasher",
+					Manufacturer:  "NewCo",
+					ModelNumber:   "NEW456",
+					SerialNumber:  "NEWSN",
+					YearPurchased: "2023",
+					PurchasePrice: "1000",
+					Location:      "Kitchen",
+					Type:          "Dishwasher",
+				},
+				{
+					ApplianceName: "Backup Fridge",
+					Manufacturer:  "BackupCo",
+					ModelNumber:   "BKP123",
+					SerialNumber:  "BSNSN",
+					YearPurchased: "2020",
+					PurchasePrice: "800",
+					Location:      "Kitchen",
+					Type:          "Refrigerator",
+				},
+			},
 		},
 	}
 
-	// Create a dummy files directory for SavedFiles, even if not used in this test
 	tempDir, err := os.MkdirTemp("", "testfiles-*")
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
@@ -246,51 +234,37 @@ func TestImportFromJSON(t *testing.T) {
 	if result.Errors > 0 {
 		t.Errorf("import returned errors: %s", result.ErrorMessage)
 	}
-	if result.Inserted != 1 {
-		t.Errorf("expected 1 inserted record, got %d", result.Inserted)
-	}
-	if result.Updated != 1 {
-		t.Errorf("expected 1 updated record, got %d", result.Updated)
-	}
-	if result.Skipped != 0 {
-		t.Errorf("expected 0 skipped records, got %d", result.Skipped)
+	// Replace semantics: both payload appliances inserted, pre-existing wiped
+	if result.Inserted != 2 {
+		t.Errorf("expected 2 inserted records, got %d", result.Inserted)
 	}
 
-	// Verify records in DB
 	var appliances []models.Appliance
 	if err := db.Order("id asc").Find(&appliances).Error; err != nil {
 		t.Fatalf("failed to query appliances: %v", err)
 	}
 
 	if len(appliances) != 2 {
-		t.Fatalf("expected 2 appliances in DB, got %d", len(appliances))
+		t.Fatalf("expected 2 appliances in DB after import, got %d", len(appliances))
 	}
 
-	// Check updated appliance
-	foundUpdated := false
+	// Pre-existing "Old Fridge" must be gone
 	for _, app := range appliances {
-		if app.ID == initialAppliance.ID {
-			if app.ApplianceName != "Updated Fridge" {
-				t.Errorf("expected updated appliance name 'Updated Fridge', got '%s'", app.ApplianceName)
-			}
-			foundUpdated = true
-			break
+		if app.ApplianceName == "Old Fridge" {
+			t.Error("pre-existing 'Old Fridge' should have been wiped by import")
 		}
-	}
-	if !foundUpdated {
-		t.Error("updated appliance not found in DB")
 	}
 
-	// Check new appliance
-	foundNew := false
+	// Both payload appliances must be present
+	names := map[string]bool{}
 	for _, app := range appliances {
-		if app.ApplianceName == "New Dishwasher" {
-			foundNew = true
-			break
-		}
+		names[app.ApplianceName] = true
 	}
-	if !foundNew {
-		t.Error("new appliance not found in DB")
+	if !names["New Dishwasher"] {
+		t.Error("'New Dishwasher' from payload not found in DB")
+	}
+	if !names["Backup Fridge"] {
+		t.Error("'Backup Fridge' from payload not found in DB")
 	}
 }
 

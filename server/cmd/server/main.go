@@ -2,6 +2,7 @@ package main
 
 import (
 	"archive/zip"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
@@ -1180,118 +1181,10 @@ func main() {
 
 	// Download a backup ZIP containing the DB and uploads
 	app.Get("/backup/download", func(c *fiber.Ctx) error {
-
-	// Import a backup ZIP containing the data.json and uploads
-    app.Post("/backup/import", func(c *fiber.Ctx) error {
-        backupMu.Lock()
-        defer backupMu.Unlock()
-
-        file, err := c.FormFile("backup")
-        if err != nil {
-            return c.Status(fiber.StatusBadRequest).SendString("Error getting backup file: " + err.Error())
-        }
-
-        // Save the uploaded file to a temporary location
-        tempDir, err := os.MkdirTemp("", "homelogger-backup-import-")
-        if err != nil {
-            return c.Status(fiber.StatusInternalServerError).SendString("Error creating temp directory: " + err.Error())
-        }
-        defer func() {
-            _ = os.RemoveAll(tempDir)
-        }()
-
-        tempZipPath := filepath.Join(tempDir, file.Filename)
-        if err := c.SaveFile(file, tempZipPath); err != nil {
-            return c.Status(fiber.StatusInternalServerError).SendString("Error saving uploaded file: " + err.Error())
-        }
-
-        // Open the zip file for reading.
-        r, err := zip.OpenReader(tempZipPath)
-        if err != nil {
-            return c.Status(fiber.StatusInternalServerError).SendString("Error opening zip file: " + err.Error())
-        }
-        defer func() {
-            _ = r.Close()
-        }()
-
-        // Extract the zip contents.
-        extractedPath := filepath.Join(tempDir, "extracted")
-        if err := os.MkdirAll(extractedPath, 0755); err != nil {
-            return c.Status(fiber.StatusInternalServerError).SendString("Error creating extraction directory: " + err.Error())
-        }
-
-        var dataJSONPath string
-        var uploadsExtractedPath string
-
-        for _, f := range r.File {
-            fpath := filepath.Join(extractedPath, f.Name)
-            if !strings.HasPrefix(fpath, filepath.Clean(extractedPath)+string(os.PathSeparator)) {
-                return c.Status(fiber.StatusBadRequest).SendString("Illegal file path in zip: " + fpath)
-            }
-
-            if f.FileInfo().IsDir() {
-                _ = os.MkdirAll(fpath, os.ModePerm)
-                continue
-            }
-
-            if err = os.MkdirAll(filepath.Dir(fpath), os.ModePerm); err != nil {
-                return c.Status(fiber.StatusInternalServerError).SendString("Error creating dir for file: " + err.Error())
-            }
-
-            outFile, err := os.OpenFile(fpath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
-            if err != nil {
-                return c.Status(fiber.StatusInternalServerError).SendString("Error creating file in extraction: " + err.Error())
-            }
-
-            rc, err := f.Open()
-            if err != nil {
-                _ = outFile.Close()
-                return c.Status(fiber.StatusInternalServerError).SendString("Error opening file in zip: " + err.Error())
-            }
-
-            _, err = io.Copy(outFile, rc)
-            _ = outFile.Close()
-            _ = rc.Close()
-
-            if err != nil {
-                return c.Status(fiber.StatusInternalServerError).SendString("Error copying file from zip: " + err.Error())
-            }
-
-            if strings.EqualFold(filepath.Base(fpath), "data.json") {
-                dataJSONPath = fpath
-            } else if strings.HasPrefix(f.Name, "uploads/") {
-                if uploadsExtractedPath == "" {
-                    uploadsExtractedPath = filepath.Join(extractedPath, "uploads")
-                }
-            }
-        }
-
-        if dataJSONPath == "" {
-            return c.Status(fiber.StatusBadRequest).SendString("Backup ZIP is missing data.json")
-        }
-
-        // Import data into the database
-        if err := database.ImportDataFromJson(db, dataJSONPath); err != nil {
-            return c.Status(fiber.StatusInternalServerError).SendString("Error importing database data: " + err.Error())
-        }
-
-        // Import uploaded files
-        if err := database.ImportUploads(uploadsExtractedPath); err != nil {
-            return c.Status(fiber.StatusInternalServerError).SendString("Error importing uploaded files: " + err.Error())
-        }
-
-        return c.SendString("Backup import completed successfully")
-    })
-
-
-
-
-
 		pr, pw := io.Pipe()
 
 		go func() {
 			zw := zip.NewWriter(pw)
-			// ensure the writer is closed which also closes the underlying pipe writer
 			defer func() {
 				_ = zw.Close()
 				_ = pw.Close()
@@ -1300,85 +1193,49 @@ func main() {
 			backupMu.Lock()
 			defer backupMu.Unlock()
 
-			// ponytail: Remove DB-specific backup (pg_dump, sqlite vacuum/copy). Universal JSON export.
-
-			jsonData, err := database.ExportDataToJson(db)
+			// ponytail: Universal JSON export — works on any GORM dialect, no raw dump needed.
+			payload, err := database.ExportToJSON(db, db.Dialector.Name())
 			if err != nil {
-				_ = pw.CloseWithError(fmt.Errorf("failed to export data to JSON: %w", err))
+				_ = pw.CloseWithError(fmt.Errorf("export data: %w", err))
 				return
 			}
 
-			// Create a temporary file for the JSON data
-			tmpJSONFile, err := os.CreateTemp("", fmt.Sprintf("homelogger-backup-%d-*.json", time.Now().UnixNano()))
+			jsonData, err := json.Marshal(payload)
 			if err != nil {
-				_ = pw.CloseWithError(fmt.Errorf("failed to create temporary JSON file: %w", err))
-				return
-			}
-			defer func() {
-				_ = tmpJSONFile.Close()
-				_ = os.Remove(tmpJSONFile.Name()) // Clean up the temporary file
-			}()
-
-			if _, err := tmpJSONFile.Write(jsonData); err != nil {
-				_ = pw.CloseWithError(fmt.Errorf("failed to write JSON data to temporary file: %w", err))
-				return
-			}
-			if err := tmpJSONFile.Close(); err != nil {
-				_ = pw.CloseWithError(fmt.Errorf("failed to close temporary JSON file: %w", err))
+				_ = pw.CloseWithError(fmt.Errorf("marshal payload: %w", err))
 				return
 			}
 
-			// Add the JSON data file to the ZIP
-			jsonFileName := "data.json" // Fixed name in the zip
-			jsonFileWriter, err := zw.Create(jsonFileName)
+			w, err := zw.Create("data.json")
 			if err != nil {
-				_ = pw.CloseWithError(fmt.Errorf("failed to create zip entry for data.json: %w", err))
+				_ = pw.CloseWithError(fmt.Errorf("zip entry data.json: %w", err))
 				return
 			}
-			jsonFileToZip, err := os.Open(tmpJSONFile.Name())
-			if err != nil {
-				_ = pw.CloseWithError(fmt.Errorf("failed to open temporary JSON file for zipping: %w", err))
-				return
-			}
-			defer func() {
-				_ = jsonFileToZip.Close()
-			}()
-			if _, err := io.Copy(jsonFileWriter, jsonFileToZip); err != nil {
-				_ = pw.CloseWithError(fmt.Errorf("failed to copy JSON data to zip: %w", err))
+			if _, err := w.Write(jsonData); err != nil {
+				_ = pw.CloseWithError(fmt.Errorf("write data.json: %w", err))
 				return
 			}
 
-			// Walk uploads directory and add files preserving relative paths
 			uploadsRoot := "./data/uploads"
 			_ = filepath.Walk(uploadsRoot, func(path string, info os.FileInfo, err error) error {
-				if err != nil {
+				if err != nil || info.IsDir() {
 					return err
 				}
-				if info.IsDir() {
-					return nil
-				}
-
 				rel, err := filepath.Rel(uploadsRoot, path)
 				if err != nil {
 					return err
 				}
-
 				f, err := os.Open(path)
 				if err != nil {
 					return err
 				}
 				defer f.Close()
-
-				// Use forward slashes inside ZIP
-				dest := filepath.ToSlash(filepath.Join("uploads", rel))
-				dst, err := zw.Create(dest)
+				dst, err := zw.Create(filepath.ToSlash(filepath.Join("uploads", rel)))
 				if err != nil {
 					return err
 				}
-				if _, err := io.Copy(dst, f); err != nil {
-					return err
-				}
-				return nil
+				_, err = io.Copy(dst, f)
+				return err
 			})
 		}()
 
@@ -1386,6 +1243,91 @@ func main() {
 		c.Set("Content-Disposition", "attachment; filename=homelogger-backup.zip")
 		return c.SendStream(pr)
 	})
+
+	// Import a backup ZIP — replaces all data: drop tables → migrate → insert
+	app.Post("/backup/import", func(c *fiber.Ctx) error {
+		backupMu.Lock()
+		defer backupMu.Unlock()
+
+		file, err := c.FormFile("backup")
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).SendString("Error getting backup file: " + err.Error())
+		}
+
+		tempDir, err := os.MkdirTemp("", "homelogger-backup-import-")
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).SendString("Error creating temp directory: " + err.Error())
+		}
+		defer func() { _ = os.RemoveAll(tempDir) }()
+
+		tempZipPath := filepath.Join(tempDir, file.Filename)
+		if err := c.SaveFile(file, tempZipPath); err != nil {
+			return c.Status(fiber.StatusInternalServerError).SendString("Error saving uploaded file: " + err.Error())
+		}
+
+		r, err := zip.OpenReader(tempZipPath)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).SendString("Error opening zip file: " + err.Error())
+		}
+		defer func() { _ = r.Close() }()
+
+		extractedPath := filepath.Join(tempDir, "extracted")
+		if err := os.MkdirAll(extractedPath, 0755); err != nil {
+			return c.Status(fiber.StatusInternalServerError).SendString("Error creating extraction directory: " + err.Error())
+		}
+
+		var dataJSONPath string
+		var uploadsExtractedPath string
+
+		for _, f := range r.File {
+			fpath := filepath.Join(extractedPath, f.Name)
+			if !strings.HasPrefix(fpath, filepath.Clean(extractedPath)+string(os.PathSeparator)) {
+				return c.Status(fiber.StatusBadRequest).SendString("Illegal file path in zip: " + fpath)
+			}
+			if f.FileInfo().IsDir() {
+				_ = os.MkdirAll(fpath, os.ModePerm)
+				continue
+			}
+			if err = os.MkdirAll(filepath.Dir(fpath), os.ModePerm); err != nil {
+				return c.Status(fiber.StatusInternalServerError).SendString("Error creating dir: " + err.Error())
+			}
+			outFile, err := os.OpenFile(fpath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
+			if err != nil {
+				return c.Status(fiber.StatusInternalServerError).SendString("Error creating file: " + err.Error())
+			}
+			rc, err := f.Open()
+			if err != nil {
+				_ = outFile.Close()
+				return c.Status(fiber.StatusInternalServerError).SendString("Error opening zip entry: " + err.Error())
+			}
+			_, copyErr := io.Copy(outFile, rc)
+			_ = outFile.Close()
+			_ = rc.Close()
+			if copyErr != nil {
+				return c.Status(fiber.StatusInternalServerError).SendString("Error extracting file: " + copyErr.Error())
+			}
+			if strings.EqualFold(filepath.Base(fpath), "data.json") {
+				dataJSONPath = fpath
+			} else if strings.HasPrefix(f.Name, "uploads/") && uploadsExtractedPath == "" {
+				uploadsExtractedPath = filepath.Join(extractedPath, "uploads")
+			}
+		}
+
+		if dataJSONPath == "" {
+			return c.Status(fiber.StatusBadRequest).SendString("Backup ZIP is missing data.json")
+		}
+
+		if _, err := database.ImportFromJSONFile(db, dataJSONPath, uploadsExtractedPath); err != nil {
+			return c.Status(fiber.StatusInternalServerError).SendString("Error importing database data: " + err.Error())
+		}
+
+		if err := database.ImportUploads(uploadsExtractedPath); err != nil {
+			return c.Status(fiber.StatusInternalServerError).SendString("Error importing uploaded files: " + err.Error())
+		}
+
+		return c.SendString("Backup import completed successfully")
+	})
+
 
 	fmt.Printf("Starting HomeLogger Server %s on port 8083\n", version.Version)
 
