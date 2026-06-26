@@ -24,6 +24,7 @@ WORKDIR /app
 
 # Copy go.mod from the server directory
 COPY server/go.mod ./
+COPY server/go.sum ./
 
 # Download dependencies
 RUN go mod download
