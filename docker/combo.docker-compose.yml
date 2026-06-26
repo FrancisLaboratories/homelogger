@@ -2,10 +2,10 @@ services:
 
   homelogger:
     build:
-      context: .
+      context: ..
       dockerfile: Dockerfile
     volumes:
-      - ./server/data:/root/data
+      - ../server/data:/root/data
     ports:
       - "3005:80"
     restart: unless-stopped

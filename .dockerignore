@@ -1,6 +1,7 @@
 .idea/
 .github/
 .vscode/
+docker/
 
 # Node deps / build artifacts
 node_modules
