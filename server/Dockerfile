@@ -1,8 +1,6 @@
 # Stage 1: Build the Go binary
-FROM golang:alpine AS builder
+FROM golang:1-alpine AS builder
 
-# Install build dependencies
-RUN apk add --no-cache gcc musl-dev
 
 # Set the Current Working Directory inside the container
 WORKDIR /app
@@ -17,8 +15,6 @@ RUN go mod download
 # Copy the source from the current directory to the Working Directory inside the container
 COPY . .
 
-# Enable CGO and build the Go app
-ENV CGO_ENABLED=1
 RUN go build -o main ./cmd/server
 
 # Stage 2: Run the Go binary

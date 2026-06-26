@@ -18,7 +18,6 @@ RUN npm run build
 # Stage 2: Build the Go binary
 FROM golang:1-alpine AS server-builder
 
-RUN apk add --no-cache gcc musl-dev
 
 WORKDIR /app
 
@@ -32,7 +31,6 @@ RUN go mod download
 # Copy only the server source into the build context
 COPY server/ .
 
-ENV CGO_ENABLED=1
 RUN go build -o main ./cmd/server
 
 # Stage 3: Final image based on Alpine, running nginx + the Go server
