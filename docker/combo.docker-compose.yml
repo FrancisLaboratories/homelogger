@@ -8,7 +8,6 @@ services:
       - homelogger-data:/root/data
     environment:
       - DB_DIALECT=sqlite
-      - ../server/data:/root/data
     ports:
       - "3005:80"
     restart: unless-stopped
