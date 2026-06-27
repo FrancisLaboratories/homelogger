@@ -14,7 +14,7 @@ To keep the project focused and maintainable, we have specific rules regarding P
 
 ### New Features
 * **Unsolicited PRs:** **Please do not submit a PR for a new feature without prior discussion + approval.**
-* **Process:** If you have an idea for a feature, please open a [Feature Request Issue/Discussion] first. I will only accept PRs for features that I have explicitly indicated I am willing to merge. 
+* **Process:** If you have an idea for a feature, please open a [Feature Request Issue/Discussion] first. we will only accept PRs for features that we have explicitly indicated we are willing to merge. 
 * **Why?** This prevents you from wasting time on a feature that may not fit the project's long-term roadmap and design.
 
 ### General Feedback & Questions
@@ -43,7 +43,7 @@ We value human oversight. If you use AI tools (GitHub Copilot, ChatGPT, Claude C
 
 ## Style & Standards
 * Follow the existing code style and naming conventions.
-* Keep commits clean and descriptive. If I can't figure out the clear purpose of your PR, it's not getting merged. 
+* Keep commits clean and descriptive. If we can't figure out the clear purpose of your PR, it's not getting merged. 
 * Code in the `client` folder is formatted by [Prettier](https://prettier.io/docs/)
 * Code is scanned by SonarQube for quality. We are shooting for 80% quality rating. Please fix as many issues on your branch as possible before submitting a PR.
 
@@ -53,8 +53,8 @@ We value human oversight. If you use AI tools (GitHub Copilot, ChatGPT, Claude C
 
 Please make sure your code includes or updates any tests. We are shooting for 80% test coverage.
 
-Note: Building tests into the project is currently a work in progress. There is a lot of code that doesn't have tests at this time. With that said, I will be implementing tests soon and will require updated tests for new code and any code that is being modified.
+Note: Building tests into the project is currently a work in progress. There is a lot of code that doesn't have tests at this time. With that said, we will be implementing tests soon and will require updated tests for new code and any code that is being modified.
 
 ---
 
-**Note:** Quality is prioritized over quantity. I would much rather see one well-documented bug fix than five unrequested features!
+**Note:** Quality is prioritized over quantity. We would much rather see one well-documented bug fix than five unrequested features!
