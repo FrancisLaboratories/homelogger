@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 
 	"github.com/masoncfrancis/homelogger/server/internal/models"
-	"gorm.io/driver/sqlite"
+	"github.com/glebarez/sqlite"
 	"gorm.io/gorm"
 )
 
