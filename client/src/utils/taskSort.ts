@@ -1,11 +1,7 @@
 import type { Task } from "@/components/TasksSection";
 
 type SortOption =
-  | "due_asc"
-  | "due_desc"
-  | "priority"
-  | "created_desc"
-  | "label_asc";
+  "due_asc" | "due_desc" | "priority" | "created_desc" | "label_asc";
 
 const PRIORITY_ORDER: Record<string, number> = {
   critical: 0,
