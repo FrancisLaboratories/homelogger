@@ -9,18 +9,9 @@ import applySort from "@/utils/taskSort";
 import { Link } from "react-router-dom";
 
 type SortOption =
-  | "due_asc"
-  | "due_desc"
-  | "priority"
-  | "created_desc"
-  | "label_asc";
+  "due_asc" | "due_desc" | "priority" | "created_desc" | "label_asc";
 type FilterOption =
-  | "active"
-  | "completed"
-  | "all"
-  | "priority_high"
-  | "recurring"
-  | "no_date";
+  "active" | "completed" | "all" | "priority_high" | "recurring" | "no_date";
 
 const PRIORITY_ORDER: Record<string, number> = {
   critical: 0,
