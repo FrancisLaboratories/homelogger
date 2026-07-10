@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/masoncfrancis/homelogger/server/internal/database"
 	"github.com/masoncfrancis/homelogger/server/internal/models"
@@ -63,6 +64,61 @@ type DemoData struct {
     } `json:"files"`
 }
 
+func daysInMonth(m, y int) int {
+    return time.Date(y, time.Month(m+1), 0, 0, 0, 0, 0, time.UTC).Day()
+}
+
+// shiftDates transforms all dates in demo data so they appear current.
+// Task dueDates spread across Aug 2026 – Jan 2027, with one overdue.
+// Maintenance and repair dates shift +1 year so all stay historical.
+func (d *DemoData) shiftDates() {
+    now := time.Now()
+
+    for i := range d.Tasks {
+        if d.Tasks[i].DueDate == nil {
+            continue
+        }
+        if i == 4 {
+            s := "2026-06-01"
+            d.Tasks[i].DueDate = &s
+            continue
+        }
+        orig, err := time.Parse("2006-01-02", *d.Tasks[i].DueDate)
+        if err != nil {
+            continue
+        }
+        monthOffset := 1 + (i % 6)
+        targetMonth := int(now.Month()) + monthOffset
+        targetYear := now.Year()
+        if targetMonth > 12 {
+            targetMonth -= 12
+            targetYear++
+        }
+        day := orig.Day()
+        if max := daysInMonth(targetMonth, targetYear); day > max {
+            day = max
+        }
+        s := fmt.Sprintf("%d-%02d-%02d", targetYear, targetMonth, day)
+        d.Tasks[i].DueDate = &s
+    }
+
+    for i := range d.Maintenances {
+        orig, err := time.Parse("2006-01-02", d.Maintenances[i].Date)
+        if err != nil {
+            continue
+        }
+        d.Maintenances[i].Date = orig.AddDate(1, 0, 0).Format("2006-01-02")
+    }
+
+    for i := range d.Repairs {
+        orig, err := time.Parse("2006-01-02", d.Repairs[i].Date)
+        if err != nil {
+            continue
+        }
+        d.Repairs[i].Date = orig.AddDate(1, 0, 0).Format("2006-01-02")
+    }
+}
+
 // Seed loads the demo JSON from the provided file path (or default) and inserts data into the DB.
 // Non-fatal errors are logged.
 func Seed(db *gorm.DB, demoFilePath string) error {
@@ -79,6 +135,7 @@ func Seed(db *gorm.DB, demoFilePath string) error {
     if err := json.Unmarshal(b, &d); err != nil {
         return fmt.Errorf("unmarshal demo data: %w", err)
     }
+    d.shiftDates()
 
     // create appliances and keep ids
     applianceIDs := make([]uint, len(d.Appliances))
