@@ -12,7 +12,10 @@ import (
 	"gorm.io/gorm"
 )
 
-const overdueDate = "2026-06-01"
+const (
+    overdueDate = "2026-06-01"
+    dateFormat  = "2006-01-02"
+)
 
 // DemoData is the shape of sample_data.json
 type DemoData struct {
@@ -71,11 +74,11 @@ func daysInMonth(m, y int) int {
 }
 
 func shiftDateField(date *string, addYears int) {
-    orig, err := time.Parse("2006-01-02", *date)
+    orig, err := time.Parse(dateFormat, *date)
     if err != nil {
         return
     }
-    *date = orig.AddDate(addYears, 0, 0).Format("2006-01-02")
+    *date = orig.AddDate(addYears, 0, 0).Format(dateFormat)
 }
 
 // shiftDates transforms all dates in demo data so they appear current.
@@ -96,7 +99,7 @@ func (d *DemoData) shiftTaskDates(now time.Time) {
             d.Tasks[i].DueDate = &s
             continue
         }
-        orig, err := time.Parse("2006-01-02", *d.Tasks[i].DueDate)
+        orig, err := time.Parse(dateFormat, *d.Tasks[i].DueDate)
         if err != nil {
             continue
         }
