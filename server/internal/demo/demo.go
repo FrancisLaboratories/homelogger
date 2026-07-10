@@ -12,6 +12,8 @@ import (
 	"gorm.io/gorm"
 )
 
+const overdueDate = "2026-06-01"
+
 // DemoData is the shape of sample_data.json
 type DemoData struct {
     Appliances []models.Appliance `json:"appliances"`
@@ -68,18 +70,29 @@ func daysInMonth(m, y int) int {
     return time.Date(y, time.Month(m+1), 0, 0, 0, 0, 0, time.UTC).Day()
 }
 
+func shiftDateField(date *string, addYears int) {
+    orig, err := time.Parse("2006-01-02", *date)
+    if err != nil {
+        return
+    }
+    *date = orig.AddDate(addYears, 0, 0).Format("2006-01-02")
+}
+
 // shiftDates transforms all dates in demo data so they appear current.
 // Task dueDates spread across Aug 2026 – Jan 2027, with one overdue.
 // Maintenance and repair dates shift +1 year so all stay historical.
 func (d *DemoData) shiftDates() {
-    now := time.Now()
+    d.shiftTaskDates(time.Now())
+    d.shiftMaintRepairDates()
+}
 
+func (d *DemoData) shiftTaskDates(now time.Time) {
     for i := range d.Tasks {
         if d.Tasks[i].DueDate == nil {
             continue
         }
         if i == 4 {
-            s := "2026-06-01"
+            s := overdueDate
             d.Tasks[i].DueDate = &s
             continue
         }
@@ -101,21 +114,14 @@ func (d *DemoData) shiftDates() {
         s := fmt.Sprintf("%d-%02d-%02d", targetYear, targetMonth, day)
         d.Tasks[i].DueDate = &s
     }
+}
 
+func (d *DemoData) shiftMaintRepairDates() {
     for i := range d.Maintenances {
-        orig, err := time.Parse("2006-01-02", d.Maintenances[i].Date)
-        if err != nil {
-            continue
-        }
-        d.Maintenances[i].Date = orig.AddDate(1, 0, 0).Format("2006-01-02")
+        shiftDateField(&d.Maintenances[i].Date, 1)
     }
-
     for i := range d.Repairs {
-        orig, err := time.Parse("2006-01-02", d.Repairs[i].Date)
-        if err != nil {
-            continue
-        }
-        d.Repairs[i].Date = orig.AddDate(1, 0, 0).Format("2006-01-02")
+        shiftDateField(&d.Repairs[i].Date, 1)
     }
 }
 
