@@ -218,11 +218,8 @@ func verifySeedTaskDates(t *testing.T, tasks []models.Task) {
             t.Fatalf("task %q has unparseable dueDate %q: %v", tk.Label, *tk.DueDate, err)
         }
         if tk.Label == "Replace central HVAC filter" {
-            if parsed.Year() != 2026 || parsed.Month() != 6 || parsed.Day() != 1 {
-                t.Fatalf("overdue task dueDate expected %s, got %s", overdueDate, *tk.DueDate)
-            }
-            if !parsed.Before(time.Now()) {
-                t.Fatal("overdue task should be in the past")
+            if parsed.Year() != 2026 || parsed.Month() != 6 || parsed.Day() != 1 || !parsed.Before(time.Now()) {
+                t.Fatalf("overdue task dueDate expected %s before now, got %s", overdueDate, *tk.DueDate)
             }
         } else if parsed.Year() < 2026 || parsed.Year() > 2027 {
             t.Fatalf("task %q dueDate %s out of expected range (2026-2027)", tk.Label, *tk.DueDate)
