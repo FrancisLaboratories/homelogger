@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/masoncfrancis/homelogger/server/internal/database"
-	"gorm.io/driver/sqlite"
+	"github.com/glebarez/sqlite"
 	"gorm.io/gorm"
 )
 

@@ -31,11 +31,7 @@ interface TasksSectionProps {
 }
 
 type SortOption =
-  | "due_asc"
-  | "due_desc"
-  | "priority"
-  | "created_desc"
-  | "label_asc";
+  "due_asc" | "due_desc" | "priority" | "created_desc" | "label_asc";
 type FilterOption = "upcoming" | "overdue" | "all" | "completed";
 
 const SORT_OPTIONS: SortOption[] = [
