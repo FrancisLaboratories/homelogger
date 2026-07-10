@@ -1,0 +1,10 @@
+services:
+  homelogger:
+    build: 
+      context: ..
+      dockerfile: Dockerfile
+    ports:
+      - "3005:80"
+    environment:
+      - DEMO_MODE=true
+      - DEMO_FILE_PATH=/root/sample_data.json

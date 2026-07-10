@@ -5,10 +5,16 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/masoncfrancis/homelogger/server/internal/database"
 	"github.com/masoncfrancis/homelogger/server/internal/models"
 	"gorm.io/gorm"
+)
+
+const (
+    overdueDate = "2026-06-01"
+    dateFormat  = "2006-01-02"
 )
 
 // DemoData is the shape of sample_data.json
@@ -63,6 +69,65 @@ type DemoData struct {
     } `json:"files"`
 }
 
+func daysInMonth(m, y int) int {
+    return time.Date(y, time.Month(m+1), 0, 0, 0, 0, 0, time.UTC).Day()
+}
+
+func shiftDateField(date *string, addYears int) {
+    orig, err := time.Parse(dateFormat, *date)
+    if err != nil {
+        return
+    }
+    *date = orig.AddDate(addYears, 0, 0).Format(dateFormat)
+}
+
+// shiftDates transforms all dates in demo data so they appear current.
+// Task dueDates spread across Aug 2026 – Jan 2027, with one overdue.
+// Maintenance and repair dates shift +1 year so all stay historical.
+func (d *DemoData) shiftDates() {
+    d.shiftTaskDates(time.Now())
+    d.shiftMaintRepairDates()
+}
+
+func (d *DemoData) shiftTaskDates(now time.Time) {
+    for i := range d.Tasks {
+        if d.Tasks[i].DueDate == nil {
+            continue
+        }
+        if i == 4 {
+            s := overdueDate
+            d.Tasks[i].DueDate = &s
+            continue
+        }
+        orig, err := time.Parse(dateFormat, *d.Tasks[i].DueDate)
+        if err != nil {
+            continue
+        }
+        monthOffset := 1 + (i % 6)
+        targetMonth := int(now.Month()) + monthOffset
+        targetYear := now.Year()
+        if targetMonth > 12 {
+            targetMonth -= 12
+            targetYear++
+        }
+        day := orig.Day()
+        if max := daysInMonth(targetMonth, targetYear); day > max {
+            day = max
+        }
+        s := fmt.Sprintf("%d-%02d-%02d", targetYear, targetMonth, day)
+        d.Tasks[i].DueDate = &s
+    }
+}
+
+func (d *DemoData) shiftMaintRepairDates() {
+    for i := range d.Maintenances {
+        shiftDateField(&d.Maintenances[i].Date, 1)
+    }
+    for i := range d.Repairs {
+        shiftDateField(&d.Repairs[i].Date, 1)
+    }
+}
+
 // Seed loads the demo JSON from the provided file path (or default) and inserts data into the DB.
 // Non-fatal errors are logged.
 func Seed(db *gorm.DB, demoFilePath string) error {
@@ -79,6 +144,7 @@ func Seed(db *gorm.DB, demoFilePath string) error {
     if err := json.Unmarshal(b, &d); err != nil {
         return fmt.Errorf("unmarshal demo data: %w", err)
     }
+    d.shiftDates()
 
     // create appliances and keep ids
     applianceIDs := make([]uint, len(d.Appliances))
