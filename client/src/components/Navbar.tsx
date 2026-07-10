@@ -32,7 +32,7 @@ const MyNavbar: React.FC = () => {
               marginTop: 4,
             }}
           >
-            Please do not enter personal information
+            Please do not enter personal or sensitive information. You should have no expectation of privacy when using this demo site. All data is publicly accessible and may be deleted at any time.
           </div>
           <div
             style={{
