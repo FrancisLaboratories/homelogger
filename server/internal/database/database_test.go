@@ -12,7 +12,7 @@ import (
 // setupTestDB returns a clean test DB (sqlite by default, postgres when configured).
 func setupTestDB(t *testing.T) *gorm.DB {
 	t.Helper()
-	return testDB(t)
+	return TestDB(t)
 }
 
 func TestConnectAndMigrate(t *testing.T) {

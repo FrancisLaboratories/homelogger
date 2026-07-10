@@ -97,9 +97,9 @@ func resetPostgresTestSchema(db *gorm.DB) error {
     return nil
 }
 
-// testDB creates a clean test DB per test run and migrates models.
+// TestDB creates a clean test DB per test run and migrates models.
 // Default dialect is sqlite. Set TEST_DB_DIALECT=postgres to run against PostgreSQL.
-func testDB(t *testing.T) *gorm.DB {
+func TestDB(t *testing.T) *gorm.DB {
     t.Helper()
 
     dialect := testDialect()

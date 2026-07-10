@@ -8,7 +8,7 @@ import (
 )
 
 func TestAddGetDeleteMaintenance(t *testing.T) {
-    db := testDB(t)
+    db := TestDB(t)
 
     // create appliance for non-space maintenance
     a := &models.Appliance{ApplianceName: "A", Manufacturer: "M", ModelNumber: "X", SerialNumber: "S", YearPurchased: "2020", PurchasePrice: "1", Location: "L", Type: "T"}
@@ -53,7 +53,7 @@ func TestAddGetDeleteMaintenance(t *testing.T) {
 }
 
 func TestGetMaintenancesSpaceFilter(t *testing.T) {
-    db := testDB(t)
+    db := TestDB(t)
 
     m := &models.Maintenance{Description: "s1", ReferenceType: "Space", SpaceType: "Yard", Date: "2026-02-01"}
     if _, err := AddMaintenance(db, m); err != nil {
@@ -70,7 +70,7 @@ func TestGetMaintenancesSpaceFilter(t *testing.T) {
 }
 
 func TestUpdateMaintenance(t *testing.T) {
-    db := testDB(t)
+    db := TestDB(t)
 
     m := &models.Maintenance{Description: "original", ReferenceType: "Space", SpaceType: "Yard", Date: "2026-01-01", Cost: 10.0, Notes: "old notes"}
     added, err := AddMaintenance(db, m)

@@ -8,7 +8,7 @@ import (
 )
 
 func TestUploadGetUpdateDeleteFile(t *testing.T) {
-    db := testDB(t)
+    db := TestDB(t)
 
     // create a temp file to simulate disk attachment
     tmp, err := os.CreateTemp(os.TempDir(), "hl-test-*")
@@ -56,7 +56,7 @@ func TestUploadGetUpdateDeleteFile(t *testing.T) {
 }
 
 func TestAttachAndGetFilesByReferences(t *testing.T) {
-    db := testDB(t)
+    db := TestDB(t)
 
     // create maintenance and repair
     m := &models.Maintenance{Description: "m1", ReferenceType: "Appliance", SpaceType: "", Date: "2026-01-01"}

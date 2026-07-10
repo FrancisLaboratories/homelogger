@@ -21,6 +21,7 @@ var tableDropOrder = []string{
 	"maintenances",
 	"appliances",
 	"todos",
+	"todo_task_migrations",
 }
 
 // dropAllTables drops every application table using raw SQL.
@@ -39,14 +40,24 @@ func dropAllTables(db *gorm.DB) error {
 	return nil
 }
 
-// resetPostgresSequences resets all table PK sequences to max(id) after an import
-// that inserted rows with explicit IDs. No-op on SQLite.
+// tablesWithSequences are the subset of tableDropOrder that have a SERIAL/BIGSERIAL id column.
+// todo_task_migrations uses BIGINT PRIMARY KEY (no sequence), so it's excluded.
 // ponytail: Postgres only — sequences don't exist in SQLite.
+var tablesWithSequences = []string{
+	"tasks",
+	"notes",
+	"saved_files",
+	"repairs",
+	"maintenances",
+	"appliances",
+	"todos",
+}
+
 func resetPostgresSequences(db *gorm.DB) error {
 	if db.Dialector.Name() != dialectPostgres {
 		return nil
 	}
-	for _, table := range tableDropOrder {
+	for _, table := range tablesWithSequences {
 		sql := fmt.Sprintf(
 			`SELECT setval(pg_get_serial_sequence('%s', 'id'), COALESCE(MAX(id), 0) + 1, false) FROM %s`,
 			table, table,

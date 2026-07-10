@@ -6,8 +6,7 @@ services:
     ports:
       - "8083:8083"
     volumes:
-      - ../server/data/db:/root/data/db
-      - ../server/data/uploads:/root/data/uploads
+      - data:/root/data
     environment:
       - DB_DIALECT=sqlite
     networks:
@@ -27,6 +26,9 @@ services:
     networks:
       - homeloggerNetwork
     restart: unless-stopped
+
+volumes:
+  data:
 
 networks:
   homeloggerNetwork:
