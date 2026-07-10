@@ -10,8 +10,6 @@ RUN npm ci
 # Copy the rest of the application code
 COPY client/ .
 
-ARG NEXT_TELEMETRY_DISABLED=1
-
 # Build the Vite app
 RUN npm run build
 
