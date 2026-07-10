@@ -4,7 +4,7 @@ go 1.23.2
 
 require (
 	github.com/glebarez/sqlite v1.11.0
-	github.com/gofiber/fiber/v2 v2.52.13
+	github.com/gofiber/fiber/v2 v2.52.14
 	gorm.io/gorm v1.31.1
 )
 
