@@ -3,6 +3,7 @@ package main
 import (
 	"archive/zip"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -115,16 +116,16 @@ func main() {
 			newDB, err := database.ConnectGorm()
 			if err != nil {
 				errs = append(errs, fmt.Sprintf("connect gorm: %v", err))
-				return fmt.Errorf(strings.Join(errs, "; "))
+				return errors.New(strings.Join(errs, "; "))
 			}
 			db = newDB
 			if err := database.MigrateGorm(db); err != nil {
 				errs = append(errs, fmt.Sprintf("migrate gorm: %v", err))
-				return fmt.Errorf(strings.Join(errs, "; "))
+				return errors.New(strings.Join(errs, "; "))
 			}
 			if err := demo.Seed(db, demoPath); err != nil {
 				errs = append(errs, fmt.Sprintf("seed demo: %v", err))
-				return fmt.Errorf(strings.Join(errs, "; "))
+				return errors.New(strings.Join(errs, "; "))
 			}
 
 			// update timestamp file
@@ -133,7 +134,7 @@ func main() {
 			}
 
 			if len(errs) > 0 {
-				return fmt.Errorf(strings.Join(errs, "; "))
+				return errors.New(strings.Join(errs, "; "))
 			}
 			return nil
 		}
