@@ -45,7 +45,7 @@ This repository contains a React client and a Go (Fiber + GORM) server with a SQ
 
 Prerequisites
 
-- Go (>= 1.20 recommended) for running the server locally
+- Go (>= 1.25 required) for running the server locally
 - Node.js (24+) and npm for the client
 - Docker & Docker Compose (optional, for containerized runs)
 
