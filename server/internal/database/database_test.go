@@ -6,17 +6,10 @@ import (
 	"testing"
 
 	"github.com/masoncfrancis/homelogger/server/internal/models"
-	"gorm.io/gorm"
 )
 
-// setupTestDB returns a clean test DB (sqlite by default, postgres when configured).
-func setupTestDB(t *testing.T) *gorm.DB {
-	t.Helper()
-	return TestDB(t)
-}
-
 func TestConnectAndMigrate(t *testing.T) {
-    db := setupTestDB(t)
+	db := TestDB(t)
     sqlDB, err := db.DB()
     if err != nil {
         t.Fatalf("db.DB() error: %v", err)
@@ -25,7 +18,7 @@ func TestConnectAndMigrate(t *testing.T) {
 }
 
 func TestApplianceCRUD(t *testing.T) {
-    db := setupTestDB(t)
+    db := TestDB(t)
 
     ap := &models.Appliance{
         ApplianceName: "Dishwasher",
@@ -87,7 +80,7 @@ func TestApplianceCRUD(t *testing.T) {
 }
 
 func TestFileAttachAndDelete(t *testing.T) {
-    db := setupTestDB(t)
+    db := TestDB(t)
 
     // Create an appliance to attach files to
     ap := &models.Appliance{ApplianceName: "Fridge", Manufacturer: "Acme", ModelNumber: "F1", SerialNumber: "S1", YearPurchased: "2021", PurchasePrice: "300", Location: "Kitchen", Type: "Appliance"}

@@ -168,17 +168,4 @@ func TestImportFromJSON(t *testing.T) {
 	}
 }
 
-// TestImportMergeConflict — placeholder, Postgres FK enforcement makes this test meaningful.
-func TestImportMergeConflict(t *testing.T) {
-	t.Skip("test fixtures need refinement")
-}
 
-// TestImportMissingFK — placeholder, Postgres enforces FK so invalid references fail on insert.
-func TestImportMissingFK(t *testing.T) {
-	t.Skip("test fixtures need refinement")
-}
-
-// TestImportSchemaMismatch — placeholder for version-gated import validation.
-func TestImportSchemaMismatch(t *testing.T) {
-	t.Skip("test fixtures need refinement")
-}

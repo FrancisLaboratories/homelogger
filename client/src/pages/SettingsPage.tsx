@@ -59,7 +59,7 @@ const SettingsPage: React.FC = () => {
         throw new Error(`Failed to import backup: ${errorText}`);
       }
 
-      alert("Backup imported successfully! The server may restart.");
+      alert("Backup imported successfully");
       setSelectedFile(null);
     } catch (err: any) {
       console.error(err);

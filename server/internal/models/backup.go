@@ -30,8 +30,4 @@ type ImportResult struct {
 	ErrorMessage string `json:"errorMessage,omitempty"`
 }
 
-// SavedFileBackupEntry represents a SavedFile with normalized path during export/import.
-type SavedFileBackupEntry struct {
-	SavedFile
-	NormalizedPath string `json:"normalizedPath"` // Relative path like "files/123"
-}
+
