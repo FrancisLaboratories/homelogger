@@ -5,7 +5,7 @@ services:
     volumes:
       - ./server/data:/root/data
     ports:
-      - "3005:80"
+      - "3005:3005"
     environment:
       - DB_DIALECT=sqlite
     restart: unless-stopped

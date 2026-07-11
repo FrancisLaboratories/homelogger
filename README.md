@@ -94,7 +94,7 @@ Open http://localhost:3000 to view the Next.js app. The client expects the API t
 
 Server environment variables (create `.env` at `server/` if needed)
 
-- `PORT` — port to run API (default currently 8083 in server startup)
+- `PORT` — port to run API (default `3005`)
 - `DB_DIALECT` — `sqlite` (default) or `postgres`
 - `DB_DIALECT` is locked on first successful server start and reused on later starts
 - `DATABASE_URL` —

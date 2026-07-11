@@ -179,12 +179,11 @@ func main() {
 		AllowHeaders: []string{"Content-Type", "Authorization"},
 	}))
 
-	app.Get("/", func(c fiber.Ctx) error {
-		return c.SendString("Hello, World")
-	})
+	// API routes grouped under /api
+	api := app.Group("/api")
 
 	// Health endpoint
-	app.Get("/health", func(c fiber.Ctx) error {
+	api.Get("/health", func(c fiber.Ctx) error {
 		// Check DB connectivity
 		dbSQL, err := db.DB()
 		dbStatus := "ok"
@@ -210,7 +209,7 @@ func main() {
 	})
 
 	// Get all appliances
-	app.Get("/appliances", func(c fiber.Ctx) error {
+	api.Get("/appliances", func(c fiber.Ctx) error {
 		// Connect to gorm
 		db, err := database.ConnectGorm()
 		if err != nil {
@@ -227,7 +226,7 @@ func main() {
 	})
 
 	// Create a new appliance
-	app.Post("/appliances/add", func(c fiber.Ctx) error {
+	api.Post("/appliances/add", func(c fiber.Ctx) error {
 		// Connect to gorm
 		db, err := database.ConnectGorm()
 		if err != nil {
@@ -269,7 +268,7 @@ func main() {
 	})
 
 	// Update an appliance
-	app.Put("/appliances/update/:id", func(c fiber.Ctx) error {
+	api.Put("/appliances/update/:id", func(c fiber.Ctx) error {
 		// Connect to gorm
 		db, err := database.ConnectGorm()
 		if err != nil {
@@ -326,7 +325,7 @@ func main() {
 		return c.JSON(updatedAppliance)
 	})
 
-	app.Get("/appliances/:id", func(c fiber.Ctx) error {
+	api.Get("/appliances/:id", func(c fiber.Ctx) error {
 		// Connect to gorm
 		db, err := database.ConnectGorm()
 		if err != nil {
@@ -351,7 +350,7 @@ func main() {
 		return c.JSON(appliance)
 	})
 
-	app.Delete("/appliances/delete/:id", func(c fiber.Ctx) error {
+	api.Delete("/appliances/delete/:id", func(c fiber.Ctx) error {
 		// Connect to gorm
 		db, err := database.ConnectGorm()
 		if err != nil {
@@ -377,7 +376,7 @@ func main() {
 	})
 
 	// Maintenance endpoints
-	app.Get("/maintenance", func(c fiber.Ctx) error {
+	api.Get("/maintenance", func(c fiber.Ctx) error {
 		applianceId := c.Query("applianceId")
 		referenceType := c.Query("referenceType")
 		spaceType := c.Query("spaceType")
@@ -413,7 +412,7 @@ func main() {
 		return c.JSON(maintenances)
 	})
 
-	app.Post("/maintenance/add", func(c fiber.Ctx) error {
+	api.Post("/maintenance/add", func(c fiber.Ctx) error {
 		// Expect maintenance fields plus optional attachmentIds array
 		var body struct {
 			models.Maintenance
@@ -436,7 +435,7 @@ func main() {
 		return c.Status(fiber.StatusCreated).JSON(newMaintenance)
 	})
 
-	app.Get("/maintenance/:id", func(c fiber.Ctx) error {
+	api.Get("/maintenance/:id", func(c fiber.Ctx) error {
 		id := c.Params("id")
 		idUint, err := strconv.ParseUint(id, 10, 32)
 		if err != nil {
@@ -449,7 +448,7 @@ func main() {
 		return c.JSON(maintenance)
 	})
 
-	app.Delete("/maintenance/delete/:id", func(c fiber.Ctx) error {
+	api.Delete("/maintenance/delete/:id", func(c fiber.Ctx) error {
 		id := c.Params("id")
 		idUint, err := strconv.ParseUint(id, 10, 32)
 		if err != nil {
@@ -461,7 +460,7 @@ func main() {
 		return c.SendStatus(fiber.StatusNoContent)
 	})
 
-	app.Put("/maintenance/update/:id", func(c fiber.Ctx) error {
+	api.Put("/maintenance/update/:id", func(c fiber.Ctx) error {
 		id := c.Params("id")
 		idUint, err := strconv.ParseUint(id, 10, 32)
 		if err != nil {
@@ -484,7 +483,7 @@ func main() {
 	})
 
 	// Repair endpoints
-	app.Get("/repair", func(c fiber.Ctx) error {
+	api.Get("/repair", func(c fiber.Ctx) error {
 		applianceId := c.Query("applianceId")
 		referenceType := c.Query("referenceType")
 		spaceType := c.Query("spaceType")
@@ -520,7 +519,7 @@ func main() {
 		return c.JSON(repairs)
 	})
 
-	app.Post("/repair/add", func(c fiber.Ctx) error {
+	api.Post("/repair/add", func(c fiber.Ctx) error {
 		var body struct {
 			models.Repair
 			AttachmentIDs []uint `json:"attachmentIds"`
@@ -540,7 +539,7 @@ func main() {
 		return c.Status(fiber.StatusCreated).JSON(newRepair)
 	})
 
-	app.Get("/repair/:id", func(c fiber.Ctx) error {
+	api.Get("/repair/:id", func(c fiber.Ctx) error {
 		id := c.Params("id")
 		idUint, err := strconv.ParseUint(id, 10, 32)
 		if err != nil {
@@ -553,7 +552,7 @@ func main() {
 		return c.JSON(repair)
 	})
 
-	app.Delete("/repair/delete/:id", func(c fiber.Ctx) error {
+	api.Delete("/repair/delete/:id", func(c fiber.Ctx) error {
 		id := c.Params("id")
 		idUint, err := strconv.ParseUint(id, 10, 32)
 		if err != nil {
@@ -565,7 +564,7 @@ func main() {
 		return c.SendStatus(fiber.StatusNoContent)
 	})
 
-	app.Put("/repair/update/:id", func(c fiber.Ctx) error {
+	api.Put("/repair/update/:id", func(c fiber.Ctx) error {
 		id := c.Params("id")
 		idUint, err := strconv.ParseUint(id, 10, 32)
 		if err != nil {
@@ -588,7 +587,7 @@ func main() {
 	})
 
 	// Upload a new file
-	app.Post("/files/upload", func(c fiber.Ctx) error {
+	api.Post("/files/upload", func(c fiber.Ctx) error {
 		// Parse the multipart form
 		form, err := c.MultipartForm()
 		if err != nil {
@@ -660,7 +659,7 @@ func main() {
 	})
 
 	// Get file information by ID
-	app.Get("/files/info/:id", func(c fiber.Ctx) error {
+	api.Get("/files/info/:id", func(c fiber.Ctx) error {
 		id := c.Params("id")
 		idUint, err := strconv.ParseUint(id, 10, 32)
 		if err != nil {
@@ -676,7 +675,7 @@ func main() {
 	})
 
 	// List files attached to a maintenance record
-	app.Get("/files/maintenance/:id", func(c fiber.Ctx) error {
+	api.Get("/files/maintenance/:id", func(c fiber.Ctx) error {
 		id := c.Params("id")
 		idUint, err := strconv.ParseUint(id, 10, 32)
 		if err != nil {
@@ -691,7 +690,7 @@ func main() {
 	})
 
 	// List files attached to a repair record
-	app.Get("/files/repair/:id", func(c fiber.Ctx) error {
+	api.Get("/files/repair/:id", func(c fiber.Ctx) error {
 		id := c.Params("id")
 		idUint, err := strconv.ParseUint(id, 10, 32)
 		if err != nil {
@@ -705,7 +704,7 @@ func main() {
 		return c.JSON(files)
 	})
 
-	app.Get("/files/download/:id", func(c fiber.Ctx) error {
+	api.Get("/files/download/:id", func(c fiber.Ctx) error {
 		id := c.Params("id")
 		idUint, err := strconv.ParseUint(id, 10, 32)
 		if err != nil {
@@ -731,7 +730,7 @@ func main() {
 	})
 
 	// List files attached to an appliance
-	app.Get("/files/appliance/:id", func(c fiber.Ctx) error {
+	api.Get("/files/appliance/:id", func(c fiber.Ctx) error {
 		id := c.Params("id")
 		idUint, err := strconv.ParseUint(id, 10, 32)
 		if err != nil {
@@ -746,7 +745,7 @@ func main() {
 	})
 
 	// List files attached to a space type
-	app.Get("/files/space/:spaceType", func(c fiber.Ctx) error {
+	api.Get("/files/space/:spaceType", func(c fiber.Ctx) error {
 		spaceType := c.Params("spaceType")
 		if spaceType == "" {
 			return c.Status(fiber.StatusBadRequest).SendString("Missing spaceType")
@@ -760,7 +759,7 @@ func main() {
 	})
 
 	// Notes endpoints
-	app.Get("/notes", func(c fiber.Ctx) error {
+	api.Get("/notes", func(c fiber.Ctx) error {
 		// Connect to gorm
 		db, err := database.ConnectGorm()
 		if err != nil {
@@ -785,7 +784,7 @@ func main() {
 		return c.JSON(notes)
 	})
 
-	app.Post("/notes/add", func(c fiber.Ctx) error {
+	api.Post("/notes/add", func(c fiber.Ctx) error {
 		db, err := database.ConnectGorm()
 		if err != nil {
 			return c.SendString("Error connecting GORM to db")
@@ -814,7 +813,7 @@ func main() {
 		return c.JSON(note)
 	})
 
-	app.Get("/notes/:id", func(c fiber.Ctx) error {
+	api.Get("/notes/:id", func(c fiber.Ctx) error {
 		id := c.Params("id")
 		idUint, err := strconv.ParseUint(id, 10, 32)
 		if err != nil {
@@ -833,7 +832,7 @@ func main() {
 		return c.JSON(note)
 	})
 
-	app.Put("/notes/update/:id", func(c fiber.Ctx) error {
+	api.Put("/notes/update/:id", func(c fiber.Ctx) error {
 		id := c.Params("id")
 		idUint, err := strconv.ParseUint(id, 10, 32)
 		if err != nil {
@@ -861,7 +860,7 @@ func main() {
 		return c.JSON(updated)
 	})
 
-	app.Delete("/notes/delete/:id", func(c fiber.Ctx) error {
+	api.Delete("/notes/delete/:id", func(c fiber.Ctx) error {
 		id := c.Params("id")
 		idUint, err := strconv.ParseUint(id, 10, 32)
 		if err != nil {
@@ -882,7 +881,7 @@ func main() {
 	})
 
 	// Associate an existing uploaded file with a maintenance, repair, appliance, or space
-	app.Post("/files/attach", func(c fiber.Ctx) error {
+	api.Post("/files/attach", func(c fiber.Ctx) error {
 		var body struct {
 			FileID        uint   `json:"fileId"`
 			MaintenanceID uint   `json:"maintenanceId"`
@@ -920,7 +919,7 @@ func main() {
 	})
 
 	// Delete a file (record + stored file)
-	app.Delete("/files/:id", func(c fiber.Ctx) error {
+	api.Delete("/files/:id", func(c fiber.Ctx) error {
 		id := c.Params("id")
 		idUint, err := strconv.ParseUint(id, 10, 32)
 		if err != nil {
@@ -947,7 +946,7 @@ func main() {
 	})
 
 	// Task endpoints
-	app.Get("/task", func(c fiber.Ctx) error {
+	api.Get("/task", func(c fiber.Ctx) error {
 		applianceIdStr := c.Query("applianceId")
 		spaceType := c.Query("spaceType")
 		includeCompleted := c.Query("includeCompleted") == "true"
@@ -966,7 +965,7 @@ func main() {
 		return c.JSON(tasks)
 	})
 
-	app.Get("/task/dashboard", func(c fiber.Ctx) error {
+	api.Get("/task/dashboard", func(c fiber.Ctx) error {
 		includeCompleted := fiber.Query[bool](c, "includeCompleted", false)
 		tasks, err := database.GetAllTasks(db, includeCompleted)
 		if err != nil {
@@ -975,7 +974,7 @@ func main() {
 		return c.JSON(tasks)
 	})
 
-	app.Post("/task/add", func(c fiber.Ctx) error {
+	api.Post("/task/add", func(c fiber.Ctx) error {
 		var body struct {
 			Label              string   `json:"label"`
 			Notes              string   `json:"notes"`
@@ -1018,7 +1017,7 @@ func main() {
 		return c.Status(fiber.StatusCreated).JSON(created)
 	})
 
-	app.Get("/task/:id", func(c fiber.Ctx) error {
+	api.Get("/task/:id", func(c fiber.Ctx) error {
 		id := c.Params("id")
 		idUint, err := strconv.ParseUint(id, 10, 32)
 		if err != nil {
@@ -1031,7 +1030,7 @@ func main() {
 		return c.JSON(task)
 	})
 
-	app.Put("/task/update/:id", func(c fiber.Ctx) error {
+	api.Put("/task/update/:id", func(c fiber.Ctx) error {
 		id := c.Params("id")
 		idUint, err := strconv.ParseUint(id, 10, 32)
 		if err != nil {
@@ -1079,7 +1078,7 @@ func main() {
 		return c.JSON(updated)
 	})
 
-	app.Put("/task/complete/:id", func(c fiber.Ctx) error {
+	api.Put("/task/complete/:id", func(c fiber.Ctx) error {
 		id := c.Params("id")
 		idUint, err := strconv.ParseUint(id, 10, 32)
 		if err != nil {
@@ -1155,7 +1154,7 @@ func main() {
 		return c.JSON(task)
 	})
 
-	app.Put("/task/uncomplete/:id", func(c fiber.Ctx) error {
+	api.Put("/task/uncomplete/:id", func(c fiber.Ctx) error {
 		id := c.Params("id")
 		idUint, err := strconv.ParseUint(id, 10, 32)
 		if err != nil {
@@ -1168,7 +1167,7 @@ func main() {
 		return c.JSON(task)
 	})
 
-	app.Delete("/task/delete/:id", func(c fiber.Ctx) error {
+	api.Delete("/task/delete/:id", func(c fiber.Ctx) error {
 		id := c.Params("id")
 		idUint, err := strconv.ParseUint(id, 10, 32)
 		if err != nil {
@@ -1181,7 +1180,7 @@ func main() {
 	})
 
 	// Download a backup ZIP containing the DB and uploads
-	app.Get("/backup/download", func(c fiber.Ctx) error {
+	api.Get("/backup/download", func(c fiber.Ctx) error {
 		pr, pw := io.Pipe()
 
 		go func() {
@@ -1246,7 +1245,7 @@ func main() {
 	})
 
 	// Import a backup ZIP — replaces all data: drop tables → migrate → insert
-	app.Post("/backup/import", func(c fiber.Ctx) error {
+	api.Post("/backup/import", func(c fiber.Ctx) error {
 		backupMu.Lock()
 		defer backupMu.Unlock()
 
@@ -1329,12 +1328,25 @@ func main() {
 		return c.SendString("Backup import completed successfully")
 	})
 
-	fmt.Printf("Starting HomeLogger Server %s on port 8083\n", version.Version)
+	// Serve static SPA files with client-side routing fallback
+	app.Get("/*", func(c fiber.Ctx) error {
+		filePath := filepath.Join("./static", c.Path())
+		if info, err := os.Stat(filePath); err == nil && !info.IsDir() {
+			return c.SendFile(filePath)
+		}
+		return c.SendFile("./static/index.html")
+	})
+
+	addr := os.Getenv("PORT")
+	if addr == "" {
+		addr = ":3005"
+	}
+	fmt.Printf("Starting HomeLogger Server %s on port %s\n", version.Version, addr)
 
 	// Start server in goroutine so we can handle signals and cleanup
 	serverErr := make(chan error, 1)
 	go func() {
-		if err := app.Listen(":8083"); err != nil {
+		if err := app.Listen(addr); err != nil {
 			serverErr <- err
 		}
 	}()

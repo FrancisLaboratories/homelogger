@@ -22,12 +22,12 @@ services:
     environment:
       - DB_DIALECT=postgres
       - DATABASE_URL=postgresql://homelogger:ChangeMe@postgres:5432/homelogger?sslmode=disable
-      - PORT=8083
+      - PORT=3005
     depends_on:
       postgres:
         condition: service_healthy
     ports:
-      - "8083:8083"
+      - "3005:3005"
     volumes:
       - server_data:/root/data
   client:

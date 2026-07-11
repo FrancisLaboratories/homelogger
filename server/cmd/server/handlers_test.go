@@ -23,7 +23,7 @@ func openTestDB(t *testing.T) *gorm.DB {
 func createApp(db *gorm.DB) *fiber.App {
 	app := fiber.New()
 
-	app.Get("/health", func(c fiber.Ctx) error {
+	app.Get("/api/health", func(c fiber.Ctx) error {
 		sqlDB, err := db.DB()
 		dbStatus := "ok"
 		if err != nil {
@@ -34,7 +34,7 @@ func createApp(db *gorm.DB) *fiber.App {
 		return c.Status(fiber.StatusOK).JSON(fiber.Map{"db": dbStatus})
 	})
 
-	app.Get("/appliances", func(c fiber.Ctx) error {
+	app.Get("/api/appliances", func(c fiber.Ctx) error {
 		apps, err := database.GetAppliances(db)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).SendString("err")
@@ -42,7 +42,7 @@ func createApp(db *gorm.DB) *fiber.App {
 		return c.JSON(apps)
 	})
 
-	app.Post("/appliances/add", func(c fiber.Ctx) error {
+	app.Post("/api/appliances/add", func(c fiber.Ctx) error {
 		var body models.Appliance
 		if err := c.Bind().Body(&body); err != nil {
 			return c.Status(fiber.StatusBadRequest).SendString("bad")
@@ -54,7 +54,7 @@ func createApp(db *gorm.DB) *fiber.App {
 		return c.JSON(a)
 	})
 
-	app.Post("/todo/add", func(c fiber.Ctx) error {
+	app.Post("/api/todo/add", func(c fiber.Ctx) error {
 		var body struct {
 			Label   string `json:"label"`
 			Checked bool   `json:"checked"`
@@ -70,7 +70,7 @@ func createApp(db *gorm.DB) *fiber.App {
 		return c.JSON(tdo)
 	})
 
-	app.Get("/todo", func(c fiber.Ctx) error {
+	app.Get("/api/todo", func(c fiber.Ctx) error {
 		todos, err := database.GetTodos(db, 0, "")
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).SendString("err")
@@ -86,7 +86,7 @@ func TestApplianceEndpoints(t *testing.T) {
 	app := createApp(db)
 
 	// initially empty
-	req := httptest.NewRequest("GET", "/appliances", nil)
+	req := httptest.NewRequest("GET", "/api/appliances", nil)
 	resp, _ := app.Test(req)
 	if resp.StatusCode != 200 {
 		t.Fatalf("expected 200, got %d", resp.StatusCode)
@@ -95,7 +95,7 @@ func TestApplianceEndpoints(t *testing.T) {
 	// add appliance
 	body := models.Appliance{ApplianceName: "Xfridge", Manufacturer: "Acme"}
 	b, _ := json.Marshal(body)
-	req = httptest.NewRequest("POST", "/appliances/add", bytes.NewReader(b))
+	req = httptest.NewRequest("POST", "/api/appliances/add", bytes.NewReader(b))
 	req.Header.Set("Content-Type", "application/json")
 	resp, _ = app.Test(req)
 	if resp.StatusCode != 200 {
@@ -103,7 +103,7 @@ func TestApplianceEndpoints(t *testing.T) {
 	}
 
 	// list should now have one
-	req = httptest.NewRequest("GET", "/appliances", nil)
+	req = httptest.NewRequest("GET", "/api/appliances", nil)
 	resp, _ = app.Test(req)
 	if resp.StatusCode != 200 {
 		t.Fatalf("expected 200, got %d", resp.StatusCode)
@@ -117,7 +117,7 @@ func TestTodoEndpoints(t *testing.T) {
 	// add todo
 	payload := map[string]interface{}{"label": "t1", "checked": false, "userid": "1"}
 	b, _ := json.Marshal(payload)
-	req := httptest.NewRequest("POST", "/todo/add", bytes.NewReader(b))
+	req := httptest.NewRequest("POST", "/api/todo/add", bytes.NewReader(b))
 	req.Header.Set("Content-Type", "application/json")
 	resp, _ := app.Test(req)
 	if resp.StatusCode != 200 {
@@ -125,7 +125,7 @@ func TestTodoEndpoints(t *testing.T) {
 	}
 
 	// get todos
-	req = httptest.NewRequest("GET", "/todo", nil)
+	req = httptest.NewRequest("GET", "/api/todo", nil)
 	resp, _ = app.Test(req)
 	if resp.StatusCode != 200 {
 		t.Fatalf("expected 200 on get todos, got %d", resp.StatusCode)
@@ -135,13 +135,13 @@ func TestTodoEndpoints(t *testing.T) {
 func createAppWithMaintenanceRepair(db *gorm.DB) *fiber.App {
 	app := fiber.New()
 
-	app.Post("/maintenance/add", maintenanceAddHandler(db))
-	app.Put("/maintenance/update/:id", maintenanceUpdateHandler(db))
-	app.Delete("/maintenance/delete/:id", maintenanceDeleteHandler(db))
+	app.Post("/api/maintenance/add", maintenanceAddHandler(db))
+	app.Put("/api/maintenance/update/:id", maintenanceUpdateHandler(db))
+	app.Delete("/api/maintenance/delete/:id", maintenanceDeleteHandler(db))
 
-	app.Post("/repair/add", repairAddHandler(db))
-	app.Put("/repair/update/:id", repairUpdateHandler(db))
-	app.Delete("/repair/delete/:id", repairDeleteHandler(db))
+	app.Post("/api/repair/add", repairAddHandler(db))
+	app.Put("/api/repair/update/:id", repairUpdateHandler(db))
+	app.Delete("/api/repair/delete/:id", repairDeleteHandler(db))
 
 	return app
 }
@@ -275,7 +275,7 @@ func TestMaintenanceEndpoints(t *testing.T) {
 		"spaceType":     "HVAC",
 	}
 	b, _ := json.Marshal(payload)
-	req := httptest.NewRequest("POST", "/maintenance/add", bytes.NewReader(b))
+	req := httptest.NewRequest("POST", "/api/maintenance/add", bytes.NewReader(b))
 	req.Header.Set("Content-Type", "application/json")
 	resp, _ := app.Test(req)
 	if resp.StatusCode != 201 {
@@ -295,7 +295,7 @@ func TestMaintenanceEndpoints(t *testing.T) {
 		"notes":       "Updated notes",
 	}
 	b, _ = json.Marshal(update)
-	req = httptest.NewRequest("PUT", "/maintenance/update/"+strconv.Itoa(id), bytes.NewReader(b))
+	req = httptest.NewRequest("PUT", "/api/maintenance/update/"+strconv.Itoa(id), bytes.NewReader(b))
 	req.Header.Set("Content-Type", "application/json")
 	resp, _ = app.Test(req)
 	if resp.StatusCode != 200 {
@@ -313,7 +313,7 @@ func TestMaintenanceEndpoints(t *testing.T) {
 	}
 
 	// Delete the maintenance record
-	req = httptest.NewRequest("DELETE", "/maintenance/delete/"+strconv.Itoa(id), nil)
+	req = httptest.NewRequest("DELETE", "/api/maintenance/delete/"+strconv.Itoa(id), nil)
 	resp, _ = app.Test(req)
 	if resp.StatusCode != 204 {
 		t.Fatalf("expected 204 on delete, got %d", resp.StatusCode)
@@ -321,7 +321,7 @@ func TestMaintenanceEndpoints(t *testing.T) {
 
 	// Update a non-existent record should fail
 	b, _ = json.Marshal(update)
-	req = httptest.NewRequest("PUT", "/maintenance/update/"+strconv.Itoa(id), bytes.NewReader(b))
+	req = httptest.NewRequest("PUT", "/api/maintenance/update/"+strconv.Itoa(id), bytes.NewReader(b))
 	req.Header.Set("Content-Type", "application/json")
 	resp, _ = app.Test(req)
 	if resp.StatusCode != 500 {
@@ -343,7 +343,7 @@ func TestRepairEndpoints(t *testing.T) {
 		"spaceType":     "Plumbing",
 	}
 	b, _ := json.Marshal(payload)
-	req := httptest.NewRequest("POST", "/repair/add", bytes.NewReader(b))
+	req := httptest.NewRequest("POST", "/api/repair/add", bytes.NewReader(b))
 	req.Header.Set("Content-Type", "application/json")
 	resp, _ := app.Test(req)
 	if resp.StatusCode != 201 {
@@ -363,7 +363,7 @@ func TestRepairEndpoints(t *testing.T) {
 		"notes":       "Updated repair notes",
 	}
 	b, _ = json.Marshal(update)
-	req = httptest.NewRequest("PUT", "/repair/update/"+strconv.Itoa(id), bytes.NewReader(b))
+	req = httptest.NewRequest("PUT", "/api/repair/update/"+strconv.Itoa(id), bytes.NewReader(b))
 	req.Header.Set("Content-Type", "application/json")
 	resp, _ = app.Test(req)
 	if resp.StatusCode != 200 {
@@ -381,7 +381,7 @@ func TestRepairEndpoints(t *testing.T) {
 	}
 
 	// Delete the repair record
-	req = httptest.NewRequest("DELETE", "/repair/delete/"+strconv.Itoa(id), nil)
+	req = httptest.NewRequest("DELETE", "/api/repair/delete/"+strconv.Itoa(id), nil)
 	resp, _ = app.Test(req)
 	if resp.StatusCode != 204 {
 		t.Fatalf("expected 204 on delete, got %d", resp.StatusCode)
@@ -389,7 +389,7 @@ func TestRepairEndpoints(t *testing.T) {
 
 	// Update a non-existent record should fail
 	b, _ = json.Marshal(update)
-	req = httptest.NewRequest("PUT", "/repair/update/"+strconv.Itoa(id), bytes.NewReader(b))
+	req = httptest.NewRequest("PUT", "/api/repair/update/"+strconv.Itoa(id), bytes.NewReader(b))
 	req.Header.Set("Content-Type", "application/json")
 	resp, _ = app.Test(req)
 	if resp.StatusCode != 500 {

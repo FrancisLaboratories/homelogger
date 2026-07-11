@@ -31,22 +31,16 @@ COPY server/ .
 
 RUN go build -o main ./cmd/server
 
-# Stage 3: Final image based on Alpine, running nginx + the Go server
+# Stage 3: Final image — Go binary serves both API + static files
 FROM alpine:latest AS final
 
-RUN apk add --no-cache ca-certificates nginx bash curl
+RUN apk add --no-cache ca-certificates curl
 
 # Ensure the runtime working directory matches expectations in server code
 WORKDIR /root
 
 # Copy the built static site (from client build).
-COPY --from=client-builder /client/dist /usr/share/nginx/html
-
-# Overwrite nginx main config with a minimal one that includes conf.d/*.conf
-COPY nginx-main.conf /etc/nginx/nginx.conf
-
-# Place the server block into nginx's conf.d (renamed)
-COPY nginx-default.conf /etc/nginx/conf.d/default.conf
+COPY --from=client-builder /client/dist ./static
 
 # Copy the Go binary
 COPY --from=server-builder /app/main /usr/local/bin/main
@@ -55,16 +49,14 @@ RUN chmod +x /usr/local/bin/main
 # Copy the demo data file
 COPY --from=server-builder /app/internal/demo/sample_data.json ./sample_data.json
 
-# Copy healthcheck script and use a single unified HEALTHCHECK that calls it.
+# Copy healthcheck script
 COPY prod.healthcheck.sh /usr/local/bin/healthcheck.sh
 RUN chmod +x /usr/local/bin/healthcheck.sh
 
-# Expose ports (80 for nginx, 8083 for Go service)
-EXPOSE 3005 8083
+# Expose the single port the Go server listens on
+EXPOSE 3005
 
-# Start both nginx and the Go server 
-CMD nginx -g "daemon off;" & /usr/local/bin/main
+# Start the Go server (serves API + static SPA)
+CMD ["/usr/local/bin/main"]
 
-# The healthcheck script checks the frontend `/health` and backend `/api/health` endpoints
-# Use exec form so Docker runs the script directly; ensure script uses bash and curl (installed above)
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 CMD ["/usr/local/bin/healthcheck.sh","http://localhost/health","http://localhost/api/health"]
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 CMD ["/usr/local/bin/healthcheck.sh"]
