@@ -13,11 +13,11 @@ This project is in it's early stages. Expect changes. You are encouraged to [con
 
 There is a demo available at [homelogger-demo.francislaboratories.com](https://homelogger-demo.francislaboratories.com)
 
-This repository contains a Next.js React client and a Go (Fiber + GORM) server with a SQLite or PostgreSQL database. The project is early-stage but includes a working client and server and a small REST API defined in [server/openapi.yaml](server/openapi.yaml).
+This repository contains a React client and a Go (Fiber + GORM) server with a SQLite or PostgreSQL database. The project is early-stage but includes a working client and server and a small REST API defined in [server/openapi.yaml](server/openapi.yaml).
 
 **Contents**
 
-- **Client:** web UI built with Next.js and React ([client](client/))
+- **Client:** web UI built with Vite and React ([client](client/))
 - **Server:** Go API server using Fiber and GORM ([server](server/))
 - **Database:** SQLite (default) or PostgreSQL
 
@@ -35,7 +35,7 @@ This repository contains a Next.js React client and a Go (Fiber + GORM) server w
 
 **Repository Layout (high level)**
 
-- [client](client/) — Next.js app and frontend components
+- [client](client/) — React app and frontend components
 - [server](server/) — Go server, internal packages, and OpenAPI spec
   - [server/cmd/server/main.go](server/cmd/server/main.go)
   - [server/openapi.yaml](server/openapi.yaml)
@@ -88,7 +88,7 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:3000 to view the Next.js app. The client expects the API to be running at the default address configured in the client environment (see `client/.env` or client code for API URL locations).
+Open http://localhost:5173 to view the React app. The client expects the API to be running at the default address configured in the client environment (see `client/.env` or client code for API URL locations).
 
 ## Environment configuration
 
@@ -125,7 +125,7 @@ Note: `DEMO_MODE` is SQLite-only. If enabled with PostgreSQL, server logs warnin
 
 Client environment variables
 
-- The client uses Next.js environment patterns if required (check `client/next.config.js` or `client/.env.local`)
+- The client uses Vite environment patterns if required (check `client/vite.config.js` or `client/.env.local`)
 
 ## API and docs
 
