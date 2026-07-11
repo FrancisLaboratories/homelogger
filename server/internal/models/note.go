@@ -9,6 +9,6 @@ type Note struct {
 	ID          uint    `json:"id" gorm:"primaryKey"`
 	Title       string  `json:"title" gorm:"not null;default:''"`
 	Body        string  `json:"body" gorm:"not null;default:''"`
-	ApplianceID *uint   `json:"applianceID" gorm:"default:null"`
+	ApplianceID *uint   `json:"applianceId" gorm:"default:null"`
 	SpaceType   *string `json:"spaceType" gorm:"default:null"`
 }

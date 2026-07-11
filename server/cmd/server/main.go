@@ -2,7 +2,7 @@ package main
 
 import (
 	"archive/zip"
-	"context"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
@@ -48,7 +48,8 @@ func main() {
 	// Connect to GORM
 	db, err := database.ConnectGorm()
 	if err != nil {
-		panic("Error connecting GORM to db")
+		fmt.Fprintf(os.Stderr, "Error connecting to database: %v\n", err)
+		os.Exit(1)
 	}
 
 	// Migrate GORM
@@ -61,8 +62,13 @@ func main() {
 		fmt.Printf("Warning: todo→task migration failed: %v\n", err)
 	}
 
-	// Demo mode: optionally seed the DB from sample JSON when DEMO_MODE env var is true
-	if dm := os.Getenv("DEMO_MODE"); dm == "true" || dm == "1" {
+	if demoMode && db != nil && db.Dialector.Name() == "postgres" {
+		fmt.Println("Warning: DEMO_MODE is only supported with SQLite; disabling demo mode for PostgreSQL")
+		demoMode = false
+	}
+
+	// Demo mode: optionally seed the DB from sample JSON when enabled.
+	if demoMode {
 		demoPath := os.Getenv("DEMO_FILE_PATH")
 		if err := demo.Seed(db, demoPath); err != nil {
 			fmt.Printf("Error seeding demo data: %v\n", err)
@@ -1179,119 +1185,57 @@ func main() {
 
 		go func() {
 			zw := zip.NewWriter(pw)
-			// ensure the writer is closed which also closes the underlying pipe writer
 			defer func() {
 				_ = zw.Close()
 				_ = pw.Close()
 			}()
 
-			// Create a consistent DB backup using the sqlite3 online backup API.
-			dbPath := "./data/db/homelogger.db"
-			tmpBackup := filepath.Join("./data/db", fmt.Sprintf("homelogger-backup-%d.db", time.Now().UnixNano()))
-
-			// Copy fallback helper
-			copyFile := func(src, dst string) error {
-				in, err := os.Open(src)
-				if err != nil {
-					return err
-				}
-				defer in.Close()
-				out, err := os.Create(dst)
-				if err != nil {
-					return err
-				}
-				defer out.Close()
-				if _, err := io.Copy(out, in); err != nil {
-					return err
-				}
-				return out.Sync()
-			}
-
-			// Serialize backups to avoid multiple concurrent backup attempts
 			backupMu.Lock()
 			defer backupMu.Unlock()
 
-			// Attempt to create a consistent DB copy using SQLite's "VACUUM INTO" SQL
-			// Use ExecContext with a short timeout so we don't block indefinitely.
-			backedUp := false
-			if db != nil {
-				if dbSQL, err := db.DB(); err == nil {
-					vacCtx, vacCancel := context.WithTimeout(context.Background(), 15*time.Second)
-					defer vacCancel()
-					// Use VACUUM INTO which creates a consistent copy of the DB
-					// Note: VACUUM INTO requires SQLite 3.27+
-					vacuumSQL := fmt.Sprintf("VACUUM INTO '%s'", tmpBackup)
-					if _, err := dbSQL.ExecContext(vacCtx, vacuumSQL); err == nil {
-						backedUp = true
-					}
-				}
+			// ponytail: Universal JSON export — works on any GORM dialect, no raw dump needed.
+			payload, err := database.ExportToJSON(db, db.Dialector.Name())
+			if err != nil {
+				_ = pw.CloseWithError(fmt.Errorf("export data: %w", err))
+				return
 			}
 
-			if !backedUp {
-				// fallback to copying the file
-				if err := copyFile(dbPath, tmpBackup); err != nil {
-					_ = pw.CloseWithError(err)
-					return
-				}
+			jsonData, err := json.Marshal(payload)
+			if err != nil {
+				_ = pw.CloseWithError(fmt.Errorf("marshal payload: %w", err))
+				return
 			}
 
-			// Ensure tmpBackup is removed after adding
-			defer func() {
-				_ = os.Remove(tmpBackup)
-			}()
-
-			// Add the DB backup file into the ZIP
-			if info, err := os.Stat(tmpBackup); err == nil && !info.IsDir() {
-				f, err := os.Open(tmpBackup)
-				if err != nil {
-					_ = pw.CloseWithError(err)
-					return
-				}
-				func() {
-					defer f.Close()
-					dst, err := zw.Create("db/" + filepath.Base(tmpBackup))
-					if err != nil {
-						_ = pw.CloseWithError(err)
-						return
-					}
-					if _, err := io.Copy(dst, f); err != nil {
-						_ = pw.CloseWithError(err)
-						return
-					}
-				}()
+			w, err := zw.Create("data.json")
+			if err != nil {
+				_ = pw.CloseWithError(fmt.Errorf("zip entry data.json: %w", err))
+				return
+			}
+			if _, err := w.Write(jsonData); err != nil {
+				_ = pw.CloseWithError(fmt.Errorf("write data.json: %w", err))
+				return
 			}
 
-			// Walk uploads directory and add files preserving relative paths
 			uploadsRoot := "./data/uploads"
 			_ = filepath.Walk(uploadsRoot, func(path string, info os.FileInfo, err error) error {
-				if err != nil {
+				if err != nil || info.IsDir() {
 					return err
 				}
-				if info.IsDir() {
-					return nil
-				}
-
 				rel, err := filepath.Rel(uploadsRoot, path)
 				if err != nil {
 					return err
 				}
-
 				f, err := os.Open(path)
 				if err != nil {
 					return err
 				}
 				defer f.Close()
-
-				// Use forward slashes inside ZIP
-				dest := filepath.ToSlash(filepath.Join("uploads", rel))
-				dst, err := zw.Create(dest)
+				dst, err := zw.Create(filepath.ToSlash(filepath.Join("uploads", rel)))
 				if err != nil {
 					return err
 				}
-				if _, err := io.Copy(dst, f); err != nil {
-					return err
-				}
-				return nil
+				_, err = io.Copy(dst, f)
+				return err
 			})
 		}()
 
@@ -1299,6 +1243,91 @@ func main() {
 		c.Set("Content-Disposition", "attachment; filename=homelogger-backup.zip")
 		return c.SendStream(pr)
 	})
+
+	// Import a backup ZIP — replaces all data: drop tables → migrate → insert
+	app.Post("/backup/import", func(c *fiber.Ctx) error {
+		backupMu.Lock()
+		defer backupMu.Unlock()
+
+		file, err := c.FormFile("backup")
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).SendString("Error getting backup file: " + err.Error())
+		}
+
+		tempDir, err := os.MkdirTemp("", "homelogger-backup-import-")
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).SendString("Error creating temp directory: " + err.Error())
+		}
+		defer func() { _ = os.RemoveAll(tempDir) }()
+
+		tempZipPath := filepath.Join(tempDir, file.Filename)
+		if err := c.SaveFile(file, tempZipPath); err != nil {
+			return c.Status(fiber.StatusInternalServerError).SendString("Error saving uploaded file: " + err.Error())
+		}
+
+		r, err := zip.OpenReader(tempZipPath)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).SendString("Error opening zip file: " + err.Error())
+		}
+		defer func() { _ = r.Close() }()
+
+		extractedPath := filepath.Join(tempDir, "extracted")
+		if err := os.MkdirAll(extractedPath, 0755); err != nil {
+			return c.Status(fiber.StatusInternalServerError).SendString("Error creating extraction directory: " + err.Error())
+		}
+
+		var dataJSONPath string
+		var uploadsExtractedPath string
+
+		for _, f := range r.File {
+			fpath := filepath.Join(extractedPath, f.Name)
+			if !strings.HasPrefix(fpath, filepath.Clean(extractedPath)+string(os.PathSeparator)) {
+				return c.Status(fiber.StatusBadRequest).SendString("Illegal file path in zip: " + fpath)
+			}
+			if f.FileInfo().IsDir() {
+				_ = os.MkdirAll(fpath, os.ModePerm)
+				continue
+			}
+			if err = os.MkdirAll(filepath.Dir(fpath), os.ModePerm); err != nil {
+				return c.Status(fiber.StatusInternalServerError).SendString("Error creating dir: " + err.Error())
+			}
+			outFile, err := os.OpenFile(fpath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
+			if err != nil {
+				return c.Status(fiber.StatusInternalServerError).SendString("Error creating file: " + err.Error())
+			}
+			rc, err := f.Open()
+			if err != nil {
+				_ = outFile.Close()
+				return c.Status(fiber.StatusInternalServerError).SendString("Error opening zip entry: " + err.Error())
+			}
+			_, copyErr := io.Copy(outFile, rc)
+			_ = outFile.Close()
+			_ = rc.Close()
+			if copyErr != nil {
+				return c.Status(fiber.StatusInternalServerError).SendString("Error extracting file: " + copyErr.Error())
+			}
+			if strings.EqualFold(filepath.Base(fpath), "data.json") {
+				dataJSONPath = fpath
+			} else if strings.HasPrefix(f.Name, "uploads/") && uploadsExtractedPath == "" {
+				uploadsExtractedPath = filepath.Join(extractedPath, "uploads")
+			}
+		}
+
+		if dataJSONPath == "" {
+			return c.Status(fiber.StatusBadRequest).SendString("Backup ZIP is missing data.json")
+		}
+
+		if _, err := database.ImportFromJSONFile(db, dataJSONPath, uploadsExtractedPath); err != nil {
+			return c.Status(fiber.StatusInternalServerError).SendString("Error importing database data: " + err.Error())
+		}
+
+		if err := database.ImportUploads(uploadsExtractedPath); err != nil {
+			return c.Status(fiber.StatusInternalServerError).SendString("Error importing uploaded files: " + err.Error())
+		}
+
+		return c.SendString("Backup import completed successfully")
+	})
+
 
 	fmt.Printf("Starting HomeLogger Server %s on port 8083\n", version.Version)
 

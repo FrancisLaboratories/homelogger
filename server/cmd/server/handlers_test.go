@@ -10,21 +10,13 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/masoncfrancis/homelogger/server/internal/database"
 	"github.com/masoncfrancis/homelogger/server/internal/models"
-	"github.com/glebarez/sqlite"
 	"gorm.io/gorm"
 )
 
-// openTestDB creates an in-memory DB and runs migrations
+// openTestDB delegates to database.TestDB — uses SQLite by default, Postgres when TEST_DB_DIALECT=postgres.
 func openTestDB(t *testing.T) *gorm.DB {
     t.Helper()
-    db, err := gorm.Open(sqlite.Open("file:mem_srv_test?mode=memory&cache=shared"), &gorm.Config{})
-    if err != nil {
-        t.Fatalf("failed open db: %v", err)
-    }
-    if err := database.MigrateGorm(db); err != nil {
-        t.Fatalf("migrate: %v", err)
-    }
-    return db
+    return database.TestDB(t)
 }
 
 // createApp registers a minimal set of handlers using the provided DB.

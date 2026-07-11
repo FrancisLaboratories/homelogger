@@ -60,7 +60,7 @@ COPY prod.healthcheck.sh /usr/local/bin/healthcheck.sh
 RUN chmod +x /usr/local/bin/healthcheck.sh
 
 # Expose ports (80 for nginx, 8083 for Go service)
-EXPOSE 80 8083
+EXPOSE 3005 8083
 
 # Start both nginx and the Go server 
 CMD nginx -g "daemon off;" & /usr/local/bin/main

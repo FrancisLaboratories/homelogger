@@ -1115,6 +1115,55 @@ paths:
                   error:
                     type: string
                     example: "File not found"
+  /backup/import:
+    post:
+      summary: Import a ZIP backup of the application data
+      description: |
+        Accepts a ZIP file containing `data.json` and optionally an `uploads/` directory.
+        This operation performs a "wipe and replace" strategy: all existing database data
+        and uploaded files will be deleted and replaced with the contents of the backup.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                backup:
+                  type: string
+                  format: binary
+                  description: The backup ZIP file.
+      responses:
+        "200":
+          description: Backup import completed successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Backup import completed successfully"
+        "400":
+          description: Invalid backup file or missing data.json
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Invalid backup ZIP or missing data.json"
+        "500":
+          description: Server error during import process.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Error importing database data"
   /files/download/{id}:
     get:
       summary: Download a file by ID

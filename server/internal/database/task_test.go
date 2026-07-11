@@ -20,7 +20,7 @@ const (
 )
 
 func TestAddAndGetTask(t *testing.T) {
-	db := setupTestDB(t)
+	db := TestDB(t)
 
 	task := &models.Task{
 		Label:    "Replace HVAC filter",
@@ -50,7 +50,7 @@ func TestAddAndGetTask(t *testing.T) {
 }
 
 func TestGetTasksFilter(t *testing.T) {
-	db := setupTestDB(t)
+	db := TestDB(t)
 
 	spaceHVAC := "HVAC"
 	spacePlumbing := "Plumbing"
@@ -71,7 +71,7 @@ func TestGetTasksFilter(t *testing.T) {
 }
 
 func TestGetAllActiveTasks(t *testing.T) {
-	db := setupTestDB(t)
+	db := TestDB(t)
 
 	spaceType := "Yard"
 	_, _ = AddTask(db, &models.Task{Label: "Mow lawn", SpaceType: &spaceType, UserID: "1"})
@@ -87,7 +87,7 @@ func TestGetAllActiveTasks(t *testing.T) {
 }
 
 func TestCompleteNonRecurringTask(t *testing.T) {
-	db := setupTestDB(t)
+	db := TestDB(t)
 
 	due := date2026Apr01
 	created, err := AddTask(db, &models.Task{
@@ -121,7 +121,7 @@ func TestCompleteNonRecurringTask(t *testing.T) {
 }
 
 func TestCompleteRecurringTask_CompletionDateMode(t *testing.T) {
-	db := setupTestDB(t)
+	db := TestDB(t)
 
 	due := date2026Apr01
 	created, err := AddTask(db, &models.Task{
@@ -152,7 +152,7 @@ func TestCompleteRecurringTask_CompletionDateMode(t *testing.T) {
 }
 
 func TestCompleteRecurringTask_DueDateMode(t *testing.T) {
-	db := setupTestDB(t)
+	db := TestDB(t)
 
 	due := date2026Apr01
 	created, err := AddTask(db, &models.Task{
@@ -180,7 +180,7 @@ func TestCompleteRecurringTask_DueDateMode(t *testing.T) {
 }
 
 func TestUpdateTask(t *testing.T) {
-	db := setupTestDB(t)
+	db := TestDB(t)
 
 	created, err := AddTask(db, &models.Task{Label: "Fix gutter", UserID: "1"})
 	if err != nil {
@@ -202,7 +202,7 @@ func TestUpdateTask(t *testing.T) {
 }
 
 func TestDeleteTask(t *testing.T) {
-	db := setupTestDB(t)
+	db := TestDB(t)
 
 	created, err := AddTask(db, &models.Task{Label: "Temp task", UserID: "1"})
 	if err != nil {
@@ -219,7 +219,7 @@ func TestDeleteTask(t *testing.T) {
 }
 
 func TestUncompleteTask(t *testing.T) {
-	db := setupTestDB(t)
+	db := TestDB(t)
 
 	created, err := AddTask(db, &models.Task{Label: "Paint fence", UserID: "1"})
 	if err != nil {

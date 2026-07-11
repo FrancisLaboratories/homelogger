@@ -172,7 +172,7 @@ func advanceDate(base, unit string, interval int) (string, error) {
 // so it is safe to call on every startup.
 func MigrateTodosToTasks(db *gorm.DB) error {
 	// Ensure the tracking table exists.
-	if err := db.Exec(`CREATE TABLE IF NOT EXISTS todo_task_migrations (todo_id INTEGER PRIMARY KEY)`).Error; err != nil {
+	if err := db.Exec(`CREATE TABLE IF NOT EXISTS todo_task_migrations (todo_id BIGINT PRIMARY KEY)`).Error; err != nil {
 		return fmt.Errorf("create migration tracking table: %w", err)
 	}
 
