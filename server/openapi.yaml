@@ -1,9 +1,20 @@
 openapi: 3.0.0
 info:
-  version: 1.0.0
-  title: Todo API
-  description: A simple API to manage todos
+  version: v0.4.4
+  title: HomeLogger API
+  description: Home maintenance and repair tracking server
 paths:
+  /:
+    get:
+      summary: Root check
+      responses:
+        "200":
+          description: Plain-text greeting
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Hello, World"
   /health:
     get:
       summary: Health and status
@@ -20,152 +31,11 @@ paths:
                     example: "ok"
                   version:
                     type: string
-                    example: "1.0.0"
+                    example: "v0.4.4"
                   db:
                     type: string
                     example: "ok"
                   demo:
-                    type: boolean
-                    example: true
-
-# ALL todo endpoints are deprecated as of v0.3.0 in favor of /task, but are left here until they are removed from the backend codebase in an upcoming release
-  /todo: 
-    get:
-      summary: Get todos (optionally filter by appliance or space)
-      parameters:
-        - name: applianceId
-          in: query
-          required: false
-          schema:
-            type: integer
-            example: 0
-        - name: spaceType
-          in: query
-          required: false
-          schema:
-            type: string
-            example: "HVAC"
-      responses:
-        "200":
-          description: A list of todos (filtered)
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    id:
-                      type: integer
-                      example: 1
-                    label:
-                      type: string
-                      example: "Change water heater anode rod"
-                    checked:
-                      type: boolean
-                      example: false
-                    userID:
-                      type: string
-                      example: "675c831a85ac9204985b80c9"
-                    applianceId:
-                      type: integer
-                      nullable: true
-                      example: 0
-                    spaceType:
-                      type: string
-                      nullable: true
-                      example: "HVAC"
-  /todo/add:
-    post:
-      summary: Add a new todo
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                label:
-                  type: string
-                  example: "Change water heater anode rod"
-                userID:
-                  type: string
-                  example: "675c831a85ac9204985b80c9"
-                applianceId:
-                  type: integer
-                  description: Optional appliance ID to associate the todo with
-                  example: 0
-                spaceType:
-                  type: string
-                  description: Optional space type (e.g., HVAC, Plumbing) to associate the todo with
-                  example: "HVAC"
-      responses:
-        "201":
-          description: Todo created
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  id:
-                    type: integer
-                    example: 1
-                  label:
-                    type: string
-                    example: "Buy groceries"
-                  applianceId:
-                    type: integer
-                    nullable: true
-                    example: 0
-                  spaceType:
-                    type: string
-                    nullable: true
-                    example: "HVAC"
-  /todo/delete/{id}:
-    delete:
-      summary: Delete a todo
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-            example: 1
-      responses:
-        "204":
-          description: Todo deleted
-  /todo/update/{id}:
-    put:
-      summary: Update a todo
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-            example: 2
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                checked:
-                  type: boolean
-                  example: true
-      responses:
-        "200":
-          description: Todo updated
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  id:
-                    type: integer
-                    example: 1
-                  checked:
                     type: boolean
                     example: true
   /task:
@@ -199,6 +69,12 @@ paths:
   /task/dashboard:
     get:
       summary: Get all active (incomplete) tasks for the dashboard
+      parameters:
+        - name: includeCompleted
+          in: query
+          required: false
+          schema:
+            type: boolean
       responses:
         "200":
           description: All active tasks ordered by due date
@@ -337,34 +213,45 @@ paths:
           description: Task deleted
 
   /appliances:
-    responses:
-      "200":
-        description: A list of appliances
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                type: object
-                properties:
-                  id:
-                    type: integer
-                    example: 1
-                  makeModel:
-                    type: string
-                    example: "Samsung Washer"
-                  yearPurchased:
-                    type: string
-                    example: "2020"
-                  purchasePrice:
-                    type: string
-                    example: "500"
-                  location:
-                    type: string
-                    example: "Laundry Room"
-                  type:
-                    type: string
-                    example: "Washer"
+    get:
+      summary: Get all appliances
+      responses:
+        "200":
+          description: A list of appliances
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                      example: 1
+                    applianceName:
+                      type: string
+                      example: "Samsung Washer"
+                    manufacturer:
+                      type: string
+                      example: "Samsung"
+                    modelNumber:
+                      type: string
+                      example: "SW1234"
+                    serialNumber:
+                      type: string
+                      example: "SN123456789"
+                    yearPurchased:
+                      type: string
+                      example: "2020"
+                    purchasePrice:
+                      type: string
+                      example: "500"
+                    location:
+                      type: string
+                      example: "Laundry Room"
+                    type:
+                      type: string
+                      example: "Washer"
   /appliances/{id}:
     get:
       summary: Get an appliance by ID
@@ -386,9 +273,18 @@ paths:
                   id:
                     type: integer
                     example: 1
-                  makeModel:
+                  applianceName:
                     type: string
                     example: "Samsung Washer"
+                  manufacturer:
+                    type: string
+                    example: "Samsung"
+                  modelNumber:
+                    type: string
+                    example: "SW1234"
+                  serialNumber:
+                    type: string
+                    example: "SN123456789"
                   yearPurchased:
                     type: string
                     example: "2020"
@@ -418,24 +314,33 @@ paths:
         required: true
         content:
           application/json:
-            schema:
-              type: object
-              properties:
-                makeModel:
-                  type: string
-                  example: "Samsung Washer"
-                yearPurchased:
-                  type: string
-                  example: "2020"
-                purchasePrice:
-                  type: string
-                  example: "500"
-                location:
-                  type: string
-                  example: "Laundry Room"
-                type:
-                  type: string
-                  example: "Washer"
+              schema:
+                type: object
+                properties:
+                  applianceName:
+                    type: string
+                    example: "Samsung Washer"
+                  manufacturer:
+                    type: string
+                    example: "Samsung"
+                  modelNumber:
+                    type: string
+                    example: "SW1234"
+                  serialNumber:
+                    type: string
+                    example: "SN123456789"
+                  yearPurchased:
+                    type: string
+                    example: "2020"
+                  purchasePrice:
+                    type: string
+                    example: "500"
+                  location:
+                    type: string
+                    example: "Laundry Room"
+                  type:
+                    type: string
+                    example: "Washer"
       responses:
         "201":
           description: Appliance created
@@ -447,9 +352,18 @@ paths:
                   id:
                     type: integer
                     example: 1
-                  makeModel:
+                  applianceName:
                     type: string
                     example: "Samsung Washer"
+                  manufacturer:
+                    type: string
+                    example: "Samsung"
+                  modelNumber:
+                    type: string
+                    example: "SW1234"
+                  serialNumber:
+                    type: string
+                    example: "SN123456789"
                   yearPurchased:
                     type: string
                     example: "2020"
@@ -565,12 +479,6 @@ paths:
     get:
       summary: Get all maintenance records
       parameters:
-        - name: applianceId
-          in: query
-          required: true
-          schema:
-            type: integer
-            example: 0
         - name: referenceType
           in: query
           required: true
@@ -579,10 +487,18 @@ paths:
             example: "Space"
         - name: spaceType
           in: query
-          required: true
+          required: false
+          description: Required when referenceType is "Space"
           schema:
             type: string
             example: "HVAC"
+        - name: applianceId
+          in: query
+          required: false
+          description: Required when referenceType is "Appliance"
+          schema:
+            type: integer
+            example: 0
       responses:
         "200":
           description: A list of maintenance records
@@ -648,6 +564,11 @@ paths:
                 applianceID:
                   type: integer
                   example: 1
+                attachmentIds:
+                  type: array
+                  description: Optional IDs of pre-uploaded files to attach
+                  items:
+                    type: integer
       responses:
         "201":
           description: Maintenance record created
@@ -761,9 +682,6 @@ paths:
           application/json:
             schema:
               type: object
-              required:
-                - description
-                - date
               properties:
                 description:
                   type: string
@@ -795,12 +713,6 @@ paths:
     get:
       summary: Get all repair records
       parameters:
-        - name: applianceId
-          in: query
-          required: true
-          schema:
-            type: integer
-            example: 0
         - name: referenceType
           in: query
           required: true
@@ -809,10 +721,18 @@ paths:
             example: "Space"
         - name: spaceType
           in: query
-          required: true
+          required: false
+          description: Required when referenceType is "Space"
           schema:
             type: string
             example: "HVAC"
+        - name: applianceId
+          in: query
+          required: false
+          description: Required when referenceType is "Appliance"
+          schema:
+            type: integer
+            example: 0
       responses:
         "200":
           description: A list of repair records
@@ -878,6 +798,11 @@ paths:
                 applianceID:
                   type: integer
                   example: 1
+                attachmentIds:
+                  type: array
+                  description: Optional IDs of pre-uploaded files to attach
+                  items:
+                    type: integer
       responses:
         "201":
           description: Repair record created
@@ -991,9 +916,6 @@ paths:
           application/json:
             schema:
               type: object
-              required:
-                - description
-                - date
               properties:
                 description:
                   type: string
@@ -1037,6 +959,10 @@ paths:
                 userID:
                   type: string
                   example: "675c831a85ac9204985b80c9"
+                spaceType:
+                  type: string
+                  description: Optional space type to associate the file with
+                  example: "HVAC"
       responses:
         "201":
           description: File uploaded
@@ -1056,7 +982,7 @@ paths:
                     example: "675c831a85ac9204985b80c9"
   /files/info/{id}:
     get:
-      summary: Get an uploaded file by ID
+      summary: Get uploaded file metadata by ID
       parameters:
         - name: id
           in: path
@@ -1066,21 +992,167 @@ paths:
             example: 1
       responses:
         "200":
-          description: File retrieved
+          description: File metadata
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SavedFile"
+        "404":
+          description: File not found
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  id:
-                    type: integer
-                    example: 1
-                  originalName:
+                  error:
                     type: string
-                    example: "file.txt"
-                  userID:
+                    example: "File not found"
+  /files/maintenance/{id}:
+    get:
+      summary: List files attached to a maintenance record
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: File list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SavedFile"
+  /files/repair/{id}:
+    get:
+      summary: List files attached to a repair record
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: File list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SavedFile"
+  /files/download/{id}:
+    get:
+      summary: Download a file by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        "200":
+          description: File downloaded
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        "404":
+          description: File not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
                     type: string
-                    example: "675c831a85ac9204985b80c9"
+                    example: "File not found"
+  /files/appliance/{id}:
+    get:
+      summary: List files attached to an appliance
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: File list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SavedFile"
+  /files/space/{spaceType}:
+    get:
+      summary: List files attached to a space type
+      parameters:
+        - name: spaceType
+          in: path
+          required: true
+          schema:
+            type: string
+            example: "HVAC"
+      responses:
+        "200":
+          description: File list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SavedFile"
+  /files/attach:
+    post:
+      summary: Associate an uploaded file with a record
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - fileId
+              properties:
+                fileId:
+                  type: integer
+                  example: 1
+                maintenanceId:
+                  type: integer
+                  example: 1
+                repairId:
+                  type: integer
+                  example: 1
+                applianceId:
+                  type: integer
+                  example: 1
+                spaceType:
+                  type: string
+                  example: "HVAC"
+      responses:
+        "204":
+          description: File attached
+  /files/{id}:
+    delete:
+      summary: Delete a file (record and stored file)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        "204":
+          description: File deleted
+        "404":
+          description: File not found
   /backup/download:
     get:
       summary: Download a ZIP backup of the application data
@@ -1164,34 +1236,6 @@ paths:
                   error:
                     type: string
                     example: "Error importing database data"
-  /files/download/{id}:
-    get:
-      summary: Download a file by ID
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-            example: 1
-      responses:
-        "200":
-          description: File downloaded
-          content:
-            application/octet-stream:
-              schema:
-                type: string
-                format: binary
-        "404":
-          description: File not found
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: "File not found"
   /notes:
     get:
       summary: Get notes (optionally filter by appliance or space)
@@ -1385,6 +1429,40 @@ paths:
 
 components:
   schemas:
+    SavedFile:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        path:
+          type: string
+          example: "./data/uploads/1"
+        originalName:
+          type: string
+          example: "file.txt"
+        type:
+          type: string
+          example: ""
+        userid:
+          type: string
+          example: "675c831a85ac9204985b80c9"
+        maintenanceId:
+          type: integer
+          nullable: true
+          example: null
+        repairId:
+          type: integer
+          nullable: true
+          example: null
+        applianceId:
+          type: integer
+          nullable: true
+          example: null
+        spaceType:
+          type: string
+          nullable: true
+          example: "HVAC"
     Task:
       type: object
       properties:
