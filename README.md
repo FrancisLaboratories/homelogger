@@ -101,7 +101,6 @@ Server environment variables (create `.env` at `server/` if needed)
   - for SQLite: optional DB file path (used after `DEMO_DB_PATH`)
   - for PostgreSQL: full DSN/URL (preferred)
 - `DB_DIALECT_LOCK_PATH` — optional lock file path (default `./data/db/.db_dialect`)
-- `FORCE_DB_DIALECT_CHANGE` — set `true`/`1` to intentionally override existing dialect lock
 
 SQLite-related variables
 
