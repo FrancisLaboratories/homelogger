@@ -18,6 +18,7 @@ import (
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/middleware/cors"
+	"github.com/gofiber/fiber/v3/middleware/static"
 	"github.com/masoncfrancis/homelogger/server/internal/database"
 	"github.com/masoncfrancis/homelogger/server/internal/demo"
 	"github.com/masoncfrancis/homelogger/server/internal/models"
@@ -168,9 +169,20 @@ func main() {
 
 	// Create new fiber server with larger body limit for file uploads
 	app := fiber.New(fiber.Config{
-		AppName:   fmt.Sprintf("HomeLogger Server %s", version.Version),
+		AppName:   fmt.Sprintf("HomeLogger %s", version.Version),
 		BodyLimit: 100 * 1024 * 1024, // 100 MB,
 	})
+
+	app.Hooks().OnPreStartupMessage(func(sm *fiber.PreStartupMessageData) error {
+        sm.BannerHeader = "    __  __                     __                               \n" +
+		"   / / / /___  ____ ___  ___  / /   ____  ____ _____ ____  _____\n" +
+		"  / /_/ / __ \\/ __ `__ \\/ _ \\/ /   / __ \\/ __ `/ __ `/ _ \\/ ___/\n" +
+		" / __  / /_/ / / / / / /  __/ /___/ /_/ / /_/ / /_/ /  __/ /    \n" +
+		"/_/ /_/\\____/_/ /_/ /_/\\___/_____/\\____/\\__, /\\__, /\\___/_/     \n" +
+		"                                       /____//____/             \n\n"
+
+        return nil
+    })
 
 	// Use CORS middleware
 	app.Use(cors.New(cors.Config{
@@ -1329,11 +1341,7 @@ func main() {
 	})
 
 	// Serve static SPA files with client-side routing fallback
-	app.Get("/*", func(c fiber.Ctx) error {
-		filePath := filepath.Join("./static", c.Path())
-		if info, err := os.Stat(filePath); err == nil && !info.IsDir() {
-			return c.SendFile(filePath)
-		}
+	app.Get("/*", static.New("./static"), func(c fiber.Ctx) error {
 		return c.SendFile("./static/index.html")
 	})
 
@@ -1341,7 +1349,7 @@ func main() {
 	if addr == "" {
 		addr = ":3005"
 	}
-	fmt.Printf("Starting HomeLogger Server %s on port %s\n", version.Version, addr)
+	fmt.Printf("\n\nStarting HomeLogger %s on port %s\n\n", version.Version, addr)
 
 	// Start server in goroutine so we can handle signals and cleanup
 	serverErr := make(chan error, 1)
