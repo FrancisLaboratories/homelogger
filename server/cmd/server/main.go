@@ -191,6 +191,9 @@ func main() {
 		AllowHeaders: []string{"Content-Type", "Authorization"},
 	}))
 
+	// Request logging middleware
+	app.Use(requestLogger())
+
 	// API routes grouped under /api
 	api := app.Group("/api")
 
