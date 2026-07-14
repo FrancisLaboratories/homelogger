@@ -8,4 +8,6 @@ services:
       - "3005:3005"
     environment:
       - DB_DIALECT=sqlite
+      # - LOG_CONSOLE=true       # set "false" or "0" to disable console logs
+      # - LOG_FILE=/root/data/homelogger.log  # enable file logging
     restart: unless-stopped

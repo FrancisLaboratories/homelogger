@@ -9,6 +9,8 @@ services:
       - data:/root/data
     environment:
       - DB_DIALECT=sqlite
+      # - LOG_CONSOLE=true
+      # - LOG_FILE=/root/data/homelogger.log
     networks:
       - homeloggerNetwork
     restart: unless-stopped
