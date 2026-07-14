@@ -8,4 +8,6 @@ services:
       - "3005:3005"
     environment:
       - DB_DIALECT=sqlite
+      # - LOG_CONSOLE=true
+      # - LOG_FILE=/root/data/homelogger.log
     restart: unless-stopped

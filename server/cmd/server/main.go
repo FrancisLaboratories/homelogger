@@ -191,6 +191,10 @@ func main() {
 		AllowHeaders: []string{"Content-Type", "Authorization"},
 	}))
 
+	// Request logging middleware
+	logWriter := newLogWriter()
+	app.Use(requestLogger(logWriter))
+
 	// API routes grouped under /api
 	api := app.Group("/api")
 
@@ -1374,6 +1378,9 @@ func main() {
 	if err := app.Shutdown(); err != nil {
 		fmt.Printf("Error shutting down server: %v\n", err)
 	}
+
+	// Close log file
+	logWriter.Close()
 
 	// Close DB connection
 	if db != nil {

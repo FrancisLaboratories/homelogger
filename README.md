@@ -122,6 +122,11 @@ Demo mode variables
 
 Note: `DEMO_MODE` is SQLite-only. If enabled with PostgreSQL, server logs warning and disables demo mode.
 
+Logging variables
+
+- `LOG_CONSOLE` — enable console request logging (`true`, default, or `false`/`0` to disable)
+- `LOG_FILE` — optional file path to append request logs (e.g. `/var/log/homelogger.log`)
+
 Client environment variables
 
 - The client uses Vite environment patterns if required (check `client/vite.config.js` or `client/.env.local`)
