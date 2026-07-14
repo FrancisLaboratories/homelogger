@@ -4,7 +4,7 @@ services:
       context: ../server
       dockerfile: Dockerfile
     ports:
-      - "8083:8083"
+      - "3005:3005"
     volumes:
       - data:/root/data
     environment:
