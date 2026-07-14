@@ -143,9 +143,7 @@ The server exposes a REST API. The OpenAPI spec is available at [server/openapi.
 ## Backup & export
 
 - The app includes a server endpoint and a client settings page to download a full backup.
-- The backup endpoint: `GET /backup/download` on API server. It streams ZIP containing:
-  - database backup artifact
-  - uploads directory with all files
+- The backup endpoint: `GET /backup/download` on API server.
 
 The backup is a ZIP containing `data.json` (all database records) and an `uploads/` directory. Works identically for both SQLite and PostgreSQL — no dialect-specific tooling required.
 
