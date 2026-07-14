@@ -3,6 +3,8 @@ info:
   version: 1.0.0
   title: Todo API
   description: A simple API to manage todos
+servers:
+  - url: /api
 paths:
   /health:
     get:
