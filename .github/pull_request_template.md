@@ -28,6 +28,7 @@ The `/api/something` endpoint is now `/api/something-else`
 
 - [ ] I have carefully read CONTRIBUTING.md
 - [ ] I have performed a self-review of my own code
+- [ ] This is not an unsolicited PR. I have discussed this change with the maintainers and received approval to submit it.
 - [ ] I have made corresponding changes to the documentation if applicable
 - [ ] I have no unrelated changes in the PR.
 - [ ] I have confirmed that any new dependencies are strictly necessary.
