@@ -207,7 +207,11 @@ func MigrateTodosToTasks(db *gorm.DB) error {
 		}
 
 		// Record as migrated.
-		if err := db.Exec(`INSERT INTO todo_task_migrations (todo_id) VALUES (?)`, t.ID).Error; err != nil {
+		recordSQL := "INSERT OR IGNORE INTO todo_task_migrations (todo_id) VALUES (?)"
+		if db.Dialector.Name() == dialectPostgres {
+			recordSQL = "INSERT INTO todo_task_migrations (todo_id) VALUES (?) ON CONFLICT (todo_id) DO NOTHING"
+		}
+		if err := db.Exec(recordSQL, t.ID).Error; err != nil {
 			fmt.Printf("MigrateTodosToTasks: failed to record migration for todo %d: %v\n", t.ID, err)
 		}
 	}
