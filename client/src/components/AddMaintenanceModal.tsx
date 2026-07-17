@@ -93,7 +93,7 @@ const AddMaintenanceModal: React.FC<AddMaintenanceModalProps> = ({
       notes: string;
       spaceType: MaintenanceSpaceType;
       referenceType: MaintenanceReferenceType;
-      applianceId: number;
+      applianceId: number | null;
       attachmentIds: number[];
     } = {
       description,
@@ -102,7 +102,7 @@ const AddMaintenanceModal: React.FC<AddMaintenanceModalProps> = ({
       notes,
       spaceType,
       referenceType,
-      applianceId: applianceId || 0,
+      applianceId: applianceId || null,
       attachmentIds,
     };
 

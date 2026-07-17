@@ -4,7 +4,9 @@ services:
       context: ..
       dockerfile: Dockerfile
     ports:
-      - "3005:80"
+      - "3005:3005"
     environment:
       - DEMO_MODE=true
       - DEMO_FILE_PATH=/root/sample_data.json
+      # - LOG_CONSOLE=true
+      # - LOG_FILE=/root/data/homelogger.log

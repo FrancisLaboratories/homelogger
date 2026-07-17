@@ -8,7 +8,7 @@ import (
 )
 
 func TestAddGetDeleteRepair(t *testing.T) {
-    db := testDB(t)
+    db := TestDB(t)
 
     // create appliance
     a := &models.Appliance{ApplianceName: "A", Manufacturer: "M", ModelNumber: "X", SerialNumber: "S", YearPurchased: "2020", PurchasePrice: "1", Location: "L", Type: "T"}
@@ -52,7 +52,7 @@ func TestAddGetDeleteRepair(t *testing.T) {
 }
 
 func TestGetRepairsSpaceFilter(t *testing.T) {
-    db := testDB(t)
+    db := TestDB(t)
 
     r := &models.Repair{Description: "s1", ReferenceType: "Space", SpaceType: "Basement", Date: "2026-02-02"}
     if _, err := AddRepair(db, r); err != nil {
@@ -69,7 +69,7 @@ func TestGetRepairsSpaceFilter(t *testing.T) {
 }
 
 func TestUpdateRepair(t *testing.T) {
-    db := testDB(t)
+    db := TestDB(t)
 
     r := &models.Repair{Description: "original", ReferenceType: "Space", SpaceType: "Basement", Date: "2026-01-02", Cost: 20.0, Notes: "old notes"}
     added, err := AddRepair(db, r)

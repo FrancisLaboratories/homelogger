@@ -2,7 +2,8 @@ package main
 
 import (
 	"archive/zip"
-	"context"
+	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -15,8 +16,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v3/middleware/cors"
+	"github.com/gofiber/fiber/v3/middleware/static"
 	"github.com/masoncfrancis/homelogger/server/internal/database"
 	"github.com/masoncfrancis/homelogger/server/internal/demo"
 	"github.com/masoncfrancis/homelogger/server/internal/models"
@@ -48,7 +50,8 @@ func main() {
 	// Connect to GORM
 	db, err := database.ConnectGorm()
 	if err != nil {
-		panic("Error connecting GORM to db")
+		fmt.Fprintf(os.Stderr, "Error connecting to database: %v\n", err)
+		os.Exit(1)
 	}
 
 	// Migrate GORM
@@ -61,8 +64,13 @@ func main() {
 		fmt.Printf("Warning: todo→task migration failed: %v\n", err)
 	}
 
-	// Demo mode: optionally seed the DB from sample JSON when DEMO_MODE env var is true
-	if dm := os.Getenv("DEMO_MODE"); dm == "true" || dm == "1" {
+	if demoMode && db != nil && db.Dialector.Name() == "postgres" {
+		fmt.Println("Warning: DEMO_MODE is only supported with SQLite; disabling demo mode for PostgreSQL")
+		demoMode = false
+	}
+
+	// Demo mode: optionally seed the DB from sample JSON when enabled.
+	if demoMode {
 		demoPath := os.Getenv("DEMO_FILE_PATH")
 		if err := demo.Seed(db, demoPath); err != nil {
 			fmt.Printf("Error seeding demo data: %v\n", err)
@@ -109,16 +117,16 @@ func main() {
 			newDB, err := database.ConnectGorm()
 			if err != nil {
 				errs = append(errs, fmt.Sprintf("connect gorm: %v", err))
-				return fmt.Errorf(strings.Join(errs, "; "))
+				return errors.New(strings.Join(errs, "; "))
 			}
 			db = newDB
 			if err := database.MigrateGorm(db); err != nil {
 				errs = append(errs, fmt.Sprintf("migrate gorm: %v", err))
-				return fmt.Errorf(strings.Join(errs, "; "))
+				return errors.New(strings.Join(errs, "; "))
 			}
 			if err := demo.Seed(db, demoPath); err != nil {
 				errs = append(errs, fmt.Sprintf("seed demo: %v", err))
-				return fmt.Errorf(strings.Join(errs, "; "))
+				return errors.New(strings.Join(errs, "; "))
 			}
 
 			// update timestamp file
@@ -127,7 +135,7 @@ func main() {
 			}
 
 			if len(errs) > 0 {
-				return fmt.Errorf(strings.Join(errs, "; "))
+				return errors.New(strings.Join(errs, "; "))
 			}
 			return nil
 		}
@@ -161,23 +169,37 @@ func main() {
 
 	// Create new fiber server with larger body limit for file uploads
 	app := fiber.New(fiber.Config{
-		AppName: fmt.Sprintf("HomeLogger Server %s", version.Version),
+		AppName:   fmt.Sprintf("HomeLogger %s", version.Version),
 		BodyLimit: 100 * 1024 * 1024, // 100 MB
 	})
 
+	app.Hooks().OnPreStartupMessage(func(sm *fiber.PreStartupMessageData) error {
+        sm.BannerHeader = "    __  __                     __                               \n" +
+		"   / / / /___  ____ ___  ___  / /   ____  ____ _____ ____  _____\n" +
+		"  / /_/ / __ \\/ __ `__ \\/ _ \\/ /   / __ \\/ __ `/ __ `/ _ \\/ ___/\n" +
+		" / __  / /_/ / / / / / /  __/ /___/ /_/ / /_/ / /_/ /  __/ /    \n" +
+		"/_/ /_/\\____/_/ /_/ /_/\\___/_____/\\____/\\__, /\\__, /\\___/_/     \n" +
+		"                                       /____//____/             \n\n"
+
+        return nil
+    })
+
 	// Use CORS middleware
 	app.Use(cors.New(cors.Config{
-		AllowOrigins: "*", // Allow all origins
-		AllowMethods: "GET,POST,PUT,DELETE,OPTIONS",
-		AllowHeaders: "Content-Type,Authorization",
+		AllowOrigins: []string{"*"}, // Allow all origins
+		AllowMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders: []string{"Content-Type", "Authorization"},
 	}))
 
-	app.Get("/", func(c *fiber.Ctx) error {
-		return c.SendString("Hello, World")
-	})
+	// Request logging middleware
+	logWriter := newLogWriter()
+	app.Use(requestLogger(logWriter))
+
+	// API routes grouped under /api
+	api := app.Group("/api")
 
 	// Health endpoint
-	app.Get("/health", func(c *fiber.Ctx) error {
+	api.Get("/health", func(c fiber.Ctx) error {
 		// Check DB connectivity
 		dbSQL, err := db.DB()
 		dbStatus := "ok"
@@ -203,7 +225,7 @@ func main() {
 	})
 
 	// Get all appliances
-	app.Get("/appliances", func(c *fiber.Ctx) error {
+	api.Get("/appliances", func(c fiber.Ctx) error {
 		// Connect to gorm
 		db, err := database.ConnectGorm()
 		if err != nil {
@@ -220,7 +242,7 @@ func main() {
 	})
 
 	// Create a new appliance
-	app.Post("/appliances/add", func(c *fiber.Ctx) error {
+	api.Post("/appliances/add", func(c fiber.Ctx) error {
 		// Connect to gorm
 		db, err := database.ConnectGorm()
 		if err != nil {
@@ -238,7 +260,7 @@ func main() {
 			Location      string `json:"location"`
 			Type          string `json:"type"`
 		}
-		err = c.BodyParser(&body)
+		err = c.Bind().Body(&body)
 		if err != nil {
 			return c.SendString("Error parsing body")
 		}
@@ -262,7 +284,7 @@ func main() {
 	})
 
 	// Update an appliance
-	app.Put("/appliances/update/:id", func(c *fiber.Ctx) error {
+	api.Put("/appliances/update/:id", func(c fiber.Ctx) error {
 		// Connect to gorm
 		db, err := database.ConnectGorm()
 		if err != nil {
@@ -289,7 +311,7 @@ func main() {
 			Location      string `json:"location"`
 			Type          string `json:"type"`
 		}
-		err = c.BodyParser(&body)
+		err = c.Bind().Body(&body)
 		if err != nil {
 			return c.SendString("Error parsing body")
 		}
@@ -319,7 +341,7 @@ func main() {
 		return c.JSON(updatedAppliance)
 	})
 
-	app.Get("/appliances/:id", func(c *fiber.Ctx) error {
+	api.Get("/appliances/:id", func(c fiber.Ctx) error {
 		// Connect to gorm
 		db, err := database.ConnectGorm()
 		if err != nil {
@@ -344,7 +366,7 @@ func main() {
 		return c.JSON(appliance)
 	})
 
-	app.Delete("/appliances/delete/:id", func(c *fiber.Ctx) error {
+	api.Delete("/appliances/delete/:id", func(c fiber.Ctx) error {
 		// Connect to gorm
 		db, err := database.ConnectGorm()
 		if err != nil {
@@ -370,7 +392,7 @@ func main() {
 	})
 
 	// Maintenance endpoints
-	app.Get("/maintenance", func(c *fiber.Ctx) error {
+	api.Get("/maintenance", func(c fiber.Ctx) error {
 		applianceId := c.Query("applianceId")
 		referenceType := c.Query("referenceType")
 		spaceType := c.Query("spaceType")
@@ -406,13 +428,13 @@ func main() {
 		return c.JSON(maintenances)
 	})
 
-	app.Post("/maintenance/add", func(c *fiber.Ctx) error {
+	api.Post("/maintenance/add", func(c fiber.Ctx) error {
 		// Expect maintenance fields plus optional attachmentIds array
 		var body struct {
 			models.Maintenance
 			AttachmentIDs []uint `json:"attachmentIds"`
 		}
-		if err := c.BodyParser(&body); err != nil {
+		if err := c.Bind().Body(&body); err != nil {
 			return c.Status(fiber.StatusBadRequest).SendString("Error parsing body: " + err.Error())
 		}
 		// Create maintenance record
@@ -429,7 +451,7 @@ func main() {
 		return c.Status(fiber.StatusCreated).JSON(newMaintenance)
 	})
 
-	app.Get("/maintenance/:id", func(c *fiber.Ctx) error {
+	api.Get("/maintenance/:id", func(c fiber.Ctx) error {
 		id := c.Params("id")
 		idUint, err := strconv.ParseUint(id, 10, 32)
 		if err != nil {
@@ -442,7 +464,7 @@ func main() {
 		return c.JSON(maintenance)
 	})
 
-	app.Delete("/maintenance/delete/:id", func(c *fiber.Ctx) error {
+	api.Delete("/maintenance/delete/:id", func(c fiber.Ctx) error {
 		id := c.Params("id")
 		idUint, err := strconv.ParseUint(id, 10, 32)
 		if err != nil {
@@ -454,7 +476,7 @@ func main() {
 		return c.SendStatus(fiber.StatusNoContent)
 	})
 
-	app.Put("/maintenance/update/:id", func(c *fiber.Ctx) error {
+	api.Put("/maintenance/update/:id", func(c fiber.Ctx) error {
 		id := c.Params("id")
 		idUint, err := strconv.ParseUint(id, 10, 32)
 		if err != nil {
@@ -466,7 +488,7 @@ func main() {
 			Cost        float64 `json:"cost"`
 			Notes       string  `json:"notes"`
 		}
-		if err := c.BodyParser(&body); err != nil {
+		if err := c.Bind().Body(&body); err != nil {
 			return c.Status(fiber.StatusBadRequest).SendString("Error parsing body: " + err.Error())
 		}
 		updated, err := database.UpdateMaintenance(db, uint(idUint), body.Description, body.Date, body.Cost, body.Notes)
@@ -477,7 +499,7 @@ func main() {
 	})
 
 	// Repair endpoints
-	app.Get("/repair", func(c *fiber.Ctx) error {
+	api.Get("/repair", func(c fiber.Ctx) error {
 		applianceId := c.Query("applianceId")
 		referenceType := c.Query("referenceType")
 		spaceType := c.Query("spaceType")
@@ -513,12 +535,12 @@ func main() {
 		return c.JSON(repairs)
 	})
 
-	app.Post("/repair/add", func(c *fiber.Ctx) error {
+	api.Post("/repair/add", func(c fiber.Ctx) error {
 		var body struct {
 			models.Repair
 			AttachmentIDs []uint `json:"attachmentIds"`
 		}
-		if err := c.BodyParser(&body); err != nil {
+		if err := c.Bind().Body(&body); err != nil {
 			return c.Status(fiber.StatusBadRequest).SendString("Error parsing body: " + err.Error())
 		}
 		newRepair, err := database.AddRepair(db, &body.Repair)
@@ -533,7 +555,7 @@ func main() {
 		return c.Status(fiber.StatusCreated).JSON(newRepair)
 	})
 
-	app.Get("/repair/:id", func(c *fiber.Ctx) error {
+	api.Get("/repair/:id", func(c fiber.Ctx) error {
 		id := c.Params("id")
 		idUint, err := strconv.ParseUint(id, 10, 32)
 		if err != nil {
@@ -546,7 +568,7 @@ func main() {
 		return c.JSON(repair)
 	})
 
-	app.Delete("/repair/delete/:id", func(c *fiber.Ctx) error {
+	api.Delete("/repair/delete/:id", func(c fiber.Ctx) error {
 		id := c.Params("id")
 		idUint, err := strconv.ParseUint(id, 10, 32)
 		if err != nil {
@@ -558,7 +580,7 @@ func main() {
 		return c.SendStatus(fiber.StatusNoContent)
 	})
 
-	app.Put("/repair/update/:id", func(c *fiber.Ctx) error {
+	api.Put("/repair/update/:id", func(c fiber.Ctx) error {
 		id := c.Params("id")
 		idUint, err := strconv.ParseUint(id, 10, 32)
 		if err != nil {
@@ -570,7 +592,7 @@ func main() {
 			Cost        float64 `json:"cost"`
 			Notes       string  `json:"notes"`
 		}
-		if err := c.BodyParser(&body); err != nil {
+		if err := c.Bind().Body(&body); err != nil {
 			return c.Status(fiber.StatusBadRequest).SendString("Error parsing body: " + err.Error())
 		}
 		updated, err := database.UpdateRepair(db, uint(idUint), body.Description, body.Date, body.Cost, body.Notes)
@@ -581,7 +603,7 @@ func main() {
 	})
 
 	// Upload a new file
-	app.Post("/files/upload", func(c *fiber.Ctx) error {
+	api.Post("/files/upload", func(c fiber.Ctx) error {
 		// Parse the multipart form
 		form, err := c.MultipartForm()
 		if err != nil {
@@ -653,7 +675,7 @@ func main() {
 	})
 
 	// Get file information by ID
-	app.Get("/files/info/:id", func(c *fiber.Ctx) error {
+	api.Get("/files/info/:id", func(c fiber.Ctx) error {
 		id := c.Params("id")
 		idUint, err := strconv.ParseUint(id, 10, 32)
 		if err != nil {
@@ -669,7 +691,7 @@ func main() {
 	})
 
 	// List files attached to a maintenance record
-	app.Get("/files/maintenance/:id", func(c *fiber.Ctx) error {
+	api.Get("/files/maintenance/:id", func(c fiber.Ctx) error {
 		id := c.Params("id")
 		idUint, err := strconv.ParseUint(id, 10, 32)
 		if err != nil {
@@ -684,7 +706,7 @@ func main() {
 	})
 
 	// List files attached to a repair record
-	app.Get("/files/repair/:id", func(c *fiber.Ctx) error {
+	api.Get("/files/repair/:id", func(c fiber.Ctx) error {
 		id := c.Params("id")
 		idUint, err := strconv.ParseUint(id, 10, 32)
 		if err != nil {
@@ -698,7 +720,7 @@ func main() {
 		return c.JSON(files)
 	})
 
-	app.Get("/files/download/:id", func(c *fiber.Ctx) error {
+	api.Get("/files/download/:id", func(c fiber.Ctx) error {
 		id := c.Params("id")
 		idUint, err := strconv.ParseUint(id, 10, 32)
 		if err != nil {
@@ -724,7 +746,7 @@ func main() {
 	})
 
 	// List files attached to an appliance
-	app.Get("/files/appliance/:id", func(c *fiber.Ctx) error {
+	api.Get("/files/appliance/:id", func(c fiber.Ctx) error {
 		id := c.Params("id")
 		idUint, err := strconv.ParseUint(id, 10, 32)
 		if err != nil {
@@ -739,7 +761,7 @@ func main() {
 	})
 
 	// List files attached to a space type
-	app.Get("/files/space/:spaceType", func(c *fiber.Ctx) error {
+	api.Get("/files/space/:spaceType", func(c fiber.Ctx) error {
 		spaceType := c.Params("spaceType")
 		if spaceType == "" {
 			return c.Status(fiber.StatusBadRequest).SendString("Missing spaceType")
@@ -753,7 +775,7 @@ func main() {
 	})
 
 	// Notes endpoints
-	app.Get("/notes", func(c *fiber.Ctx) error {
+	api.Get("/notes", func(c fiber.Ctx) error {
 		// Connect to gorm
 		db, err := database.ConnectGorm()
 		if err != nil {
@@ -778,7 +800,7 @@ func main() {
 		return c.JSON(notes)
 	})
 
-	app.Post("/notes/add", func(c *fiber.Ctx) error {
+	api.Post("/notes/add", func(c fiber.Ctx) error {
 		db, err := database.ConnectGorm()
 		if err != nil {
 			return c.SendString("Error connecting GORM to db")
@@ -790,7 +812,7 @@ func main() {
 			ApplianceID uint   `json:"applianceId"`
 			SpaceType   string `json:"spaceType"`
 		}
-		if err := c.BodyParser(&body); err != nil {
+		if err := c.Bind().Body(&body); err != nil {
 			return c.SendString("Error parsing body")
 		}
 
@@ -807,7 +829,7 @@ func main() {
 		return c.JSON(note)
 	})
 
-	app.Get("/notes/:id", func(c *fiber.Ctx) error {
+	api.Get("/notes/:id", func(c fiber.Ctx) error {
 		id := c.Params("id")
 		idUint, err := strconv.ParseUint(id, 10, 32)
 		if err != nil {
@@ -826,7 +848,7 @@ func main() {
 		return c.JSON(note)
 	})
 
-	app.Put("/notes/update/:id", func(c *fiber.Ctx) error {
+	api.Put("/notes/update/:id", func(c fiber.Ctx) error {
 		id := c.Params("id")
 		idUint, err := strconv.ParseUint(id, 10, 32)
 		if err != nil {
@@ -837,7 +859,7 @@ func main() {
 			Title string `json:"title"`
 			Body  string `json:"body"`
 		}
-		if err := c.BodyParser(&body); err != nil {
+		if err := c.Bind().Body(&body); err != nil {
 			return c.SendString("Error parsing body")
 		}
 
@@ -854,7 +876,7 @@ func main() {
 		return c.JSON(updated)
 	})
 
-	app.Delete("/notes/delete/:id", func(c *fiber.Ctx) error {
+	api.Delete("/notes/delete/:id", func(c fiber.Ctx) error {
 		id := c.Params("id")
 		idUint, err := strconv.ParseUint(id, 10, 32)
 		if err != nil {
@@ -875,7 +897,7 @@ func main() {
 	})
 
 	// Associate an existing uploaded file with a maintenance, repair, appliance, or space
-	app.Post("/files/attach", func(c *fiber.Ctx) error {
+	api.Post("/files/attach", func(c fiber.Ctx) error {
 		var body struct {
 			FileID        uint   `json:"fileId"`
 			MaintenanceID uint   `json:"maintenanceId"`
@@ -883,7 +905,7 @@ func main() {
 			ApplianceID   uint   `json:"applianceId"`
 			SpaceType     string `json:"spaceType"`
 		}
-		if err := c.BodyParser(&body); err != nil {
+		if err := c.Bind().Body(&body); err != nil {
 			return c.Status(fiber.StatusBadRequest).SendString("Error parsing body: " + err.Error())
 		}
 
@@ -913,7 +935,7 @@ func main() {
 	})
 
 	// Delete a file (record + stored file)
-	app.Delete("/files/:id", func(c *fiber.Ctx) error {
+	api.Delete("/files/:id", func(c fiber.Ctx) error {
 		id := c.Params("id")
 		idUint, err := strconv.ParseUint(id, 10, 32)
 		if err != nil {
@@ -940,7 +962,7 @@ func main() {
 	})
 
 	// Task endpoints
-	app.Get("/task", func(c *fiber.Ctx) error {
+	api.Get("/task", func(c fiber.Ctx) error {
 		applianceIdStr := c.Query("applianceId")
 		spaceType := c.Query("spaceType")
 		includeCompleted := c.Query("includeCompleted") == "true"
@@ -959,8 +981,8 @@ func main() {
 		return c.JSON(tasks)
 	})
 
-	app.Get("/task/dashboard", func(c *fiber.Ctx) error {
-		includeCompleted := c.QueryBool("includeCompleted", false)
+	api.Get("/task/dashboard", func(c fiber.Ctx) error {
+		includeCompleted := fiber.Query[bool](c, "includeCompleted", false)
 		tasks, err := database.GetAllTasks(db, includeCompleted)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).SendString("Error getting tasks: " + err.Error())
@@ -968,7 +990,7 @@ func main() {
 		return c.JSON(tasks)
 	})
 
-	app.Post("/task/add", func(c *fiber.Ctx) error {
+	api.Post("/task/add", func(c fiber.Ctx) error {
 		var body struct {
 			Label              string   `json:"label"`
 			Notes              string   `json:"notes"`
@@ -982,7 +1004,7 @@ func main() {
 			ApplianceID        *uint    `json:"applianceId"`
 			SpaceType          *string  `json:"spaceType"`
 		}
-		if err := c.BodyParser(&body); err != nil {
+		if err := c.Bind().Body(&body); err != nil {
 			return c.Status(fiber.StatusBadRequest).SendString("Error parsing body: " + err.Error())
 		}
 		if body.Label == "" {
@@ -1011,7 +1033,7 @@ func main() {
 		return c.Status(fiber.StatusCreated).JSON(created)
 	})
 
-	app.Get("/task/:id", func(c *fiber.Ctx) error {
+	api.Get("/task/:id", func(c fiber.Ctx) error {
 		id := c.Params("id")
 		idUint, err := strconv.ParseUint(id, 10, 32)
 		if err != nil {
@@ -1024,7 +1046,7 @@ func main() {
 		return c.JSON(task)
 	})
 
-	app.Put("/task/update/:id", func(c *fiber.Ctx) error {
+	api.Put("/task/update/:id", func(c fiber.Ctx) error {
 		id := c.Params("id")
 		idUint, err := strconv.ParseUint(id, 10, 32)
 		if err != nil {
@@ -1049,7 +1071,7 @@ func main() {
 			ApplianceID        *uint    `json:"applianceId"`
 			SpaceType          *string  `json:"spaceType"`
 		}
-		if err := c.BodyParser(&body); err != nil {
+		if err := c.Bind().Body(&body); err != nil {
 			return c.Status(fiber.StatusBadRequest).SendString("Error parsing body: " + err.Error())
 		}
 
@@ -1072,7 +1094,7 @@ func main() {
 		return c.JSON(updated)
 	})
 
-	app.Put("/task/complete/:id", func(c *fiber.Ctx) error {
+	api.Put("/task/complete/:id", func(c fiber.Ctx) error {
 		id := c.Params("id")
 		idUint, err := strconv.ParseUint(id, 10, 32)
 		if err != nil {
@@ -1086,7 +1108,7 @@ func main() {
 			Description    string  `json:"description"`
 			Cost           float64 `json:"cost"`
 		}
-		if err := c.BodyParser(&body); err != nil {
+		if err := c.Bind().Body(&body); err != nil {
 			return c.Status(fiber.StatusBadRequest).SendString("Error parsing body: " + err.Error())
 		}
 		if body.CompletionDate == "" {
@@ -1148,7 +1170,7 @@ func main() {
 		return c.JSON(task)
 	})
 
-	app.Put("/task/uncomplete/:id", func(c *fiber.Ctx) error {
+	api.Put("/task/uncomplete/:id", func(c fiber.Ctx) error {
 		id := c.Params("id")
 		idUint, err := strconv.ParseUint(id, 10, 32)
 		if err != nil {
@@ -1161,7 +1183,7 @@ func main() {
 		return c.JSON(task)
 	})
 
-	app.Delete("/task/delete/:id", func(c *fiber.Ctx) error {
+	api.Delete("/task/delete/:id", func(c fiber.Ctx) error {
 		id := c.Params("id")
 		idUint, err := strconv.ParseUint(id, 10, 32)
 		if err != nil {
@@ -1174,124 +1196,62 @@ func main() {
 	})
 
 	// Download a backup ZIP containing the DB and uploads
-	app.Get("/backup/download", func(c *fiber.Ctx) error {
+	api.Get("/backup/download", func(c fiber.Ctx) error {
 		pr, pw := io.Pipe()
 
 		go func() {
 			zw := zip.NewWriter(pw)
-			// ensure the writer is closed which also closes the underlying pipe writer
 			defer func() {
 				_ = zw.Close()
 				_ = pw.Close()
 			}()
 
-			// Create a consistent DB backup using the sqlite3 online backup API.
-			dbPath := "./data/db/homelogger.db"
-			tmpBackup := filepath.Join("./data/db", fmt.Sprintf("homelogger-backup-%d.db", time.Now().UnixNano()))
-
-			// Copy fallback helper
-			copyFile := func(src, dst string) error {
-				in, err := os.Open(src)
-				if err != nil {
-					return err
-				}
-				defer in.Close()
-				out, err := os.Create(dst)
-				if err != nil {
-					return err
-				}
-				defer out.Close()
-				if _, err := io.Copy(out, in); err != nil {
-					return err
-				}
-				return out.Sync()
-			}
-
-			// Serialize backups to avoid multiple concurrent backup attempts
 			backupMu.Lock()
 			defer backupMu.Unlock()
 
-			// Attempt to create a consistent DB copy using SQLite's "VACUUM INTO" SQL
-			// Use ExecContext with a short timeout so we don't block indefinitely.
-			backedUp := false
-			if db != nil {
-				if dbSQL, err := db.DB(); err == nil {
-					vacCtx, vacCancel := context.WithTimeout(context.Background(), 15*time.Second)
-					defer vacCancel()
-					// Use VACUUM INTO which creates a consistent copy of the DB
-					// Note: VACUUM INTO requires SQLite 3.27+
-					vacuumSQL := fmt.Sprintf("VACUUM INTO '%s'", tmpBackup)
-					if _, err := dbSQL.ExecContext(vacCtx, vacuumSQL); err == nil {
-						backedUp = true
-					}
-				}
+			// ponytail: Universal JSON export — works on any GORM dialect, no raw dump needed.
+			payload, err := database.ExportToJSON(db, db.Dialector.Name())
+			if err != nil {
+				_ = pw.CloseWithError(fmt.Errorf("export data: %w", err))
+				return
 			}
 
-			if !backedUp {
-				// fallback to copying the file
-				if err := copyFile(dbPath, tmpBackup); err != nil {
-					_ = pw.CloseWithError(err)
-					return
-				}
+			jsonData, err := json.Marshal(payload)
+			if err != nil {
+				_ = pw.CloseWithError(fmt.Errorf("marshal payload: %w", err))
+				return
 			}
 
-			// Ensure tmpBackup is removed after adding
-			defer func() {
-				_ = os.Remove(tmpBackup)
-			}()
-
-			// Add the DB backup file into the ZIP
-			if info, err := os.Stat(tmpBackup); err == nil && !info.IsDir() {
-				f, err := os.Open(tmpBackup)
-				if err != nil {
-					_ = pw.CloseWithError(err)
-					return
-				}
-				func() {
-					defer f.Close()
-					dst, err := zw.Create("db/" + filepath.Base(tmpBackup))
-					if err != nil {
-						_ = pw.CloseWithError(err)
-						return
-					}
-					if _, err := io.Copy(dst, f); err != nil {
-						_ = pw.CloseWithError(err)
-						return
-					}
-				}()
+			w, err := zw.Create("data.json")
+			if err != nil {
+				_ = pw.CloseWithError(fmt.Errorf("zip entry data.json: %w", err))
+				return
+			}
+			if _, err := w.Write(jsonData); err != nil {
+				_ = pw.CloseWithError(fmt.Errorf("write data.json: %w", err))
+				return
 			}
 
-			// Walk uploads directory and add files preserving relative paths
 			uploadsRoot := "./data/uploads"
 			_ = filepath.Walk(uploadsRoot, func(path string, info os.FileInfo, err error) error {
-				if err != nil {
+				if err != nil || info.IsDir() {
 					return err
 				}
-				if info.IsDir() {
-					return nil
-				}
-
 				rel, err := filepath.Rel(uploadsRoot, path)
 				if err != nil {
 					return err
 				}
-
 				f, err := os.Open(path)
 				if err != nil {
 					return err
 				}
 				defer f.Close()
-
-				// Use forward slashes inside ZIP
-				dest := filepath.ToSlash(filepath.Join("uploads", rel))
-				dst, err := zw.Create(dest)
+				dst, err := zw.Create(filepath.ToSlash(filepath.Join("uploads", rel)))
 				if err != nil {
 					return err
 				}
-				if _, err := io.Copy(dst, f); err != nil {
-					return err
-				}
-				return nil
+				_, err = io.Copy(dst, f)
+				return err
 			})
 		}()
 
@@ -1300,12 +1260,119 @@ func main() {
 		return c.SendStream(pr)
 	})
 
-	fmt.Printf("Starting HomeLogger Server %s on port 8083\n", version.Version)
+	// Import a backup ZIP — replaces all data: drop tables → migrate → insert
+	api.Post("/backup/import", func(c fiber.Ctx) error {
+		backupMu.Lock()
+		defer backupMu.Unlock()
+
+		file, err := c.FormFile("backup")
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).SendString("Error getting backup file: " + err.Error())
+		}
+
+		tempDir, err := os.MkdirTemp("", "homelogger-backup-import-")
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).SendString("Error creating temp directory: " + err.Error())
+		}
+		defer func() { _ = os.RemoveAll(tempDir) }()
+
+		tempZipPath := filepath.Join(tempDir, file.Filename)
+		if err := c.SaveFile(file, tempZipPath); err != nil {
+			return c.Status(fiber.StatusInternalServerError).SendString("Error saving uploaded file: " + err.Error())
+		}
+
+		r, err := zip.OpenReader(tempZipPath)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).SendString("Error opening zip file: " + err.Error())
+		}
+		defer func() { _ = r.Close() }()
+
+		extractedPath := filepath.Join(tempDir, "extracted")
+		if err := os.MkdirAll(extractedPath, 0755); err != nil {
+			return c.Status(fiber.StatusInternalServerError).SendString("Error creating extraction directory: " + err.Error())
+		}
+
+		var dataJSONPath string
+		var legacyDBPath string
+		var uploadsExtractedPath string
+
+		for _, f := range r.File {
+			fpath := filepath.Join(extractedPath, f.Name)
+			if !strings.HasPrefix(fpath, filepath.Clean(extractedPath)+string(os.PathSeparator)) {
+				return c.Status(fiber.StatusBadRequest).SendString("Illegal file path in zip: " + fpath)
+			}
+			if f.FileInfo().IsDir() {
+				_ = os.MkdirAll(fpath, os.ModePerm)
+				continue
+			}
+			if err = os.MkdirAll(filepath.Dir(fpath), os.ModePerm); err != nil {
+				return c.Status(fiber.StatusInternalServerError).SendString("Error creating dir: " + err.Error())
+			}
+			outFile, err := os.OpenFile(fpath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
+			if err != nil {
+				return c.Status(fiber.StatusInternalServerError).SendString("Error creating file: " + err.Error())
+			}
+			rc, err := f.Open()
+			if err != nil {
+				_ = outFile.Close()
+				return c.Status(fiber.StatusInternalServerError).SendString("Error opening zip entry: " + err.Error())
+			}
+			_, copyErr := io.Copy(outFile, rc)
+			_ = outFile.Close()
+			_ = rc.Close()
+			if copyErr != nil {
+				return c.Status(fiber.StatusInternalServerError).SendString("Error extracting file: " + copyErr.Error())
+			}
+			if strings.EqualFold(filepath.Base(fpath), "data.json") {
+				dataJSONPath = fpath
+			} else if strings.HasPrefix(f.Name, "db/") && strings.HasSuffix(strings.ToLower(f.Name), ".db") && legacyDBPath == "" {
+				legacyDBPath = fpath
+			} else if strings.HasPrefix(f.Name, "uploads/") && uploadsExtractedPath == "" {
+				uploadsExtractedPath = filepath.Join(extractedPath, "uploads")
+			}
+		}
+
+		switch {
+		case dataJSONPath != "":
+			if _, err := database.ImportFromJSONFile(db, dataJSONPath, uploadsExtractedPath); err != nil {
+				return c.Status(fiber.StatusInternalServerError).SendString("Error importing database data: " + err.Error())
+			}
+		case legacyDBPath != "":
+			payload, err := database.ConvertLegacyDB(legacyDBPath)
+			if err != nil {
+				return c.Status(fiber.StatusInternalServerError).SendString("Error reading legacy backup: " + err.Error())
+			}
+			if _, err := database.ImportFromJSON(db, payload, uploadsExtractedPath); err != nil {
+				return c.Status(fiber.StatusInternalServerError).SendString("Error importing database data: " + err.Error())
+			}
+		default:
+			return c.Status(fiber.StatusBadRequest).SendString("Backup ZIP must contain data.json (new format) or a .db file in a db/ directory (legacy format)")
+		}
+
+		if err := database.ImportUploads(uploadsExtractedPath); err != nil {
+			return c.Status(fiber.StatusInternalServerError).SendString("Error importing uploaded files: " + err.Error())
+		}
+
+		return c.SendString("Backup import completed successfully")
+	})
+
+	// Serve static SPA files with client-side routing fallback
+	app.Get("/*", static.New("./static"), func(c fiber.Ctx) error {
+		return c.SendFile("./static/index.html")
+	})
+
+	addr := os.Getenv("PORT")
+	if addr == "" {
+		addr = ":3005"
+	} else if _, err := strconv.Atoi(addr); err == nil {
+		addr = ":" + addr
+	}
+	fmt.Printf("\n\nStarting HomeLogger %s on port %s\n\n", version.Version, addr)
 
 	// Start server in goroutine so we can handle signals and cleanup
 	serverErr := make(chan error, 1)
 	go func() {
-		if err := app.Listen(":8083"); err != nil {
+		if err := app.Listen(addr); err != nil {
 			serverErr <- err
 		}
 	}()
@@ -1325,6 +1392,9 @@ func main() {
 	if err := app.Shutdown(); err != nil {
 		fmt.Printf("Error shutting down server: %v\n", err)
 	}
+
+	// Close log file
+	logWriter.Close()
 
 	// Close DB connection
 	if db != nil {

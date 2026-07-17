@@ -13,7 +13,7 @@ type Repair struct {
 	Notes         string    `json:"notes" gorm:"not null" gorm:"default:''"`
 	SpaceType     string    `json:"spaceType" gorm:"not null" gorm:"default:''"`
 	ReferenceType string    `json:"referenceType" gorm:"not null" gorm:"default:''"`
-	ApplianceID   *uint     `json:"applianceID" gorm:"default:null"`
+	ApplianceID   *uint     `json:"applianceId" gorm:"default:null"`
 	Appliance     Appliance `gorm:"foreignKey:ApplianceID;references:ID"` // Foreign key
 	AttachmentID  *uint     `json:"attachmentId" gorm:"default:null"`
 	Attachment    SavedFile `gorm:"foreignKey:AttachmentID;references:ID"`

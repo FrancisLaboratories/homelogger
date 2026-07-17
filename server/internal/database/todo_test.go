@@ -7,7 +7,7 @@ import (
 )
 
 func TestAddAndGetTodos(t *testing.T) {
-    db := testDB(t)
+    db := TestDB(t)
 
     // Add two todos: one general and one for an appliance
     todo1, err := AddTodo(db, "task1", false, "1", 0, "")
@@ -41,7 +41,7 @@ func TestAddAndGetTodos(t *testing.T) {
 }
 
 func TestDeleteTodo(t *testing.T) {
-    db := testDB(t)
+    db := TestDB(t)
 
     td, err := AddTodo(db, "to-delete", false, "1", 0, "")
     if err != nil {
@@ -53,7 +53,7 @@ func TestDeleteTodo(t *testing.T) {
     }
 }
 func TestAddGetDeleteTodo(t *testing.T) {
-    db := testDB(t)
+    db := TestDB(t)
 
     // add a todo (use userID "1" to match GetTodos filter)
     todo, err := AddTodo(db, "test task", false, "1", 0, "")

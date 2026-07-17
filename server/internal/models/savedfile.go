@@ -8,7 +8,7 @@ type SavedFile struct {
 	gorm.Model
 	ID            uint    `json:"id" gorm:"primaryKey"`
 	Path          string  `json:"path" gorm:"not null"`
-	OriginalName  string  `json:"checked" gorm:"default:'';not null"`
+	OriginalName  string  `json:"originalName" gorm:"default:'';not null"`
 	Type          string  `json:"type" gorm:"default:'';not null"`
 	UserID        string  `json:"userid" gorm:"not null"`
 	MaintenanceID *uint   `json:"maintenanceId" gorm:"default:null"`

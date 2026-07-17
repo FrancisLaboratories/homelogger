@@ -4,10 +4,13 @@ services:
       context: ../server
       dockerfile: Dockerfile
     ports:
-      - "8083:8083"
+      - "3005:3005"
     volumes:
-      - ../server/data/db:/root/data/db
-      - ../server/data/uploads:/root/data/uploads
+      - data:/root/data
+    environment:
+      - DB_DIALECT=sqlite
+      # - LOG_CONSOLE=true
+      # - LOG_FILE=/root/data/homelogger.log
     networks:
       - homeloggerNetwork
     restart: unless-stopped
@@ -25,6 +28,9 @@ services:
     networks:
       - homeloggerNetwork
     restart: unless-stopped
+
+volumes:
+  data:
 
 networks:
   homeloggerNetwork:

@@ -6,37 +6,10 @@ import (
 	"testing"
 
 	"github.com/masoncfrancis/homelogger/server/internal/models"
-	"gorm.io/gorm"
 )
 
-// setupTestDB prepares a temporary sqlite DB and runs migrations.
-func setupTestDB(t *testing.T) *gorm.DB {
-    t.Helper()
-    tmpDir := t.TempDir()
-    dbPath := filepath.Join(tmpDir, "test.db")
-    if err := os.Setenv("DEMO_DB_PATH", dbPath); err != nil {
-        t.Fatalf("failed to set DEMO_DB_PATH: %v", err)
-    }
-
-    db, err := ConnectGorm()
-    if err != nil {
-        t.Fatalf("ConnectGorm error: %v", err)
-    }
-
-    if err := MigrateGorm(db); err != nil {
-        t.Fatalf("MigrateGorm error: %v", err)
-    }
-
-    // Ensure underlying sql.DB is closed when the test ends to avoid file locks on Windows
-    if sqlDB, err := db.DB(); err == nil {
-        t.Cleanup(func() { _ = sqlDB.Close() })
-    }
-
-    return db
-}
-
 func TestConnectAndMigrate(t *testing.T) {
-    db := setupTestDB(t)
+	db := TestDB(t)
     sqlDB, err := db.DB()
     if err != nil {
         t.Fatalf("db.DB() error: %v", err)
@@ -45,7 +18,7 @@ func TestConnectAndMigrate(t *testing.T) {
 }
 
 func TestApplianceCRUD(t *testing.T) {
-    db := setupTestDB(t)
+    db := TestDB(t)
 
     ap := &models.Appliance{
         ApplianceName: "Dishwasher",
@@ -107,7 +80,7 @@ func TestApplianceCRUD(t *testing.T) {
 }
 
 func TestFileAttachAndDelete(t *testing.T) {
-    db := setupTestDB(t)
+    db := TestDB(t)
 
     // Create an appliance to attach files to
     ap := &models.Appliance{ApplianceName: "Fridge", Manufacturer: "Acme", ModelNumber: "F1", SerialNumber: "S1", YearPurchased: "2021", PurchasePrice: "300", Location: "Kitchen", Type: "Appliance"}

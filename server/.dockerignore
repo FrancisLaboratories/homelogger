@@ -2,3 +2,4 @@ data/
 .vscode
 .idea
 .env
+vendor/

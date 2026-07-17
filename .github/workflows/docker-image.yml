@@ -34,3 +34,4 @@ jobs:
           tags: |
             ${{ env.DOCKER_IMAGE }}:latest
             ${{ env.DOCKER_IMAGE }}:${{ github.event.release.tag_name }}
+            ${{ env.DOCKER_IMAGE }}:0

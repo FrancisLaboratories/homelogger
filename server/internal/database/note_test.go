@@ -7,7 +7,7 @@ import (
 )
 
 func TestAddGetUpdateDeleteNote(t *testing.T) {
-    db := testDB(t)
+    db := TestDB(t)
 
     // Add
     n, err := AddNote(db, "title1", "body1", 0, "")
