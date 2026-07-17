@@ -115,6 +115,19 @@ func ImportFromJSON(db *gorm.DB, payload *models.BackupPayload, uploadsDir strin
 		return result, fmt.Errorf("reset sequences: %w", err)
 	}
 
+	// 5. If both todos and tasks were imported, mark all todos as already migrated
+	// so MigrateTodosToTasks on next startup doesn't create duplicate tasks.
+	if len(payload.Entities.Todos) > 0 && len(payload.Entities.Tasks) > 0 {
+		for _, todo := range payload.Entities.Todos {
+			if err := db.Exec(
+				"INSERT OR IGNORE INTO todo_task_migrations (todo_id) VALUES (?)",
+				todo.ID,
+			).Error; err != nil {
+				result.ErrorMessage += fmt.Sprintf("track migration todo[%d]: %v; ", todo.ID, err)
+			}
+		}
+	}
+
 	return result, nil
 }
 
