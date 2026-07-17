@@ -34,7 +34,7 @@ RUN go build -o main ./cmd/server
 # Stage 3: Final image — Go binary serves both API + static files
 FROM alpine:latest AS final
 
-RUN apk add --no-cache ca-certificates curl
+RUN apk add --no-cache ca-certificates bash curl
 
 # Ensure the runtime working directory matches expectations in server code
 WORKDIR /root
