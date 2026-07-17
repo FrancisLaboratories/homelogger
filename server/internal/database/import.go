@@ -12,7 +12,7 @@ import (
 )
 
 // tableDropOrder lists tables in reverse FK dependency order for safe drops.
-// ponytail: hard-coded list mirrors MigrateGorm — update both together.
+// note: hard-coded list mirrors MigrateGorm — update both together.
 var tableDropOrder = []string{
 	"tasks",
 	"notes",
@@ -27,7 +27,7 @@ var tableDropOrder = []string{
 // dropAllTables drops every application table using raw SQL.
 // Works on both SQLite and PostgreSQL — DROP TABLE IF EXISTS is ANSI SQL.
 func dropAllTables(db *gorm.DB) error {
-	// ponytail: CASCADE is Postgres-only; SQLite doesn't support it (and has no FK enforcement by default)
+	// note: CASCADE is Postgres-only; SQLite doesn't support it (and has no FK enforcement by default)
 	cascade := ""
 	if db.Dialector.Name() == dialectPostgres {
 		cascade = " CASCADE"
@@ -42,7 +42,7 @@ func dropAllTables(db *gorm.DB) error {
 
 // tablesWithSequences are the subset of tableDropOrder that have a SERIAL/BIGSERIAL id column.
 // todo_task_migrations uses BIGINT PRIMARY KEY (no sequence), so it's excluded.
-// ponytail: Postgres only — sequences don't exist in SQLite.
+// note: Postgres only — sequences don't exist in SQLite.
 var tablesWithSequences = []string{
 	"tasks",
 	"notes",
@@ -86,7 +86,7 @@ func ImportFromJSON(db *gorm.DB, payload *models.BackupPayload, uploadsDir strin
 	}
 
 	// 3. Insert in FK dependency order (parents before children)
-	// ponytail: insert individually (not batch) so GORM handles mixed auto/explicit IDs correctly.
+	// note: insert individually (not batch) so GORM handles mixed auto/explicit IDs correctly.
 	insertEach := func(name string, fn func(i int) error, count int) {
 		for i := 0; i < count; i++ {
 			if err := fn(i); err != nil {
@@ -113,6 +113,19 @@ func ImportFromJSON(db *gorm.DB, payload *models.BackupPayload, uploadsDir strin
 	// 4. Resync Postgres sequences — inserting explicit IDs doesn't advance them
 	if err := resetPostgresSequences(db); err != nil {
 		return result, fmt.Errorf("reset sequences: %w", err)
+	}
+
+	// 5. If both todos and tasks were imported, mark all todos as already migrated
+	// so MigrateTodosToTasks on next startup doesn't create duplicate tasks.
+	if len(payload.Entities.Todos) > 0 && len(payload.Entities.Tasks) > 0 {
+		for _, todo := range payload.Entities.Todos {
+			if err := db.Exec(
+				"INSERT OR IGNORE INTO todo_task_migrations (todo_id) VALUES (?)",
+				todo.ID,
+			).Error; err != nil {
+				result.ErrorMessage += fmt.Sprintf("track migration todo[%d]: %v; ", todo.ID, err)
+			}
+		}
 	}
 
 	return result, nil
@@ -145,7 +158,7 @@ func ImportUploads(extractedUploadsPath string) error {
 	}
 
 	if extractedUploadsPath == "" {
-		return nil // ponytail: no uploads in backup, that's fine
+		return nil // no uploads in backup, that's fine
 	}
 
 	return filepath.Walk(extractedUploadsPath, func(path string, info os.FileInfo, err error) error {

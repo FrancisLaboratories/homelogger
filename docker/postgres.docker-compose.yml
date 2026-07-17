@@ -17,12 +17,12 @@ services:
 
   server:
     build:
-      context: ../server
+      context: ..
       dockerfile: Dockerfile
     environment:
       - DB_DIALECT=postgres
       - DATABASE_URL=postgresql://homelogger:ChangeMe@postgres:5432/homelogger?sslmode=disable
-      - PORT=3005
+      # - PORT=3005
       # - LOG_CONSOLE=true
       # - LOG_FILE=/root/data/homelogger.log
     depends_on:
@@ -32,17 +32,6 @@ services:
       - "3005:3005"
     volumes:
       - server_data:/root/data
-  client:
-    build:
-      context: ../client
-      dockerfile: Dockerfile
-    ports:
-      - "3005:80"
-    volumes:
-      - ../client/nginx.conf:/etc/nginx/conf.d/default.conf
-    depends_on:
-      - server
-    restart: unless-stopped
 
 volumes:
   postgres_data:

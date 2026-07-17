@@ -170,7 +170,7 @@ func main() {
 	// Create new fiber server with larger body limit for file uploads
 	app := fiber.New(fiber.Config{
 		AppName:   fmt.Sprintf("HomeLogger %s", version.Version),
-		BodyLimit: 100 * 1024 * 1024, // 100 MB,
+		BodyLimit: 100 * 1024 * 1024, // 100 MB
 	})
 
 	app.Hooks().OnPreStartupMessage(func(sm *fiber.PreStartupMessageData) error {
@@ -1293,6 +1293,7 @@ func main() {
 		}
 
 		var dataJSONPath string
+		var legacyDBPath string
 		var uploadsExtractedPath string
 
 		for _, f := range r.File {
@@ -1324,17 +1325,28 @@ func main() {
 			}
 			if strings.EqualFold(filepath.Base(fpath), "data.json") {
 				dataJSONPath = fpath
+			} else if strings.HasPrefix(f.Name, "db/") && strings.HasSuffix(strings.ToLower(f.Name), ".db") && legacyDBPath == "" {
+				legacyDBPath = fpath
 			} else if strings.HasPrefix(f.Name, "uploads/") && uploadsExtractedPath == "" {
 				uploadsExtractedPath = filepath.Join(extractedPath, "uploads")
 			}
 		}
 
-		if dataJSONPath == "" {
-			return c.Status(fiber.StatusBadRequest).SendString("Backup ZIP is missing data.json")
-		}
-
-		if _, err := database.ImportFromJSONFile(db, dataJSONPath, uploadsExtractedPath); err != nil {
-			return c.Status(fiber.StatusInternalServerError).SendString("Error importing database data: " + err.Error())
+		switch {
+		case dataJSONPath != "":
+			if _, err := database.ImportFromJSONFile(db, dataJSONPath, uploadsExtractedPath); err != nil {
+				return c.Status(fiber.StatusInternalServerError).SendString("Error importing database data: " + err.Error())
+			}
+		case legacyDBPath != "":
+			payload, err := database.ConvertLegacyDB(legacyDBPath)
+			if err != nil {
+				return c.Status(fiber.StatusInternalServerError).SendString("Error reading legacy backup: " + err.Error())
+			}
+			if _, err := database.ImportFromJSON(db, payload, uploadsExtractedPath); err != nil {
+				return c.Status(fiber.StatusInternalServerError).SendString("Error importing database data: " + err.Error())
+			}
+		default:
+			return c.Status(fiber.StatusBadRequest).SendString("Backup ZIP must contain data.json (new format) or a .db file in a db/ directory (legacy format)")
 		}
 
 		if err := database.ImportUploads(uploadsExtractedPath); err != nil {

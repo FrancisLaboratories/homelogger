@@ -28,7 +28,7 @@ func GetRepairs(db *gorm.DB, applianceId uint, referenceType, spaceType string) 
 
 // AddRepair creates a new repair record
 func AddRepair(db *gorm.DB, repair *models.Repair) (*models.Repair, error) {
-	// ponytail: nil out zero ApplianceID — Postgres enforces FK, 0 is not a valid appliance id
+	// note: nil out zero ApplianceID — Postgres enforces FK, 0 is not a valid appliance id
 	if repair.ApplianceID != nil && *repair.ApplianceID == 0 {
 		repair.ApplianceID = nil
 	}
