@@ -1,5 +1,5 @@
 <p align="center">
-	<img src="client/public/logoname.png" alt="HomeLogger wordmark" width="320" />
+ <img src="client/public/logoname.png" alt="HomeLogger wordmark" width="320" />
 </p>
 
 # HomeLogger
@@ -9,11 +9,11 @@ HomeLogger is a simple home maintenance and asset tracker for homeowners, inspir
 > [!WARNING]
 > HomeLogger is still in version 0.x.x and is subject to major changes from version to version. I am developing the core features and collecting feedbacks. Expect bugs! Please open issues or feature requests
 
-This project is in it's early stages. Expect changes. You are encouraged to [contribute](#Contributing) as well. Be mindful, this is a side project, not my full-time job, so development will be slow and incremental. The goal is to build a useful tool for myself and others. Constructive feedback is always welcome.
+This project is in it's early stages. Expect changes. You are encouraged to [contribute](#contributing) as well. Be mindful, this is a side project, not my full-time job, so development will be slow and incremental. The goal is to build a useful tool for myself and others. Constructive feedback is always welcome.
 
 There is a demo available at [homelogger-demo.francislaboratories.com](https://homelogger-demo.francislaboratories.com)
 
-This repository contains a React client and a Go (Fiber + GORM) server with a SQLite or PostgreSQL database. The project is early-stage but includes a working client and server and a small REST API defined in [server/openapi.yaml](server/openapi.yaml).
+This repository contains a Go (Fiber + GORM) server with a built-in React SPA (served via Fiber static middleware) and a SQLite or PostgreSQL database. The production Docker image is a single monolith container. For development, the client and server can run separately. The project is early-stage but includes a working UI and a small REST API defined in [server/openapi.yaml](server/openapi.yaml).
 
 **Contents**
 
@@ -30,7 +30,7 @@ This repository contains a React client and a Go (Fiber + GORM) server with a SQ
 **Tech Stack**
 
 - Client: Node, React, Bootstrap built with Vite
-- Server: Go,Go Fiber web framework, GORM ORM
+- Server: Go, Fiber web framework, GORM ORM
 - Database: SQLite (default) or PostgreSQL
 
 **Repository Layout (high level)**
@@ -39,97 +39,138 @@ This repository contains a React client and a Go (Fiber + GORM) server with a SQ
 - [server](server/) — Go server, internal packages, and OpenAPI spec
   - [server/cmd/server/main.go](server/cmd/server/main.go)
   - [server/openapi.yaml](server/openapi.yaml)
-  - [server/internal/models](server/internal/models)
+  - [server/internal/models](server/internal/models) — data models
+  - [server/internal/database](server/internal/database) — GORM setup, migrations, backup/import
+  - [server/internal/demo](server/internal/demo) — demo mode seed/reset logic
+  - [server/internal/version](server/internal/version) — build version info
+- [docker/](docker/) — alternate Docker Compose configurations (dev, demo, postgres)
 
 ## Getting started
 
-Prerequisites
+You have two options: run everything with Docker (recommended, no setup needed) or run locally if you want to make changes to the code.
 
-- Go (>= 1.25 required) for running the server locally
-- Node.js (24+) and npm for the client
-- Docker & Docker Compose (optional, for containerized runs)
+### Option 1: Docker (easiest)
 
-## Docker Compose (recommended for quick start)
+You will need [Docker](https://docker.com) installed on your machine. Create a docker-compose file with the following contents:
 
-This repo includes an example `docker-compose.yml` for running both services together.
+```yaml
+services:
+  homelogger:
+    image: francislaboratories/homelogger:latest
+    container_name: homelogger
+    ports:
+      - "3005:3005"
+    volumes:
+      - homelogger_data:/app/data
+    restart: unless-stopped
+volumes:
+  homelogger_data:
+```
 
-Start both services with:
+Then, run the following command in the same directory as your `docker-compose.yml` file:
 
 ```bash
 docker compose up
 ```
 
-The client will be available at http://localhost:3005
+Open <http://localhost:3005> in your browser. The app will be ready to use — it creates and manages its own database file automatically.
 
-Stop and remove containers with:
+To stop, press `Ctrl+C` or run:
 
 ```bash
 docker compose down
 ```
 
-## Local development
+There are also a few alternative setups in the [docker/](docker/) folder if you need something different:
 
-1. Start the API server
+| File | What it does |
+|------|--------------|
+| `dev.docker-compose.yml` | Lets you work on the code with the app running in containers |
+| `postgres.docker-compose.yml` | Uses a different database system (PostgreSQL) instead of the default file-based one |
+| `demo.docker-compose.yml` | Starts the app with sample data pre-loaded so you can explore |
+| `combo.docker-compose.yml` | Builds the app from the source code instead of using a pre-made image |
 
-```bash
-cd server
-go run ./cmd/server
-```
+### Option 2: Run locally (for developers)
 
-By default, server uses SQLite file under `server/data/db`. On first run it creates DB file and tables via GORM migrations in code.
+You'll need to have the following installed:
 
-To use PostgreSQL, set `DB_DIALECT=postgres` and provide connection settings (see Environment configuration below).
+- **Go** (version 1.25 or newer) for the server
+- **Node.js** (version 24 or newer, comes with npm) for the web interface
 
-2. Start the client
+1. **Set up environment variables**
 
-```bash
-cd client
-npm install
-npm run dev
-```
+   Copy the client example file and adjust if needed:
 
-Open http://localhost:5173 to view the React app. The client expects the API to be running at the default address configured in the client environment (see `client/.env` or client code for API URL locations).
+   ```bash
+   cp client/.env.example client/.env.local
+   ```
+
+   The defaults work out of the box — you only need to change them if you want to use a different database or port. See the [Environment configuration](#environment-configuration) section for all available options.
+
+   > Server settings are set through environment variables in your terminal. For example, to run on a different port:
+   > ```bash
+   > export PORT=4000
+   > ```
+   > You can also prefix them inline: `PORT=4000 go run ./cmd/server`
+
+2. **Start the server**
+
+   Open a terminal, go to the `server` folder, and run:
+
+   ```bash
+   cd server
+   go run ./cmd/server
+   ```
+
+   The server uses a file-based database by default — it will create everything it needs on the first run.
+
+3. **Start the web interface**
+
+   Open another terminal, go to the `client` folder, and run:
+
+   ```bash
+   cd client
+   npm install
+   npm run dev
+   ```
+
+4. Open http://localhost:5173 in your browser.
 
 ## Environment configuration
 
-Server environment variables (create `.env` at `server/` if needed)
+Create `.env` at `server/` for server vars. Create `client/.env.local` for client vars.
 
-- `PORT` — port to run API (default `3005`)
-- `DB_DIALECT` — `sqlite` (default) or `postgres`
-- `DB_DIALECT` is locked on first successful server start and reused on later starts
-- `DATABASE_URL` —
-  - for SQLite: optional DB file path (used after `DEMO_DB_PATH`)
-  - for PostgreSQL: full DSN/URL (preferred)
-- `DB_DIALECT_LOCK_PATH` — optional lock file path (default `./data/db/.db_dialect`)
+`DB_DIALECT` is locked on first successful start and reused on later starts.
 
-SQLite-related variables
+> [!CAUTION]
+> `FORCE_DB_DIALECT_CHANGE` overrides the dialect lock. Only use this if you understand the consequences — switching dialects after data exists will not migrate your data.
 
-- `DEMO_DB_PATH` — overrides SQLite DB file path (used for demo mode)
+**Server variables**
 
-PostgreSQL variables (used when `DB_DIALECT=postgres` and `DATABASE_URL` not set)
+| Variable | Default | Required | Description |
+|----------|---------|----------|-------------|
+| `PORT` | `3005` | No | API server listen port |
+| `DB_DIALECT` | `sqlite` | No | `sqlite` or `postgres` |
+| `DATABASE_URL` | — | Conditional | SQLite: path to DB file (optional). Postgres: full connection string like `postgres://user:pass@host:5432/dbname` (preferred over individual `DB_*` vars) |
+| `DB_DIALECT_LOCK_PATH` | `./data/db/.db_dialect` | No | Dialect lock file path |
+| `FORCE_DB_DIALECT_CHANGE` | — | No | Override dialect lock (advanced — see caution above). Set to `true` or `1` |
+| `DEMO_DB_PATH` | — | No | Override SQLite DB file path |
+| `DEMO_MODE` | — | No | Enable demo seed/reset. Set to `true` or `1`. SQLite only |
+| `DEMO_FILE_PATH` | — | No | Path to demo seed JSON |
+| `DB_HOST` | `localhost` | Conditional | Postgres host (when `DB_DIALECT=postgres` and no `DATABASE_URL`) |
+| `DB_PORT` | `5432` | Conditional | Postgres port |
+| `DB_USER` | — | Conditional | Postgres user |
+| `DB_PASSWORD` | — | Conditional | Postgres password |
+| `DB_NAME` | — | Conditional | Postgres database name |
+| `DB_SSLMODE` | `disable` | No | Postgres SSL mode |
+| `LOG_CONSOLE` | `true` | No | Console request logging. Set to `true` or `false` |
+| `LOG_FILE` | — | No | File path for request logs (e.g. `/var/log/homelogger.log`). Leave unset or blank to disable file logging |
 
-- `DB_HOST` — PostgreSQL host (default `localhost`)
-- `DB_PORT` — PostgreSQL port (default `5432`)
-- `DB_USER` — PostgreSQL user
-- `DB_PASSWORD` — PostgreSQL password
-- `DB_NAME` — PostgreSQL database name
-- `DB_SSLMODE` — PostgreSQL SSL mode (default `disable`)
+**Client variables**
 
-Demo mode variables
-
-- `DEMO_MODE` — enable demo seed/reset mode (`true` or `1`)
-- `DEMO_FILE_PATH` — optional path to demo seed JSON
-
-Note: `DEMO_MODE` is SQLite-only. If enabled with PostgreSQL, server logs warning and disables demo mode.
-
-Logging variables
-
-- `LOG_CONSOLE` — enable console request logging (`true`, default, or `false`/`0` to disable)
-- `LOG_FILE` — optional file path to append request logs (e.g. `/var/log/homelogger.log`)
-
-Client environment variables
-
-- The client uses Vite environment patterns if required (check `client/vite.config.js` or `client/.env.local`)
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `VITE_SERVER_URL` | Yes | API server URL (e.g. `http://localhost:3005` for local dev, `/api` when served via Docker monolith). Only needed when running the client standalone or building locally |
 
 ## API and docs
 
@@ -139,6 +180,8 @@ The server exposes a REST API. The OpenAPI spec is available at [server/openapi.
 
 - SQLite DB file is stored under [server/data/db](server/data/db)
 - Uploaded files are stored under [server/data/uploads](server/data/uploads)
+- Server accepts uploads up to 100 MB (configurable via `BodyLimit` in server code)
+- Production Docker container uses a healthcheck (`prod.healthcheck.sh`)
 
 ## Backup & export
 
@@ -153,7 +196,6 @@ The app includes a server endpoint and client settings page to import a backup Z
 
 - REST endpoint: `POST /backup/import` (multipart form, field name `backup`)
 - Web UI: open Settings → "Import Backup" → select `.zip` file → confirm overwrite
-
 
 Notes & safety
 
