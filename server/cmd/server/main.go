@@ -1209,7 +1209,7 @@ func main() {
 			backupMu.Lock()
 			defer backupMu.Unlock()
 
-			// ponytail: Universal JSON export — works on any GORM dialect, no raw dump needed.
+			// note: Universal JSON export — works on any GORM dialect, no raw dump needed.
 			payload, err := database.ExportToJSON(db, db.Dialector.Name())
 			if err != nil {
 				_ = pw.CloseWithError(fmt.Errorf("export data: %w", err))
