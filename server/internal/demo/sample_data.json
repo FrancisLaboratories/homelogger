@@ -136,8 +136,8 @@
       "priority": "medium",
       "dueDate": "2026-06-01",
       "isRecurring": true,
-      "recurrenceInterval": 6,
-      "recurrenceUnit": "months",
+      "recurrenceInterval": 1,
+      "recurrenceUnit": "years",
       "recurrenceMode": "due_date",
       "userID": "1",
       "spaceType": "Plumbing"
