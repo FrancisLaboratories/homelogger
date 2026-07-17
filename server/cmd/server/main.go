@@ -1364,6 +1364,8 @@ func main() {
 	addr := os.Getenv("PORT")
 	if addr == "" {
 		addr = ":3005"
+	} else if _, err := strconv.Atoi(addr); err == nil {
+		addr = ":" + addr
 	}
 	fmt.Printf("\n\nStarting HomeLogger %s on port %s\n\n", version.Version, addr)
 
