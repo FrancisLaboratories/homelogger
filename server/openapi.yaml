@@ -530,7 +530,7 @@ paths:
                     referenceType:
                       type: string
                       example: "Filter"
-                    applianceID:
+                    applianceId:
                       type: integer
                       example: 1
   /maintenance/add:
@@ -561,7 +561,7 @@ paths:
                 referenceType:
                   type: string
                   example: "Filter"
-                applianceID:
+                applianceId:
                   type: integer
                   example: 1
                 attachmentIds:
@@ -598,7 +598,7 @@ paths:
                   referenceType:
                     type: string
                     example: "Filter"
-                  applianceID:
+                  applianceId:
                     type: integer
                     example: 1
   /maintenance/{id}:
@@ -640,7 +640,7 @@ paths:
                   referenceType:
                     type: string
                     example: "Filter"
-                  applianceID:
+                  applianceId:
                     type: integer
                     example: 1
         "404":
@@ -764,7 +764,7 @@ paths:
                     referenceType:
                       type: string
                       example: "Motor"
-                    applianceID:
+                    applianceId:
                       type: integer
                       example: 1
   /repair/add:
@@ -795,7 +795,7 @@ paths:
                 referenceType:
                   type: string
                   example: "Motor"
-                applianceID:
+                applianceId:
                   type: integer
                   example: 1
                 attachmentIds:
@@ -832,7 +832,7 @@ paths:
                   referenceType:
                     type: string
                     example: "Motor"
-                  applianceID:
+                  applianceId:
                     type: integer
                     example: 1
   /repair/{id}:
@@ -874,7 +874,7 @@ paths:
                   referenceType:
                     type: string
                     example: "Motor"
-                  applianceID:
+                  applianceId:
                     type: integer
                     example: 1
         "404":

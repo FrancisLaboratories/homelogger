@@ -170,7 +170,7 @@ Create `.env` at `server/` for server vars. Create `client/.env.local` for clien
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `VITE_SERVER_URL` | Yes | API server URL (e.g. `http://localhost:3005` for local dev, `/api` when served via Docker monolith). Only needed when running the client standalone or building locally |
+| `VITE_SERVER_URL` | Yes | API server URL (e.g. `http://localhost:3005/api` for local dev, `/api` when served via Docker monolith). Only needed when running the client standalone or building locally |
 
 ## API and docs
 

@@ -170,7 +170,7 @@ func main() {
 	// Create new fiber server with larger body limit for file uploads
 	app := fiber.New(fiber.Config{
 		AppName:   fmt.Sprintf("HomeLogger %s", version.Version),
-		BodyLimit: 100 * 1024 * 1024, // 100 MB,
+		BodyLimit: 100 * 1024 * 1024, // 100 MB
 	})
 
 	app.Hooks().OnPreStartupMessage(func(sm *fiber.PreStartupMessageData) error {
