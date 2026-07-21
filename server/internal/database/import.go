@@ -75,11 +75,6 @@ func resetPostgresSequences(db *gorm.DB) error {
 func ImportFromJSON(db *gorm.DB, payload *models.BackupPayload, uploadsDir string) (*models.ImportResult, error) {
 	result := &models.ImportResult{}
 
-	// 0. NIL out orphaned FK references that would violate constraints on Postgres.
-	// SQLite backups may have soft-deleted or otherwise orphaned FK targets
-	// that Find() didn't include in the payload.
-	sanitizeFKs(payload)
-
 	// 1. Drop all tables
 	if err := dropAllTables(db); err != nil {
 		return nil, fmt.Errorf("drop tables: %w", err)
