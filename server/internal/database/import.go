@@ -71,48 +71,68 @@ func resetPostgresSequences(db *gorm.DB) error {
 
 // ImportFromJSON replaces all DB data with the payload contents.
 // Steps: drop all tables → re-migrate → bulk insert from payload.
+// The critical path (drop → migrate → insert → reset sequences) is wrapped
+// in a database transaction so that any failure fully rolls back, preventing
+// a broken or empty database state.
 // uploadsDir is the directory containing extracted upload files (may be "").
 func ImportFromJSON(db *gorm.DB, payload *models.BackupPayload, uploadsDir string) (*models.ImportResult, error) {
 	result := &models.ImportResult{}
 
-	// 1. Drop all tables
-	if err := dropAllTables(db); err != nil {
-		return nil, fmt.Errorf("drop tables: %w", err)
-	}
+	err := db.Transaction(func(tx *gorm.DB) error {
+		// 1. Drop all tables
+		if err := dropAllTables(tx); err != nil {
+			return fmt.Errorf("drop tables: %w", err)
+		}
 
-	// 2. Re-create schema
-	if err := MigrateGorm(db); err != nil {
-		return nil, fmt.Errorf("re-migrate: %w", err)
-	}
+		// 2. Re-create schema
+		if err := MigrateGorm(tx); err != nil {
+			return fmt.Errorf("re-migrate: %w", err)
+		}
 
-	// 3. Insert in FK dependency order (parents before children)
-	// note: insert individually (not batch) so GORM handles mixed auto/explicit IDs correctly.
-	insertEach := func(name string, fn func(i int) error, count int) {
-		for i := 0; i < count; i++ {
-			if err := fn(i); err != nil {
-				result.Errors++
-				result.ErrorMessage += fmt.Sprintf("%s[%d]: %v; ", name, i, err)
-			} else {
+		// 3. Insert in FK dependency order (parents before children)
+		// note: insert individually (not batch) so GORM handles mixed auto/explicit IDs correctly.
+		insertEach := func(name string, fn func(i int) error, count int) error {
+			for i := 0; i < count; i++ {
+				if err := fn(i); err != nil {
+					return fmt.Errorf("%s[%d]: %w", name, i, err)
+				}
 				result.Inserted++
 			}
+			return nil
 		}
-	}
 
-	insertEach("Appliance", func(i int) error { return db.Create(&payload.Entities.Appliances[i]).Error }, len(payload.Entities.Appliances))
-	insertEach("Todo", func(i int) error { return db.Create(&payload.Entities.Todos[i]).Error }, len(payload.Entities.Todos))
-	insertEach("Maintenance", func(i int) error { return db.Create(&payload.Entities.Maintenance[i]).Error }, len(payload.Entities.Maintenance))
-	insertEach("Repair", func(i int) error { return db.Create(&payload.Entities.Repairs[i]).Error }, len(payload.Entities.Repairs))
-	insertEach("SavedFile", func(i int) error { return db.Create(&payload.Entities.SavedFiles[i]).Error }, len(payload.Entities.SavedFiles))
-	insertEach("Note", func(i int) error { return db.Create(&payload.Entities.Notes[i]).Error }, len(payload.Entities.Notes))
-	insertEach("Task", func(i int) error { return db.Create(&payload.Entities.Tasks[i]).Error }, len(payload.Entities.Tasks))
+		if err := insertEach("Appliance", func(i int) error { return tx.Create(&payload.Entities.Appliances[i]).Error }, len(payload.Entities.Appliances)); err != nil {
+			return err
+		}
+		if err := insertEach("Todo", func(i int) error { return tx.Create(&payload.Entities.Todos[i]).Error }, len(payload.Entities.Todos)); err != nil {
+			return err
+		}
+		if err := insertEach("Maintenance", func(i int) error { return tx.Create(&payload.Entities.Maintenance[i]).Error }, len(payload.Entities.Maintenance)); err != nil {
+			return err
+		}
+		if err := insertEach("Repair", func(i int) error { return tx.Create(&payload.Entities.Repairs[i]).Error }, len(payload.Entities.Repairs)); err != nil {
+			return err
+		}
+		if err := insertEach("SavedFile", func(i int) error { return tx.Create(&payload.Entities.SavedFiles[i]).Error }, len(payload.Entities.SavedFiles)); err != nil {
+			return err
+		}
+		if err := insertEach("Note", func(i int) error { return tx.Create(&payload.Entities.Notes[i]).Error }, len(payload.Entities.Notes)); err != nil {
+			return err
+		}
+		if err := insertEach("Task", func(i int) error { return tx.Create(&payload.Entities.Tasks[i]).Error }, len(payload.Entities.Tasks)); err != nil {
+			return err
+		}
 
-	if result.Errors > 0 {
-		return result, fmt.Errorf("import errors: %s", result.ErrorMessage)
-	}
+		// 4. Resync Postgres sequences — inserting explicit IDs doesn't advance them
+		if err := resetPostgresSequences(tx); err != nil {
+			return fmt.Errorf("reset sequences: %w", err)
+		}
 
-	// 4. Resync Postgres sequences — inserting explicit IDs doesn't advance them
-	if err := resetPostgresSequences(db); err != nil {
-		return result, fmt.Errorf("reset sequences: %w", err)
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
 	}
 
 	// 5. Ensure todo→task migration tracking table exists, then handle migration.
@@ -156,22 +176,27 @@ func ImportFromJSONFile(db *gorm.DB, jsonFilePath string, uploadsDir string) (*m
 	return ImportFromJSON(db, &payload, uploadsDir)
 }
 
-// ImportUploads wipes the uploads directory and copies files from extractedUploadsPath.
+// ImportUploads replaces the uploads directory with files from extractedUploadsPath.
+// Files are staged in a temp directory first, then atomically swapped into place
+// so that a partial copy failure does not wipe the existing uploads.
 func ImportUploads(extractedUploadsPath string) error {
 	appUploadsRoot := "./data/uploads"
 
-	if err := os.RemoveAll(appUploadsRoot); err != nil && !os.IsNotExist(err) {
-		return fmt.Errorf("remove uploads: %w", err)
-	}
-	if err := os.MkdirAll(appUploadsRoot, 0755); err != nil {
-		return fmt.Errorf("mkdir uploads: %w", err)
-	}
-
 	if extractedUploadsPath == "" {
-		return nil // no uploads in backup, that's fine
+		return nil
 	}
 
-	return filepath.Walk(extractedUploadsPath, func(path string, info os.FileInfo, err error) error {
+	tempDir, err := os.MkdirTemp("", "homelogger-uploads-import-")
+	if err != nil {
+		return fmt.Errorf("create temp dir: %w", err)
+	}
+	defer func() {
+		if tempDir != "" {
+			os.RemoveAll(tempDir)
+		}
+	}()
+
+	err = filepath.Walk(extractedUploadsPath, func(path string, info os.FileInfo, err error) error {
 		if err != nil || info.IsDir() {
 			return err
 		}
@@ -181,7 +206,7 @@ func ImportUploads(extractedUploadsPath string) error {
 			return err
 		}
 
-		dest := filepath.Join(appUploadsRoot, rel)
+		dest := filepath.Join(tempDir, rel)
 		if err := os.MkdirAll(filepath.Dir(dest), 0755); err != nil {
 			return err
 		}
@@ -201,4 +226,19 @@ func ImportUploads(extractedUploadsPath string) error {
 		_, err = io.Copy(dst, src)
 		return err
 	})
+	if err != nil {
+		return fmt.Errorf("stage uploads: %w", err)
+	}
+
+	if err := os.RemoveAll(appUploadsRoot); err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("remove old uploads: %w", err)
+	}
+
+	if err := os.Rename(tempDir, appUploadsRoot); err != nil {
+		os.MkdirAll(appUploadsRoot, 0755)
+		return fmt.Errorf("swap uploads: %w", err)
+	}
+
+	tempDir = ""
+	return nil
 }
