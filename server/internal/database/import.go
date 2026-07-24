@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/masoncfrancis/homelogger/server/internal/models"
 	"gorm.io/gorm"
@@ -69,6 +70,61 @@ func resetPostgresSequences(db *gorm.DB) error {
 	return nil
 }
 
+// importLogDDL creates the import_log tracking table.
+// Not in tableDropOrder — never dropped, persists across imports.
+// Used to detect interrupted imports on server restart.
+const importLogDDL = `CREATE TABLE IF NOT EXISTS import_log (
+    id           TEXT PRIMARY KEY,
+    status       TEXT NOT NULL DEFAULT 'in_progress',
+    error_msg    TEXT,
+    created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    completed_at TIMESTAMP
+)`
+
+func ensureImportLogTable(db *gorm.DB) error {
+	return db.Exec(importLogDDL).Error
+}
+
+// CompleteImport marks an import as completed after upload swap succeeds.
+// Best-effort — errors are logged but not returned (uploads already swapped).
+func CompleteImport(db *gorm.DB, importID string) {
+	if err := db.Exec("UPDATE import_log SET status = 'completed', completed_at = CURRENT_TIMESTAMP WHERE id = ?", importID).Error; err != nil {
+		fmt.Printf("Warning: failed to mark import %s as completed: %v\n", importID, err)
+	}
+}
+
+// FailImport marks an import as failed when upload swap errors out.
+func FailImport(db *gorm.DB, importID, reason string) {
+	if err := db.Exec("UPDATE import_log SET status = 'failed', error_msg = ? WHERE id = ?", reason, importID).Error; err != nil {
+		fmt.Printf("Warning: failed to mark import %s as failed: %v\n", importID, err)
+	}
+}
+
+// CheckImportLog checks for incomplete imports and returns a warning message
+// if any are found. Should be called at server startup after MigrateGorm.
+func CheckImportLog(db *gorm.DB) string {
+	if err := ensureImportLogTable(db); err != nil {
+		return fmt.Sprintf("Warning: could not ensure import_log table: %v", err)
+	}
+	type pendingImport struct {
+		ID        string
+		Status    string
+		CreatedAt time.Time `gorm:"column:created_at"`
+	}
+	var pending []pendingImport
+	if err := db.Table("import_log").Where("status NOT IN ('completed', 'failed')").Find(&pending).Error; err != nil {
+		return fmt.Sprintf("Warning: could not check import log: %v", err)
+	}
+	if len(pending) == 0 {
+		return ""
+	}
+	var msg string
+	for _, p := range pending {
+		msg += fmt.Sprintf("Import %s was interrupted (status: %s, started: %s). Re-run import to ensure data consistency.\n", p.ID, p.Status, p.CreatedAt.Format(time.RFC3339))
+	}
+	return msg
+}
+
 // ImportFromJSON replaces all DB data with the payload contents.
 // Steps: drop all tables → re-migrate → bulk insert from payload.
 // The critical path (drop → migrate → insert → reset sequences) is wrapped
@@ -77,6 +133,15 @@ func resetPostgresSequences(db *gorm.DB) error {
 // uploadsDir is the directory containing extracted upload files (may be "").
 func ImportFromJSON(db *gorm.DB, payload *models.BackupPayload, uploadsDir string) (*models.ImportResult, error) {
 	result := &models.ImportResult{}
+
+	if err := ensureImportLogTable(db); err != nil {
+		return nil, fmt.Errorf("ensure import_log: %w", err)
+	}
+
+	sanitizeFKs(payload)
+
+	importID := fmt.Sprintf("imp_%d", time.Now().UnixNano())
+	result.ImportID = importID
 
 	err := db.Transaction(func(tx *gorm.DB) error {
 		// 1. Drop all tables
@@ -126,6 +191,15 @@ func ImportFromJSON(db *gorm.DB, payload *models.BackupPayload, uploadsDir strin
 		// 4. Resync Postgres sequences — inserting explicit IDs doesn't advance them
 		if err := resetPostgresSequences(tx); err != nil {
 			return fmt.Errorf("reset sequences: %w", err)
+		}
+
+		// 5. Record in_progress in import_log for crash detection.
+		// Clear old entries first — only care about latest.
+		if err := tx.Exec("DELETE FROM import_log").Error; err != nil {
+			return fmt.Errorf("clear import_log: %w", err)
+		}
+		if err := tx.Exec("INSERT INTO import_log (id, status) VALUES (?, 'in_progress')", importID).Error; err != nil {
+			return fmt.Errorf("record import state: %w", err)
 		}
 
 		return nil
@@ -186,7 +260,7 @@ func ImportUploads(extractedUploadsPath string) error {
 		return nil
 	}
 
-	tempDir, err := os.MkdirTemp("", "homelogger-uploads-import-")
+	tempDir, err := os.MkdirTemp("./data", "uploads-import-")
 	if err != nil {
 		return fmt.Errorf("create temp dir: %w", err)
 	}

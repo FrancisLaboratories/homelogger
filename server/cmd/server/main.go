@@ -64,6 +64,10 @@ func main() {
 		fmt.Printf("Warning: todo→task migration failed: %v\n", err)
 	}
 
+	if msg := database.CheckImportLog(db); msg != "" {
+		fmt.Print(msg)
+	}
+
 	if demoMode && db != nil && db.Dialector.Name() == "postgres" {
 		fmt.Println("Warning: DEMO_MODE is only supported with SQLite; disabling demo mode for PostgreSQL")
 		demoMode = false
@@ -1332,9 +1336,11 @@ func main() {
 			}
 		}
 
+		var importResult *models.ImportResult
 		switch {
 		case dataJSONPath != "":
-			if _, err := database.ImportFromJSONFile(db, dataJSONPath, uploadsExtractedPath); err != nil {
+			importResult, err = database.ImportFromJSONFile(db, dataJSONPath, uploadsExtractedPath)
+			if err != nil {
 				return c.Status(fiber.StatusInternalServerError).SendString("Error importing database data: " + err.Error())
 			}
 		case legacyDBPath != "":
@@ -1342,7 +1348,8 @@ func main() {
 			if err != nil {
 				return c.Status(fiber.StatusInternalServerError).SendString("Error reading legacy backup: " + err.Error())
 			}
-			if _, err := database.ImportFromJSON(db, payload, uploadsExtractedPath); err != nil {
+			importResult, err = database.ImportFromJSON(db, payload, uploadsExtractedPath)
+			if err != nil {
 				return c.Status(fiber.StatusInternalServerError).SendString("Error importing database data: " + err.Error())
 			}
 		default:
@@ -1350,9 +1357,11 @@ func main() {
 		}
 
 		if err := database.ImportUploads(uploadsExtractedPath); err != nil {
+			database.FailImport(db, importResult.ImportID, err.Error())
 			return c.Status(fiber.StatusInternalServerError).SendString("Error importing uploaded files: " + err.Error())
 		}
 
+		database.CompleteImport(db, importResult.ImportID)
 		return c.SendString("Backup import completed successfully")
 	})
 
