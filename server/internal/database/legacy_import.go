@@ -78,12 +78,12 @@ func ConvertLegacyDB(dbPath string) (*models.BackupPayload, error) {
 	// have orphaned FK references (e.g. maintenance.appliance_id pointing to a
 	// non-existent or hard-deleted appliance). NIL out any FK that doesn't
 	// resolve to a record in the payload to avoid FK violations on Postgres.
-	sanitizeFKs(payload)
+	SanitizeFKs(payload)
 
 	return payload, nil
 }
 
-func sanitizeFKs(payload *models.BackupPayload) {
+func SanitizeFKs(payload *models.BackupPayload) {
 	validApplianceIDs := make(map[uint]struct{}, len(payload.Entities.Appliances))
 	for _, a := range payload.Entities.Appliances {
 		validApplianceIDs[a.ID] = struct{}{}

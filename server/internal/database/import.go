@@ -129,6 +129,9 @@ func CheckImportLog(db *gorm.DB) string {
 // backup payload, before any destructive DB operations begin.
 // Returns the first error found — fail-fast.
 func validatePayload(payload *models.BackupPayload) error {
+	if payload == nil {
+		return fmt.Errorf("backup payload is nil")
+	}
 	if payload.Version == "" {
 		return fmt.Errorf("backup version is required")
 	}
@@ -276,7 +279,7 @@ func ImportFromJSON(db *gorm.DB, payload *models.BackupPayload, uploadsDir strin
 		return nil, fmt.Errorf("ensure import_log: %w", err)
 	}
 
-	sanitizeFKs(payload)
+	SanitizeFKs(payload)
 
 	if err := validatePayload(payload); err != nil {
 		return nil, fmt.Errorf("invalid backup: %w", err)

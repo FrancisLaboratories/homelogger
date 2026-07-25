@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/gofiber/fiber/v3"
@@ -90,5 +91,19 @@ func requestLogger(w io.Writer) fiber.Handler {
 		)
 
 		return chainErr
+	}
+}
+
+func ImportLockMiddleware(importing *atomic.Bool) fiber.Handler {
+	return func(c fiber.Ctx) error {
+		if importing.Load() && strings.HasPrefix(c.Path(), "/api/") {
+			if c.Path() != "/api/health" && c.Path() != "/api/backup/import" {
+				return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{
+					"status":  "busy",
+					"message": "Server is restoring a backup. Please wait...",
+				})
+			}
+		}
+		return c.Next()
 	}
 }
