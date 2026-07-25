@@ -306,15 +306,33 @@ func ImportUploads(extractedUploadsPath string) error {
 		return fmt.Errorf("stage uploads: %w", err)
 	}
 
-	if err := os.RemoveAll(appUploadsRoot); err != nil && !os.IsNotExist(err) {
-		return fmt.Errorf("remove old uploads: %w", err)
+	// Backup old uploads by renaming out of the way.
+	// This keeps the original data intact in case the swap fails.
+	oldBackup := appUploadsRoot + ".bak"
+	if err := os.RemoveAll(oldBackup); err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("clean stale backup: %w", err)
+	}
+
+	if err := os.Rename(appUploadsRoot, oldBackup); err != nil {
+		if !os.IsNotExist(err) {
+			return fmt.Errorf("backup old uploads: %w", err)
+		}
+		// No existing uploads directory — that's fine.
+		oldBackup = ""
 	}
 
 	if err := os.Rename(tempDir, appUploadsRoot); err != nil {
-		os.MkdirAll(appUploadsRoot, 0755)
+		// Swap failed — restore original uploads if we backed them up.
+		if oldBackup != "" {
+			_ = os.Rename(oldBackup, appUploadsRoot)
+		}
 		return fmt.Errorf("swap uploads: %w", err)
 	}
 
+	// Success — clean up old backup and mark temp as handled.
+	if oldBackup != "" {
+		_ = os.RemoveAll(oldBackup)
+	}
 	tempDir = ""
 	return nil
 }
