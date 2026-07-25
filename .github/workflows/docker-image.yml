@@ -25,6 +25,17 @@ jobs:
           username: ${{ vars.DOCKERHUB_USER }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Extract version components
+        id: extract_version
+        run: |
+          TAG="${{ github.event.release.tag_name }}"
+          TAG="${TAG#v}"
+          MAJOR="${TAG%%.*}"
+          MINOR="${TAG#*.}"
+          MINOR="${MINOR%%.*}"
+          echo "major=$MAJOR" >> "$GITHUB_OUTPUT"
+          echo "minor=$MINOR" >> "$GITHUB_OUTPUT"
+
       - name: Build and Push Multi-Platform Image
         uses: docker/build-push-action@v5
         with:
@@ -34,4 +45,5 @@ jobs:
           tags: |
             ${{ env.DOCKER_IMAGE }}:latest
             ${{ env.DOCKER_IMAGE }}:${{ github.event.release.tag_name }}
-            ${{ env.DOCKER_IMAGE }}:0
+            ${{ env.DOCKER_IMAGE }}:${{ steps.extract_version.outputs.major }}
+            ${{ env.DOCKER_IMAGE }}:${{ steps.extract_version.outputs.major }}.${{ steps.extract_version.outputs.minor }}
