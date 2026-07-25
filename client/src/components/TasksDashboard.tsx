@@ -6,7 +6,7 @@ import type { Task } from "./TasksSection";
 import TaskItem from "./TaskItem";
 import AddTaskModal from "./AddTaskModal";
 import applySort from "@/utils/taskSort";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 
 type SortOption =
   "due_asc" | "due_desc" | "priority" | "created_desc" | "label_asc";

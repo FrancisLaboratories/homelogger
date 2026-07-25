@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { Row } from "react-bootstrap";
 import AddApplianceModal from "@/components/AddApplianceModal";
 import ApplianceCard from "@/components/ApplianceCard";

@@ -1,5 +1,5 @@
 import React from "react";
-import { Routes, Route, useLocation } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router";
 import { Helmet } from "react-helmet-async";
 import MyNavbar from "@/components/Navbar";
 import ImportOverlay from "@/components/ImportOverlay";
