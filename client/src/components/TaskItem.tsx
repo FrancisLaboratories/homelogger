@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Badge, Button, ListGroup } from "react-bootstrap";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { SERVER_URL } from "@/context/DemoContext";
 import type { Task } from "./TasksSection";
 import CompleteTaskModal from "./CompleteTaskModal";

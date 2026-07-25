@@ -1,6 +1,6 @@
 import React, { useContext } from "react";
 import { Nav, Navbar } from "react-bootstrap";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router";
 import { DemoContext } from "@/context/DemoContext";
 
 const MyNavbar: React.FC = () => {

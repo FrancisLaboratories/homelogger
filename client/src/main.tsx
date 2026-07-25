@@ -7,7 +7,7 @@ import App from "./App";
 import { DemoProvider } from "./context/DemoContext";
 import { ImportProvider } from "./context/ImportProvider";
 import { HelmetProvider } from "react-helmet-async";
-import { BrowserRouter } from "react-router-dom";
+import { BrowserRouter } from "react-router";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
