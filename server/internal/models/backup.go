@@ -31,4 +31,12 @@ type ImportResult struct {
 	ErrorMessage string `json:"errorMessage,omitempty"`
 }
 
+// GetImportID returns ImportID safely, even on nil receiver.
+func (r *ImportResult) GetImportID() string {
+	if r == nil {
+		return ""
+	}
+	return r.ImportID
+}
+
 

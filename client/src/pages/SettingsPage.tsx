@@ -54,12 +54,13 @@ const SettingsPage: React.FC = () => {
         body: formData,
       });
 
+      const body = await res.json();
+
       if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(`Failed to import backup: ${errorText}`);
+        throw new Error(`Failed to import backup: ${body.error || "Unknown error"}`);
       }
 
-      alert("Backup imported successfully");
+      alert(`Backup imported successfully (${body.inserted || 0} records inserted)`);
       setSelectedFile(null);
     } catch (err: any) {
       console.error(err);

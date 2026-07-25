@@ -1341,28 +1341,51 @@ func main() {
 		case dataJSONPath != "":
 			importResult, err = database.ImportFromJSONFile(db, dataJSONPath, uploadsExtractedPath)
 			if err != nil {
-				return c.Status(fiber.StatusInternalServerError).SendString("Error importing database data: " + err.Error())
+				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+					"status":   "failed",
+					"importId": importResult.GetImportID(),
+					"error":    "Error importing database data: " + err.Error(),
+				})
 			}
 		case legacyDBPath != "":
 			payload, err := database.ConvertLegacyDB(legacyDBPath)
 			if err != nil {
-				return c.Status(fiber.StatusInternalServerError).SendString("Error reading legacy backup: " + err.Error())
+				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+					"status": "failed",
+					"error":  "Error reading legacy backup: " + err.Error(),
+				})
 			}
 			importResult, err = database.ImportFromJSON(db, payload, uploadsExtractedPath)
 			if err != nil {
-				return c.Status(fiber.StatusInternalServerError).SendString("Error importing database data: " + err.Error())
+				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+					"status":   "failed",
+					"importId": importResult.GetImportID(),
+					"error":    "Error importing database data: " + err.Error(),
+				})
 			}
 		default:
-			return c.Status(fiber.StatusBadRequest).SendString("Backup ZIP must contain data.json (new format) or a .db file in a db/ directory (legacy format)")
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"status": "failed",
+				"error":  "Backup ZIP must contain data.json (new format) or a .db file in a db/ directory (legacy format)",
+			})
 		}
 
 		if err := database.ImportUploads(uploadsExtractedPath); err != nil {
 			database.FailImport(db, importResult.ImportID, err.Error())
-			return c.Status(fiber.StatusInternalServerError).SendString("Error importing uploaded files: " + err.Error())
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"status":   "failed",
+				"importId": importResult.ImportID,
+				"inserted": importResult.Inserted,
+				"error":    "Error importing uploaded files: " + err.Error(),
+			})
 		}
 
 		database.CompleteImport(db, importResult.ImportID)
-		return c.SendString("Backup import completed successfully")
+		return c.JSON(fiber.Map{
+			"status":   "completed",
+			"importId": importResult.ImportID,
+			"inserted": importResult.Inserted,
+		})
 	})
 
 	// Serve static SPA files with client-side routing fallback

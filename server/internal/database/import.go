@@ -202,34 +202,36 @@ func ImportFromJSON(db *gorm.DB, payload *models.BackupPayload, uploadsDir strin
 			return fmt.Errorf("record import state: %w", err)
 		}
 
+		// 6. Ensure todo→task migration tracking table and migrate.
+		// Runs inside the transaction so that any failure rolls back the entire import.
+		if len(payload.Entities.Todos) > 0 {
+			if err := tx.Exec(`CREATE TABLE IF NOT EXISTS todo_task_migrations (todo_id BIGINT PRIMARY KEY)`).Error; err != nil {
+				return fmt.Errorf("create migration tracking table: %w", err)
+			}
+			// If both todos and tasks were imported, mark all todos as already
+			// migrated so MigrateTodosToTasks doesn't create duplicates.
+			if len(payload.Entities.Tasks) > 0 {
+				insertSQL := "INSERT OR IGNORE INTO todo_task_migrations (todo_id) VALUES (?)"
+				if tx.Dialector.Name() == dialectPostgres {
+					insertSQL = "INSERT INTO todo_task_migrations (todo_id) VALUES (?) ON CONFLICT (todo_id) DO NOTHING"
+				}
+				for _, todo := range payload.Entities.Todos {
+					if err := tx.Exec(insertSQL, todo.ID).Error; err != nil {
+						return fmt.Errorf("track migration todo[%d]: %w", todo.ID, err)
+					}
+				}
+			}
+			// Migrate any remaining todos (those without a tracking entry) to tasks now.
+			if err := MigrateTodosToTasks(tx); err != nil {
+				return fmt.Errorf("migrate todos: %w", err)
+			}
+		}
+
 		return nil
 	})
 
 	if err != nil {
 		return nil, err
-	}
-
-	// 5. Ensure todo→task migration tracking table exists, then handle migration.
-	if err := db.Exec(`CREATE TABLE IF NOT EXISTS todo_task_migrations (todo_id BIGINT PRIMARY KEY)`).Error; err != nil {
-		result.ErrorMessage += fmt.Sprintf("create migration tracking table: %v; ", err)
-	} else if len(payload.Entities.Todos) > 0 {
-		// If both todos and tasks were imported, mark all todos as already
-		// migrated so MigrateTodosToTasks doesn't create duplicates.
-		if len(payload.Entities.Tasks) > 0 {
-			insertSQL := "INSERT OR IGNORE INTO todo_task_migrations (todo_id) VALUES (?)"
-			if db.Dialector.Name() == dialectPostgres {
-				insertSQL = "INSERT INTO todo_task_migrations (todo_id) VALUES (?) ON CONFLICT (todo_id) DO NOTHING"
-			}
-			for _, todo := range payload.Entities.Todos {
-				if err := db.Exec(insertSQL, todo.ID).Error; err != nil {
-					result.ErrorMessage += fmt.Sprintf("track migration todo[%d]: %v; ", todo.ID, err)
-				}
-			}
-		}
-		// Migrate any remaining todos (those without a tracking entry) to tasks now.
-		if err := MigrateTodosToTasks(db); err != nil {
-			result.ErrorMessage += fmt.Sprintf("migrate todos: %v; ", err)
-		}
 	}
 
 	return result, nil
