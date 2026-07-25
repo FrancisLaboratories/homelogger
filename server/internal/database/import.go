@@ -237,6 +237,32 @@ func validatePayload(payload *models.BackupPayload) error {
 	return nil
 }
 
+// validateUploads checks that every SavedFile referenced in the payload has a
+// corresponding file in the extracted uploads directory. Returns the first
+// missing file as an error. Skips validation if uploadsDir is empty.
+func validateUploads(payload *models.BackupPayload, uploadsDir string) error {
+	if uploadsDir == "" {
+		return nil
+	}
+	for i, f := range payload.Entities.SavedFiles {
+		if f.Path == "" {
+			continue
+		}
+		rel, err := filepath.Rel("./data/uploads", f.Path)
+		if err != nil {
+			rel = filepath.Base(f.Path)
+		}
+		expected := filepath.Join(uploadsDir, rel)
+		if _, err := os.Stat(expected); err != nil {
+			if os.IsNotExist(err) {
+				return fmt.Errorf("savedFile[%d] references file %q but it was not found in the backup uploads", i, rel)
+			}
+			return fmt.Errorf("savedFile[%d]: %w", i, err)
+		}
+	}
+	return nil
+}
+
 // ImportFromJSON replaces all DB data with the payload contents.
 // Steps: drop all tables → re-migrate → bulk insert from payload.
 // The critical path (drop → migrate → insert → reset sequences) is wrapped
@@ -253,6 +279,10 @@ func ImportFromJSON(db *gorm.DB, payload *models.BackupPayload, uploadsDir strin
 	sanitizeFKs(payload)
 
 	if err := validatePayload(payload); err != nil {
+		return nil, fmt.Errorf("invalid backup: %w", err)
+	}
+
+	if err := validateUploads(payload, uploadsDir); err != nil {
 		return nil, fmt.Errorf("invalid backup: %w", err)
 	}
 

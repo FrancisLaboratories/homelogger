@@ -1322,6 +1322,9 @@ func main() {
 		var dataJSONPath string
 		var legacyDBPath string
 		var uploadsExtractedPath string
+		var nestedDataJSON string
+		var nestedLegacyDB string
+		var nestedUploads string
 
 		for _, f := range r.File {
 			if err := ctx.Err(); err != nil {
@@ -1356,12 +1359,21 @@ func main() {
 			if copyErr != nil {
 				return c.Status(fiber.StatusInternalServerError).SendString("Error extracting file: " + copyErr.Error())
 			}
-			if strings.EqualFold(filepath.Base(fpath), "data.json") {
+			switch {
+			case f.Name == "data.json":
 				dataJSONPath = fpath
-			} else if strings.HasPrefix(f.Name, "db/") && strings.HasSuffix(strings.ToLower(f.Name), ".db") && legacyDBPath == "" {
+			case strings.HasSuffix(f.Name, "/data.json") && nestedDataJSON == "":
+				nestedDataJSON = f.Name
+			}
+			if strings.HasPrefix(f.Name, "db/") && strings.HasSuffix(strings.ToLower(f.Name), ".db") && legacyDBPath == "" {
 				legacyDBPath = fpath
-			} else if strings.HasPrefix(f.Name, "uploads/") && uploadsExtractedPath == "" {
+			} else if strings.Contains(f.Name, "/db/") && strings.HasSuffix(strings.ToLower(f.Name), ".db") && nestedLegacyDB == "" {
+				nestedLegacyDB = f.Name
+			}
+			if strings.HasPrefix(f.Name, "uploads/") && uploadsExtractedPath == "" {
 				uploadsExtractedPath = filepath.Join(extractedPath, "uploads")
+			} else if strings.Contains(f.Name, "/uploads/") && nestedUploads == "" {
+				nestedUploads = f.Name
 			}
 		}
 
@@ -1369,6 +1381,19 @@ func main() {
 			return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{
 				"status": "failed",
 				"error":  "Import timed out before database import",
+			})
+		}
+
+		if dataJSONPath == "" && nestedDataJSON != "" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"status": "failed",
+				"error":  fmt.Sprintf("data.json was found inside %q — place it at the root of the ZIP archive", nestedDataJSON),
+			})
+		}
+		if dataJSONPath != "" && uploadsExtractedPath == "" && nestedUploads != "" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"status": "failed",
+				"error":  fmt.Sprintf("uploads folder was found inside %q — place uploads/ at the root of the ZIP archive", nestedUploads),
 			})
 		}
 
@@ -1401,9 +1426,16 @@ func main() {
 				})
 			}
 		default:
+			msg := "Backup ZIP must contain data.json (new format) or a .db file in a db/ directory (legacy format)"
+			switch {
+			case nestedDataJSON != "":
+				msg += fmt.Sprintf(" data.json was found inside %q — place it at the root of the ZIP", nestedDataJSON)
+			case nestedLegacyDB != "":
+				msg += fmt.Sprintf(" legacy database was found inside %q — place it at the root of the ZIP", nestedLegacyDB)
+			}
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"status": "failed",
-				"error":  "Backup ZIP must contain data.json (new format) or a .db file in a db/ directory (legacy format)",
+				"error":  msg,
 			})
 		}
 
