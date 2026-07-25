@@ -1,31 +1,14 @@
-import React, { useContext } from "react";
+import React from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { Modal, Spinner } from "react-bootstrap";
 import MyNavbar from "@/components/Navbar";
-import { ImportContext } from "@/context/ImportContext";
+import ImportOverlay from "@/components/ImportOverlay";
 import HomePage from "./pages/HomePage";
 import AppliancesPage from "./pages/AppliancesPage";
 import AppliancePage from "./pages/AppliancePage";
 import SpacePage from "./pages/SpacePage";
 import SettingsPage from "./pages/SettingsPage";
 import { APP_VERSION } from "./version";
-
-const ImportOverlay: React.FC = () => {
-  const { isImporting } = useContext(ImportContext);
-
-  return (
-    <Modal show={isImporting} backdrop="static" keyboard={false} centered>
-      <Modal.Body className="text-center py-5">
-        <Spinner animation="border" role="status" />
-        <p className="mt-3 mb-1 fw-bold">Import in progress...</p>
-        <p className="text-muted small mb-0">
-          Please do not close or navigate away from this page.
-        </p>
-      </Modal.Body>
-    </Modal>
-  );
-};
 
 const getPageName = (p: string) => {
   if (!p || p === "/") return "Home";
