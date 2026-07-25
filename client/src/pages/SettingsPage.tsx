@@ -1,5 +1,5 @@
 import React, { useContext, useState, type ChangeEvent } from "react";
-import { Button, Modal } from "react-bootstrap";
+import { Alert, Button, Modal } from "react-bootstrap";
 
 import { SERVER_URL } from "@/context/DemoContext";
 import { ImportContext } from "@/context/ImportContext";
@@ -8,6 +8,9 @@ const SettingsPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const { isImporting, setImporting } = useContext(ImportContext);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [showResultModal, setShowResultModal] = useState(false);
+  const [resultMessage, setResultMessage] = useState("");
+  const [resultIsSuccess, setResultIsSuccess] = useState(false);
   const [showFileSelectionModal, setShowFileSelectionModal] = useState(false);
   const [showOverwriteConfirmModal, setShowOverwriteConfirmModal] =
     useState(false);
@@ -62,17 +65,20 @@ const SettingsPage: React.FC = () => {
         );
       }
 
-      alert(
+      setResultMessage(
         `Backup imported successfully (${body.inserted || 0} records inserted)`,
       );
+      setResultIsSuccess(true);
       setSelectedFile(null);
     } catch (err: any) {
       console.error(err);
-      alert(
+      setResultMessage(
         `Error importing backup: ${err.message || "See console for details."}`,
       );
+      setResultIsSuccess(false);
     } finally {
       setImporting(false);
+      setShowResultModal(true);
     }
   };
 
@@ -188,6 +194,35 @@ const SettingsPage: React.FC = () => {
             {isImporting ? "Importing..." : "Import Data"}
           </Button>
         </Modal.Footer>
+      </Modal>
+
+      <Modal show={showResultModal} onHide={() => setShowResultModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>
+            <i
+              className={`bi ${resultIsSuccess ? "bi-check-circle-fill text-success" : "bi-x-circle-fill text-danger"}`}
+              style={{ marginRight: 8 }}
+            />
+            {resultIsSuccess ? "Import Successful" : "Import Failed"}
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Alert variant={resultIsSuccess ? "success" : "danger"} className="mb-0">
+            {resultMessage}
+          </Alert>
+          {!resultIsSuccess && (
+            <p className="text-center mt-3 mb-0">
+              <a
+                href="https://github.com/FrancisLaboratories/homelogger/issues"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <i className="bi bi-github me-1" />
+                Submit a GitHub issue if this keeps happening
+              </a>
+            </p>
+          )}
+        </Modal.Body>
       </Modal>
     </div>
   );
