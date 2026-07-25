@@ -17,7 +17,7 @@
     "react-dom": "^19.2.7",
     "react-helmet-async": "^3.0.0",
     "react-markdown": "^10.1.0",
-    "react-router-dom": "^6.30.4",
+    "react-router-dom": "^7.0.0",
     "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
