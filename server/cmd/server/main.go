@@ -2,6 +2,7 @@ package main
 
 import (
 	"archive/zip"
+	"context"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -13,6 +14,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -27,6 +29,7 @@ import (
 
 var backupMu sync.Mutex
 var demoMu sync.Mutex
+var importing atomic.Bool
 
 func main() {
 	// CLI flags
@@ -199,6 +202,19 @@ func main() {
 	logWriter := newLogWriter()
 	app.Use(requestLogger(logWriter))
 
+	// Import-lock middleware — blocks all non-critical API calls during backup import
+	app.Use(func(c fiber.Ctx) error {
+		if importing.Load() && strings.HasPrefix(c.Path(), "/api/") {
+			if c.Path() != "/api/health" && c.Path() != "/api/backup/import" {
+				return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{
+					"status":  "busy",
+					"message": "Server is restoring a backup. Please wait...",
+				})
+			}
+		}
+		return c.Next()
+	})
+
 	// API routes grouped under /api
 	api := app.Group("/api")
 
@@ -214,10 +230,11 @@ func main() {
 		}
 
 		status := fiber.Map{
-			"status":  "ok",
-			"version": version.Version,
-			"db":      dbStatus,
-			"demo":    demoMode,
+			"status":     "ok",
+			"version":    version.Version,
+			"db":         dbStatus,
+			"demo":       demoMode,
+			"importing":  importing.Load(),
 		}
 
 		// If DB is not ok, return 500
@@ -1269,6 +1286,12 @@ func main() {
 		backupMu.Lock()
 		defer backupMu.Unlock()
 
+		importing.Store(true)
+		defer importing.Store(false)
+
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+		defer cancel()
+
 		file, err := c.FormFile("backup")
 		if err != nil {
 			return c.Status(fiber.StatusBadRequest).SendString("Error getting backup file: " + err.Error())
@@ -1301,6 +1324,12 @@ func main() {
 		var uploadsExtractedPath string
 
 		for _, f := range r.File {
+			if err := ctx.Err(); err != nil {
+				return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{
+					"status": "failed",
+					"error":  "Import timed out during ZIP extraction",
+				})
+			}
 			fpath := filepath.Join(extractedPath, f.Name)
 			if !strings.HasPrefix(fpath, filepath.Clean(extractedPath)+string(os.PathSeparator)) {
 				return c.Status(fiber.StatusBadRequest).SendString("Illegal file path in zip: " + fpath)
@@ -1336,10 +1365,18 @@ func main() {
 			}
 		}
 
+		if err := ctx.Err(); err != nil {
+			return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{
+				"status": "failed",
+				"error":  "Import timed out before database import",
+			})
+		}
+
+		dbCtx := db.WithContext(ctx)
 		var importResult *models.ImportResult
 		switch {
 		case dataJSONPath != "":
-			importResult, err = database.ImportFromJSONFile(db, dataJSONPath, uploadsExtractedPath)
+			importResult, err = database.ImportFromJSONFile(dbCtx, dataJSONPath, uploadsExtractedPath)
 			if err != nil {
 				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 					"status":   "failed",
@@ -1355,7 +1392,7 @@ func main() {
 					"error":  "Error reading legacy backup: " + err.Error(),
 				})
 			}
-			importResult, err = database.ImportFromJSON(db, payload, uploadsExtractedPath)
+			importResult, err = database.ImportFromJSON(dbCtx, payload, uploadsExtractedPath)
 			if err != nil {
 				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 					"status":   "failed",
@@ -1367,6 +1404,15 @@ func main() {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"status": "failed",
 				"error":  "Backup ZIP must contain data.json (new format) or a .db file in a db/ directory (legacy format)",
+			})
+		}
+
+		if err := ctx.Err(); err != nil {
+			database.FailImport(db, importResult.ImportID, "import timed out after database import")
+			return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{
+				"status":   "failed",
+				"importId": importResult.ImportID,
+				"error":    "Import timed out after database import — uploads were not restored",
 			})
 		}
 

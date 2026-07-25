@@ -142,27 +142,6 @@ func validatePayload(payload *models.BackupPayload) error {
 		if e.ApplianceName == "" {
 			return fmt.Errorf("appliance[%d].applianceName: must not be empty", i)
 		}
-		if e.Manufacturer == "" {
-			return fmt.Errorf("appliance[%d].manufacturer: must not be empty", i)
-		}
-		if e.ModelNumber == "" {
-			return fmt.Errorf("appliance[%d].modelNumber: must not be empty", i)
-		}
-		if e.SerialNumber == "" {
-			return fmt.Errorf("appliance[%d].serialNumber: must not be empty", i)
-		}
-		if e.YearPurchased == "" {
-			return fmt.Errorf("appliance[%d].yearPurchased: must not be empty", i)
-		}
-		if e.PurchasePrice == "" {
-			return fmt.Errorf("appliance[%d].purchasePrice: must not be empty", i)
-		}
-		if e.Location == "" {
-			return fmt.Errorf("appliance[%d].location: must not be empty", i)
-		}
-		if e.Type == "" {
-			return fmt.Errorf("appliance[%d].type: must not be empty", i)
-		}
 		if e.ID != 0 {
 			if seenIDs[e.ID] {
 				return fmt.Errorf("duplicate appliance ID: %d", e.ID)
@@ -223,9 +202,6 @@ func validatePayload(payload *models.BackupPayload) error {
 		}
 		if e.OriginalName == "" {
 			return fmt.Errorf("savedFile[%d].originalName: must not be empty", i)
-		}
-		if e.Type == "" {
-			return fmt.Errorf("savedFile[%d].type: must not be empty", i)
 		}
 		if e.UserID == "" {
 			return fmt.Errorf("savedFile[%d].userid: must not be empty", i)

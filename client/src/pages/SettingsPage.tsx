@@ -1,11 +1,12 @@
-import React, { useState, type ChangeEvent } from "react";
+import React, { useContext, useState, type ChangeEvent } from "react";
 import { Button, Modal } from "react-bootstrap";
 
 import { SERVER_URL } from "@/context/DemoContext";
+import { ImportContext } from "@/context/ImportContext";
 
 const SettingsPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
-  const [importLoading, setImportLoading] = useState(false);
+  const { isImporting, setImporting } = useContext(ImportContext);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [showFileSelectionModal, setShowFileSelectionModal] = useState(false);
   const [showOverwriteConfirmModal, setShowOverwriteConfirmModal] =
@@ -29,7 +30,6 @@ const SettingsPage: React.FC = () => {
   };
 
   const handleImportBackupClick = () => {
-    // This will now be the trigger for the confirmation modal, not the import itself
     if (!selectedFile) {
       alert("Please select a backup file to import.");
       return;
@@ -39,8 +39,8 @@ const SettingsPage: React.FC = () => {
 
   const handleConfirmImport = async () => {
     setShowOverwriteConfirmModal(false);
-    setShowFileSelectionModal(false); // Close file selection modal too
-    setImportLoading(true);
+    setShowFileSelectionModal(false);
+    setImporting(true);
     try {
       const formData = new FormData();
       if (selectedFile) {
@@ -72,7 +72,7 @@ const SettingsPage: React.FC = () => {
         `Error importing backup: ${err.message || "See console for details."}`,
       );
     } finally {
-      setImportLoading(false);
+      setImporting(false);
     }
   };
 
@@ -182,10 +182,10 @@ const SettingsPage: React.FC = () => {
           </Button>
           <Button
             onClick={handleImportBackupClick}
-            disabled={importLoading || !selectedFile}
+            disabled={isImporting || !selectedFile}
             variant="danger"
           >
-            {importLoading ? "Importing..." : "Import Data"}
+            {isImporting ? "Importing..." : "Import Data"}
           </Button>
         </Modal.Footer>
       </Modal>
