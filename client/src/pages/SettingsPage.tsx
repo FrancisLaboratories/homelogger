@@ -207,7 +207,10 @@ const SettingsPage: React.FC = () => {
           </Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <Alert variant={resultIsSuccess ? "success" : "danger"} className="mb-0">
+          <Alert
+            variant={resultIsSuccess ? "success" : "danger"}
+            className="mb-0"
+          >
             {resultMessage}
           </Alert>
           {!resultIsSuccess && (
