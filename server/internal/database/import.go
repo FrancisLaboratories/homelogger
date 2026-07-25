@@ -125,6 +125,142 @@ func CheckImportLog(db *gorm.DB) string {
 	return msg
 }
 
+// validatePayload checks basic structural and required-field constraints on the
+// backup payload, before any destructive DB operations begin.
+// Returns the first error found — fail-fast.
+func validatePayload(payload *models.BackupPayload) error {
+	if payload.Version == "" {
+		return fmt.Errorf("backup version is required")
+	}
+	if payload.DatabaseType == "" {
+		return fmt.Errorf("database type is required")
+	}
+
+	seenIDs := make(map[uint]bool)
+
+	for i, e := range payload.Entities.Appliances {
+		if e.ApplianceName == "" {
+			return fmt.Errorf("appliance[%d].applianceName: must not be empty", i)
+		}
+		if e.Manufacturer == "" {
+			return fmt.Errorf("appliance[%d].manufacturer: must not be empty", i)
+		}
+		if e.ModelNumber == "" {
+			return fmt.Errorf("appliance[%d].modelNumber: must not be empty", i)
+		}
+		if e.SerialNumber == "" {
+			return fmt.Errorf("appliance[%d].serialNumber: must not be empty", i)
+		}
+		if e.YearPurchased == "" {
+			return fmt.Errorf("appliance[%d].yearPurchased: must not be empty", i)
+		}
+		if e.PurchasePrice == "" {
+			return fmt.Errorf("appliance[%d].purchasePrice: must not be empty", i)
+		}
+		if e.Location == "" {
+			return fmt.Errorf("appliance[%d].location: must not be empty", i)
+		}
+		if e.Type == "" {
+			return fmt.Errorf("appliance[%d].type: must not be empty", i)
+		}
+		if e.ID != 0 {
+			if seenIDs[e.ID] {
+				return fmt.Errorf("duplicate appliance ID: %d", e.ID)
+			}
+			seenIDs[e.ID] = true
+		}
+	}
+
+	seenIDs = make(map[uint]bool)
+	for i, e := range payload.Entities.Todos {
+		if e.UserID == "" {
+			return fmt.Errorf("todo[%d].userid: must not be empty", i)
+		}
+		if e.ID != 0 {
+			if seenIDs[e.ID] {
+				return fmt.Errorf("duplicate todo ID: %d", e.ID)
+			}
+			seenIDs[e.ID] = true
+		}
+	}
+
+	seenIDs = make(map[uint]bool)
+	for i, e := range payload.Entities.Maintenance {
+		if e.Description == "" {
+			return fmt.Errorf("maintenance[%d].description: must not be empty", i)
+		}
+		if e.Date == "" {
+			return fmt.Errorf("maintenance[%d].date: must not be empty", i)
+		}
+		if e.ID != 0 {
+			if seenIDs[e.ID] {
+				return fmt.Errorf("duplicate maintenance ID: %d", e.ID)
+			}
+			seenIDs[e.ID] = true
+		}
+	}
+
+	seenIDs = make(map[uint]bool)
+	for i, e := range payload.Entities.Repairs {
+		if e.Description == "" {
+			return fmt.Errorf("repair[%d].description: must not be empty", i)
+		}
+		if e.Date == "" {
+			return fmt.Errorf("repair[%d].date: must not be empty", i)
+		}
+		if e.ID != 0 {
+			if seenIDs[e.ID] {
+				return fmt.Errorf("duplicate repair ID: %d", e.ID)
+			}
+			seenIDs[e.ID] = true
+		}
+	}
+
+	seenIDs = make(map[uint]bool)
+	for i, e := range payload.Entities.SavedFiles {
+		if e.Path == "" {
+			return fmt.Errorf("savedFile[%d].path: must not be empty", i)
+		}
+		if e.OriginalName == "" {
+			return fmt.Errorf("savedFile[%d].originalName: must not be empty", i)
+		}
+		if e.Type == "" {
+			return fmt.Errorf("savedFile[%d].type: must not be empty", i)
+		}
+		if e.UserID == "" {
+			return fmt.Errorf("savedFile[%d].userid: must not be empty", i)
+		}
+		if e.ID != 0 {
+			if seenIDs[e.ID] {
+				return fmt.Errorf("duplicate savedFile ID: %d", e.ID)
+			}
+			seenIDs[e.ID] = true
+		}
+	}
+
+	seenIDs = make(map[uint]bool)
+	for i := range payload.Entities.Notes {
+		if payload.Entities.Notes[i].ID != 0 {
+			if seenIDs[payload.Entities.Notes[i].ID] {
+				return fmt.Errorf("duplicate note ID: %d", payload.Entities.Notes[i].ID)
+			}
+			seenIDs[payload.Entities.Notes[i].ID] = true
+		}
+	}
+
+	seenIDs = make(map[uint]bool)
+	for i := range payload.Entities.Tasks {
+		if payload.Entities.Tasks[i].ID != 0 {
+			if seenIDs[payload.Entities.Tasks[i].ID] {
+				return fmt.Errorf("duplicate task ID: %d", payload.Entities.Tasks[i].ID)
+			}
+			seenIDs[payload.Entities.Tasks[i].ID] = true
+		}
+	}
+
+	return nil
+}
+
 // ImportFromJSON replaces all DB data with the payload contents.
 // Steps: drop all tables → re-migrate → bulk insert from payload.
 // The critical path (drop → migrate → insert → reset sequences) is wrapped
@@ -139,6 +275,10 @@ func ImportFromJSON(db *gorm.DB, payload *models.BackupPayload, uploadsDir strin
 	}
 
 	sanitizeFKs(payload)
+
+	if err := validatePayload(payload); err != nil {
+		return nil, fmt.Errorf("invalid backup: %w", err)
+	}
 
 	importID := fmt.Sprintf("imp_%d", time.Now().UnixNano())
 	result.ImportID = importID
