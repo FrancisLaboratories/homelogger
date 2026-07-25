@@ -2,6 +2,7 @@ import React from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import MyNavbar from "@/components/Navbar";
+import ImportOverlay from "@/components/ImportOverlay";
 import HomePage from "./pages/HomePage";
 import AppliancesPage from "./pages/AppliancesPage";
 import AppliancePage from "./pages/AppliancePage";
@@ -27,6 +28,7 @@ const App: React.FC = () => {
       <Helmet>
         <title>{`HomeLogger | ${pageName}`}</title>
       </Helmet>
+      <ImportOverlay />
       <div className="container">
         <MyNavbar />
         <main style={{ marginTop: 18 }}>

@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -27,6 +28,7 @@ import (
 
 var backupMu sync.Mutex
 var demoMu sync.Mutex
+var importing atomic.Bool
 
 func main() {
 	// CLI flags
@@ -62,6 +64,10 @@ func main() {
 
 	if err := database.MigrateTodosToTasks(db); err != nil {
 		fmt.Printf("Warning: todo→task migration failed: %v\n", err)
+	}
+
+	if msg := database.CheckImportLog(db); msg != "" {
+		fmt.Print(msg)
 	}
 
 	if demoMode && db != nil && db.Dialector.Name() == "postgres" {
@@ -195,34 +201,14 @@ func main() {
 	logWriter := newLogWriter()
 	app.Use(requestLogger(logWriter))
 
+	// Import-lock middleware — blocks all non-critical API calls during backup import
+	app.Use(ImportLockMiddleware(&importing))
+
 	// API routes grouped under /api
 	api := app.Group("/api")
 
 	// Health endpoint
-	api.Get("/health", func(c fiber.Ctx) error {
-		// Check DB connectivity
-		dbSQL, err := db.DB()
-		dbStatus := "ok"
-		if err != nil {
-			dbStatus = "error: " + err.Error()
-		} else if err := dbSQL.Ping(); err != nil {
-			dbStatus = "error: " + err.Error()
-		}
-
-		status := fiber.Map{
-			"status":  "ok",
-			"version": version.Version,
-			"db":      dbStatus,
-			"demo":    demoMode,
-		}
-
-		// If DB is not ok, return 500
-		if dbStatus != "ok" {
-			return c.Status(fiber.StatusInternalServerError).JSON(status)
-		}
-
-		return c.Status(fiber.StatusOK).JSON(status)
-	})
+	api.Get("/health", HealthHandler(db, demoMode, &importing))
 
 	// Get all appliances
 	api.Get("/appliances", func(c fiber.Ctx) error {
@@ -1261,100 +1247,7 @@ func main() {
 	})
 
 	// Import a backup ZIP — replaces all data: drop tables → migrate → insert
-	api.Post("/backup/import", func(c fiber.Ctx) error {
-		backupMu.Lock()
-		defer backupMu.Unlock()
-
-		file, err := c.FormFile("backup")
-		if err != nil {
-			return c.Status(fiber.StatusBadRequest).SendString("Error getting backup file: " + err.Error())
-		}
-
-		tempDir, err := os.MkdirTemp("", "homelogger-backup-import-")
-		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).SendString("Error creating temp directory: " + err.Error())
-		}
-		defer func() { _ = os.RemoveAll(tempDir) }()
-
-		tempZipPath := filepath.Join(tempDir, file.Filename)
-		if err := c.SaveFile(file, tempZipPath); err != nil {
-			return c.Status(fiber.StatusInternalServerError).SendString("Error saving uploaded file: " + err.Error())
-		}
-
-		r, err := zip.OpenReader(tempZipPath)
-		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).SendString("Error opening zip file: " + err.Error())
-		}
-		defer func() { _ = r.Close() }()
-
-		extractedPath := filepath.Join(tempDir, "extracted")
-		if err := os.MkdirAll(extractedPath, 0755); err != nil {
-			return c.Status(fiber.StatusInternalServerError).SendString("Error creating extraction directory: " + err.Error())
-		}
-
-		var dataJSONPath string
-		var legacyDBPath string
-		var uploadsExtractedPath string
-
-		for _, f := range r.File {
-			fpath := filepath.Join(extractedPath, f.Name)
-			if !strings.HasPrefix(fpath, filepath.Clean(extractedPath)+string(os.PathSeparator)) {
-				return c.Status(fiber.StatusBadRequest).SendString("Illegal file path in zip: " + fpath)
-			}
-			if f.FileInfo().IsDir() {
-				_ = os.MkdirAll(fpath, os.ModePerm)
-				continue
-			}
-			if err = os.MkdirAll(filepath.Dir(fpath), os.ModePerm); err != nil {
-				return c.Status(fiber.StatusInternalServerError).SendString("Error creating dir: " + err.Error())
-			}
-			outFile, err := os.OpenFile(fpath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
-			if err != nil {
-				return c.Status(fiber.StatusInternalServerError).SendString("Error creating file: " + err.Error())
-			}
-			rc, err := f.Open()
-			if err != nil {
-				_ = outFile.Close()
-				return c.Status(fiber.StatusInternalServerError).SendString("Error opening zip entry: " + err.Error())
-			}
-			_, copyErr := io.Copy(outFile, rc)
-			_ = outFile.Close()
-			_ = rc.Close()
-			if copyErr != nil {
-				return c.Status(fiber.StatusInternalServerError).SendString("Error extracting file: " + copyErr.Error())
-			}
-			if strings.EqualFold(filepath.Base(fpath), "data.json") {
-				dataJSONPath = fpath
-			} else if strings.HasPrefix(f.Name, "db/") && strings.HasSuffix(strings.ToLower(f.Name), ".db") && legacyDBPath == "" {
-				legacyDBPath = fpath
-			} else if strings.HasPrefix(f.Name, "uploads/") && uploadsExtractedPath == "" {
-				uploadsExtractedPath = filepath.Join(extractedPath, "uploads")
-			}
-		}
-
-		switch {
-		case dataJSONPath != "":
-			if _, err := database.ImportFromJSONFile(db, dataJSONPath, uploadsExtractedPath); err != nil {
-				return c.Status(fiber.StatusInternalServerError).SendString("Error importing database data: " + err.Error())
-			}
-		case legacyDBPath != "":
-			payload, err := database.ConvertLegacyDB(legacyDBPath)
-			if err != nil {
-				return c.Status(fiber.StatusInternalServerError).SendString("Error reading legacy backup: " + err.Error())
-			}
-			if _, err := database.ImportFromJSON(db, payload, uploadsExtractedPath); err != nil {
-				return c.Status(fiber.StatusInternalServerError).SendString("Error importing database data: " + err.Error())
-			}
-		default:
-			return c.Status(fiber.StatusBadRequest).SendString("Backup ZIP must contain data.json (new format) or a .db file in a db/ directory (legacy format)")
-		}
-
-		if err := database.ImportUploads(uploadsExtractedPath); err != nil {
-			return c.Status(fiber.StatusInternalServerError).SendString("Error importing uploaded files: " + err.Error())
-		}
-
-		return c.SendString("Backup import completed successfully")
-	})
+	api.Post("/backup/import", ImportBackupHandler(db, &importing, &backupMu))
 
 	// Serve static SPA files with client-side routing fallback
 	app.Get("/*", static.New("./static"), func(c fiber.Ctx) error {

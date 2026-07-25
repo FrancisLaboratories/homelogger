@@ -23,11 +23,20 @@ type Entities struct {
 
 // ImportResult summarizes the results of an import operation.
 type ImportResult struct {
+	ImportID     string `json:"importId,omitempty"`
 	Inserted     int    `json:"inserted"`
 	Updated      int    `json:"updated"`
 	Skipped      int    `json:"skipped"`
 	Errors       int    `json:"errors"`
 	ErrorMessage string `json:"errorMessage,omitempty"`
+}
+
+// GetImportID returns ImportID safely, even on nil receiver.
+func (r *ImportResult) GetImportID() string {
+	if r == nil {
+		return ""
+	}
+	return r.ImportID
 }
 
 

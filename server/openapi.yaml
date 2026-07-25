@@ -38,6 +38,10 @@ paths:
                   demo:
                     type: boolean
                     example: true
+                  importing:
+                    type: boolean
+                    example: false
+                    description: True when the server is currently restoring a backup
   /task:
     get:
       summary: Get tasks (optionally filtered by appliance or space)
@@ -1191,9 +1195,18 @@ paths:
     post:
       summary: Import a ZIP backup of the application data
       description: |
-        Accepts a ZIP file containing `data.json` and optionally an `uploads/` directory.
-        This operation performs a "wipe and replace" strategy: all existing database data
-        and uploaded files will be deleted and replaced with the contents of the backup.
+        Accepts a ZIP file containing `data.json` at the root level and optionally an
+        `uploads/` directory at the root level. This operation performs a "wipe and
+        replace" strategy: all existing database data and uploaded files will be deleted
+        and replaced with the contents of the backup.
+
+        Required ZIP structure:
+          - data.json must be at the root of the archive (not nested in subdirectories)
+          - uploads/ (if present) must be at the root of the archive
+          - Legacy .db files must be in a db/ directory at the root
+
+        While an import is in progress, all /api/* endpoints except /api/health and
+        /api/backup/import return a 503 status with {"status": "busy"}.
       requestBody:
         required: true
         content:
@@ -1213,29 +1226,64 @@ paths:
               schema:
                 type: object
                 properties:
-                  message:
+                  status:
                     type: string
-                    example: "Backup import completed successfully"
+                    example: "completed"
+                  importId:
+                    type: string
+                    example: "imp_174234234234"
+                    description: Unique identifier for this import operation
+                  inserted:
+                    type: integer
+                    example: 42
+                    description: Total number of records inserted
         "400":
-          description: Invalid backup file or missing data.json
+          description: |
+            Invalid backup file. Possible causes:
+              - Missing data.json or legacy .db file
+              - data.json or uploads/ found inside a subdirectory instead of root
+              - Payload validation failure (missing required fields)
+              - Upload file reference in payload not found in extracted uploads/
           content:
             application/json:
               schema:
                 type: object
                 properties:
+                  status:
+                    type: string
+                    example: "failed"
                   error:
                     type: string
-                    example: "Invalid backup ZIP or missing data.json"
+                    example: "data.json was found inside \"subdir/data.json\" — place it at the root of the ZIP archive"
+        "503":
+          description: Import timed out, or another import is already in progress (though mutex prevents concurrent imports).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "failed"
+                  error:
+                    type: string
+                    example: "Import timed out during ZIP extraction"
         "500":
-          description: Server error during import process.
+          description: Server error during import process (database error, file system error).
           content:
             application/json:
               schema:
                 type: object
                 properties:
+                  status:
+                    type: string
+                    example: "failed"
+                  importId:
+                    type: string
+                    example: "imp_174234234234"
                   error:
                     type: string
-                    example: "Error importing database data"
+                    example: "Error importing database data: invalid backup: appliance[0].applianceName: must not be empty"
   /notes:
     get:
       summary: Get notes (optionally filter by appliance or space)
