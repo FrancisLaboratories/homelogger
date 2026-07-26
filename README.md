@@ -85,10 +85,10 @@ There are also a few alternative setups in the [docker/](docker/) folder if you 
 
 | File | What it does |
 |------|--------------|
-| `dev.docker-compose.yml` | Lets you work on the code with the app running in containers |
-| `postgres.docker-compose.yml` | Uses a different database system (PostgreSQL) instead of the default file-based one |
+| `dev.docker-compose.yml` | Builds the client and server in 2 separate containers |
+| `postgres.docker-compose.yml` | Uses a different database system (PostgreSQL) instead of the default sqlite, while building the client and server into a single image |
 | `demo.docker-compose.yml` | Starts the app with sample data pre-loaded so you can explore |
-| `combo.docker-compose.yml` | Builds the app from the source code instead of using a pre-made image |
+| `combo.docker-compose.yml` | Builds the app client and server into a single image, similar to the image posted on Docker Hub |
 
 ### Option 2: Run locally (for developers)
 
