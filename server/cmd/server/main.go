@@ -24,6 +24,7 @@ import (
 	"github.com/masoncfrancis/homelogger/server/internal/demo"
 	"github.com/masoncfrancis/homelogger/server/internal/models"
 	"github.com/masoncfrancis/homelogger/server/internal/version"
+	"gorm.io/gorm"
 )
 
 var backupMu sync.Mutex
@@ -208,7 +209,7 @@ func main() {
 	api := app.Group("/api")
 
 	// Health endpoint
-	api.Get("/health", HealthHandler(db, demoMode, &importing))
+	api.Get("/health", HealthHandler(func() *gorm.DB { return db }, demoMode, &importing))
 
 	// Get all appliances
 	api.Get("/appliances", func(c fiber.Ctx) error {
