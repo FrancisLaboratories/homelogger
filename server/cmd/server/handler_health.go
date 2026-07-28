@@ -8,11 +8,12 @@ import (
 	"gorm.io/gorm"
 )
 
-func HealthHandler(db *gorm.DB, demoMode bool, importing *atomic.Bool) fiber.Handler {
+func HealthHandler(db func() *gorm.DB, demoMode bool, importing *atomic.Bool) fiber.Handler {
 	return func(c fiber.Ctx) error {
-		dbSQL, err := db.DB()
 		dbStatus := "ok"
-		if err != nil {
+		if dbConn := db(); dbConn == nil {
+			dbStatus = "error: no database connection"
+		} else if dbSQL, err := dbConn.DB(); err != nil {
 			dbStatus = "error: " + err.Error()
 		} else if err := dbSQL.Ping(); err != nil {
 			dbStatus = "error: " + err.Error()
