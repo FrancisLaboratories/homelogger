@@ -157,15 +157,14 @@ func ensureSQLiteFile(dbPath string) error {
 		return err
 	}
 
-	if _, err := os.Stat(dbPath); os.IsNotExist(err) {
-		f, err := os.Create(dbPath)
-		if err != nil {
-			return err
+	f, err := os.OpenFile(dbPath, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0644)
+	if err != nil {
+		if os.IsExist(err) {
+			return nil
 		}
-		_ = f.Close()
+		return err
 	}
-
-	return nil
+	return f.Close()
 }
 
 func columnExists(db *gorm.DB, tableName, columnName string) (bool, error) {
