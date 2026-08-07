@@ -51,21 +51,7 @@ You have two options: run everything with Docker (recommended, no setup needed) 
 
 ### Option 1: Docker (easiest)
 
-You will need [Docker](https://docker.com) installed on your machine. Create a docker-compose file with the following contents:
-
-```yaml
-services:
-  homelogger:
-    image: francislaboratories/homelogger:latest
-    container_name: homelogger
-    ports:
-      - "3005:3005"
-    volumes:
-      - homelogger_data:/app/data
-    restart: unless-stopped
-volumes:
-  homelogger_data:
-```
+You will need [Docker](https://docker.com) installed on your machine. Copy the contents of [example.docker-compose.yml](example.docker-compose.yml) into your `docker-compose.yml` file. 
 
 Then, run the following command in the same directory as your `docker-compose.yml` file:
 
