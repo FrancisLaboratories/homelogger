@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Button, Form, Modal } from "react-bootstrap";
 import { SERVER_URL } from "@/context/DemoContext";
+import { useCurrency } from "@/context/useCurrency";
 import type {
   RepairRecord,
   RepairReferenceType,
@@ -24,6 +25,7 @@ const AddRepairModal: React.FC<AddRepairModalProps> = ({
   referenceType,
   spaceType,
 }) => {
+  const { currency } = useCurrency();
   const [description, setDescription] = useState("");
   const [date, setDate] = useState("");
   const [cost, setCost] = useState(0);
@@ -153,7 +155,7 @@ const AddRepairModal: React.FC<AddRepairModalProps> = ({
             />
           </Form.Group>
           <Form.Group controlId="formCost">
-            <Form.Label>Cost</Form.Label>
+            <Form.Label>Cost ({currency})</Form.Label>
             <Form.Control
               type="number"
               placeholder="Enter cost"

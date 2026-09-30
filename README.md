@@ -87,9 +87,10 @@ You'll need to have the following installed:
 
    Copy the client example file and adjust if needed:
 
-   ```bash
-   cp client/.env.example client/.env.local
-   ```
+    ```bash
+    cp client/.env.example client/.env.local
+    cp server/.env.example server/.env
+    ```
 
    The defaults work out of the box — you only need to change them if you want to use a different database or port. See the [Environment configuration](#environment-configuration) section for all available options.
 
@@ -151,12 +152,34 @@ Create `.env` at `server/` for server vars. Create `client/.env.local` for clien
 | `DB_SSLMODE` | `disable` | No | Postgres SSL mode |
 | `LOG_CONSOLE` | `true` | No | Console request logging. Set to `true` or `false` |
 | `LOG_FILE` | — | No | File path for request logs (e.g. `/var/log/homelogger.log`). Leave unset or blank to disable file logging |
+| `CURRENCY` | `USD` | No | Server-wide display currency. Accepts recognized ISO 4217 currency codes. |
 
 **Client variables**
 
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `VITE_SERVER_URL` | Yes | API server URL (e.g. `http://localhost:3005/api` for local dev, `/api` when served via Docker monolith). Only needed when running the client standalone or building locally |
+
+### Currency codes
+
+HomeLogger accepts recognized ISO 4217 currency codes. Common examples:
+
+| Code | Currency |
+|------|----------|
+| `USD` | US Dollar |
+| `EUR` | Euro |
+| `GBP` | British Pound |
+| `JPY` | Japanese Yen |
+| `CNY` | Chinese Yuan |
+| `INR` | Indian Rupee |
+| `CAD` | Canadian Dollar |
+| `AUD` | Australian Dollar |
+| `CHF` | Swiss Franc |
+| `KRW` | South Korean Won |
+| `BRL` | Brazilian Real |
+| `MXN` | Mexican Peso |
+
+This list is illustrative, not exhaustive. See the complete [ISO 4217 currency code list](https://en.wikipedia.org/wiki/ISO_4217#List_of_ISO_4217_currency_codes). If `CURRENCY` is omitted, HomeLogger uses `USD`.
 
 ## API and docs
 

@@ -2,6 +2,8 @@ import React, { useEffect, useRef, useState } from "react";
 import { Button, Modal, Form } from "react-bootstrap";
 import type { MaintenanceRecord } from "./MaintenanceSection";
 import { SERVER_URL } from "@/context/DemoContext";
+import { useCurrency } from "@/context/useCurrency";
+import { formatCurrency } from "@/utils/currency";
 
 interface Props {
   show: boolean;
@@ -23,6 +25,7 @@ const ShowMaintenanceModal: React.FC<Props> = ({
   handleDeleteMaintenance,
   handleUpdateMaintenance,
 }) => {
+  const { currency } = useCurrency();
   const [attachments, setAttachments] = useState<AttachmentInfo[]>([]);
   const [uploadMessage, setUploadMessage] = useState("");
   const [uploadError, setUploadError] = useState("");
@@ -199,7 +202,7 @@ const ShowMaintenanceModal: React.FC<Props> = ({
               />
             </Form.Group>
             <Form.Group className="mb-3" controlId="editCost">
-              <Form.Label>Cost ($)</Form.Label>
+              <Form.Label>Cost ({currency})</Form.Label>
               <Form.Control
                 type="number"
                 min={0}
@@ -227,7 +230,8 @@ const ShowMaintenanceModal: React.FC<Props> = ({
               <strong>Date:</strong> {maintenanceRecord.date}
             </p>
             <p>
-              <strong>Cost:</strong> ${maintenanceRecord.cost}
+              <strong>Cost:</strong>{" "}
+              {formatCurrency(maintenanceRecord.cost, currency)}
             </p>
             <Form.Group>
               <Form.Label>

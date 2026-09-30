@@ -9,6 +9,7 @@ services:
       - data:/root/data
     environment:
       - DB_DIALECT=sqlite
+      - CURRENCY=USD
       # - LOG_CONSOLE=true
       # - LOG_FILE=/root/data/homelogger.log
     networks:

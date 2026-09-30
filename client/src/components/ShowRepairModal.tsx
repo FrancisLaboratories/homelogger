@@ -2,6 +2,8 @@ import React, { useEffect, useRef, useState } from "react";
 import { Button, Modal, Form } from "react-bootstrap";
 import type { RepairRecord } from "./RepairSection";
 import { SERVER_URL } from "@/context/DemoContext";
+import { useCurrency } from "@/context/useCurrency";
+import { formatCurrency } from "@/utils/currency";
 
 interface Props {
   show: boolean;
@@ -23,6 +25,7 @@ const ShowRepairModal: React.FC<Props> = ({
   handleDeleteRepair,
   handleUpdateRepair,
 }) => {
+  const { currency } = useCurrency();
   const [attachments, setAttachments] = useState<AttachmentInfo[]>([]);
   const [uploadMessage, setUploadMessage] = useState("");
   const [uploadError, setUploadError] = useState("");
@@ -199,7 +202,7 @@ const ShowRepairModal: React.FC<Props> = ({
               />
             </Form.Group>
             <Form.Group className="mb-3" controlId="editCost">
-              <Form.Label>Cost ($)</Form.Label>
+              <Form.Label>Cost ({currency})</Form.Label>
               <Form.Control
                 type="number"
                 min={0}
@@ -227,7 +230,8 @@ const ShowRepairModal: React.FC<Props> = ({
               <strong>Date:</strong> {repairRecord.date}
             </p>
             <p>
-              <strong>Cost:</strong> ${repairRecord.cost}
+              <strong>Cost:</strong>{" "}
+              {formatCurrency(repairRecord.cost, currency)}
             </p>
             <Form.Group>
               <Form.Label>

@@ -20,6 +20,8 @@ import (
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/middleware/cors"
 	"github.com/gofiber/fiber/v3/middleware/static"
+	"github.com/joho/godotenv"
+	"github.com/masoncfrancis/homelogger/server/internal/config"
 	"github.com/masoncfrancis/homelogger/server/internal/database"
 	"github.com/masoncfrancis/homelogger/server/internal/demo"
 	"github.com/masoncfrancis/homelogger/server/internal/models"
@@ -32,6 +34,17 @@ var demoMu sync.Mutex
 var importing atomic.Bool
 
 func main() {
+	if err := godotenv.Load(); err != nil && !os.IsNotExist(err) {
+		fmt.Fprintf(os.Stderr, "Error loading .env: %v\n", err)
+		os.Exit(1)
+	}
+
+	currency, err := config.CurrencyFromEnv()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Invalid server configuration: %v\n", err)
+		os.Exit(1)
+	}
+
 	// CLI flags
 	showVersion := flag.Bool("version", false, "Print version and exit")
 	shortV := flag.Bool("v", false, "Print version and exit (shorthand)")
@@ -181,15 +194,15 @@ func main() {
 	})
 
 	app.Hooks().OnPreStartupMessage(func(sm *fiber.PreStartupMessageData) error {
-        sm.BannerHeader = "    __  __                     __                               \n" +
-		"   / / / /___  ____ ___  ___  / /   ____  ____ _____ ____  _____\n" +
-		"  / /_/ / __ \\/ __ `__ \\/ _ \\/ /   / __ \\/ __ `/ __ `/ _ \\/ ___/\n" +
-		" / __  / /_/ / / / / / /  __/ /___/ /_/ / /_/ / /_/ /  __/ /    \n" +
-		"/_/ /_/\\____/_/ /_/ /_/\\___/_____/\\____/\\__, /\\__, /\\___/_/     \n" +
-		"                                       /____//____/             \n\n"
+		sm.BannerHeader = "    __  __                     __                               \n" +
+			"   / / / /___  ____ ___  ___  / /   ____  ____ _____ ____  _____\n" +
+			"  / /_/ / __ \\/ __ `__ \\/ _ \\/ /   / __ \\/ __ `/ __ `/ _ \\/ ___/\n" +
+			" / __  / /_/ / / / / / /  __/ /___/ /_/ / /_/ / /_/ /  __/ /    \n" +
+			"/_/ /_/\\____/_/ /_/ /_/\\___/_____/\\____/\\__, /\\__, /\\___/_/     \n" +
+			"                                       /____//____/             \n\n"
 
-        return nil
-    })
+		return nil
+	})
 
 	// Use CORS middleware
 	app.Use(cors.New(cors.Config{
@@ -209,7 +222,7 @@ func main() {
 	api := app.Group("/api")
 
 	// Health endpoint
-	api.Get("/health", HealthHandler(func() *gorm.DB { return db }, demoMode, &importing))
+	api.Get("/health", HealthHandler(func() *gorm.DB { return db }, demoMode, currency, &importing))
 
 	// Get all appliances
 	api.Get("/appliances", func(c fiber.Ctx) error {

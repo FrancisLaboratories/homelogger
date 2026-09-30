@@ -3,10 +3,12 @@ import { Alert, Button, Modal } from "react-bootstrap";
 
 import { SERVER_URL } from "@/context/DemoContext";
 import { ImportContext } from "@/context/ImportContext";
+import { useCurrency } from "@/context/useCurrency";
 
 const SettingsPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const { isImporting, setImporting } = useContext(ImportContext);
+  const { currency } = useCurrency();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [showResultModal, setShowResultModal] = useState(false);
   const [resultMessage, setResultMessage] = useState("");
@@ -119,6 +121,7 @@ const SettingsPage: React.FC = () => {
         Settings
       </h4>
       <div style={{ marginTop: "1rem" }}>
+        <p>Server-configured currency: {currency}</p>
         <p>Download a backup of the database and uploaded files.</p>
         <Button
           onClick={handleDownloadBackup}

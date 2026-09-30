@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Button, Form, Modal } from "react-bootstrap";
 import { SERVER_URL } from "@/context/DemoContext";
+import { useCurrency } from "@/context/useCurrency";
 import type { Task } from "./TasksSection";
 
 interface CompleteTaskModalProps {
@@ -16,6 +17,7 @@ const CompleteTaskModal: React.FC<CompleteTaskModalProps> = ({
   task,
   onComplete,
 }) => {
+  const { currency } = useCurrency();
   const today = new Date().toISOString().split("T")[0];
   const [completionDate, setCompletionDate] = useState(today);
   const [recordType, setRecordType] = useState<
@@ -142,7 +144,7 @@ const CompleteTaskModal: React.FC<CompleteTaskModalProps> = ({
               />
             </Form.Group>
             <Form.Group>
-              <Form.Label>Cost ($)</Form.Label>
+              <Form.Label>Cost ({currency})</Form.Label>
               <Form.Control
                 type="number"
                 min="0"
