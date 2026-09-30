@@ -5,6 +5,8 @@ go 1.25.0
 require (
 	github.com/glebarez/sqlite v1.11.0
 	github.com/gofiber/fiber/v3 v3.4.0
+	github.com/joho/godotenv v1.5.1
+	golang.org/x/text v0.38.0
 	gorm.io/driver/postgres v1.6.0
 	gorm.io/gorm v1.31.1
 )
@@ -34,7 +36,6 @@ require (
 	golang.org/x/net v0.56.0 // indirect
 	golang.org/x/sync v0.21.0 // indirect
 	golang.org/x/sys v0.46.0 // indirect
-	golang.org/x/text v0.38.0 // indirect
 	modernc.org/libc v1.22.5 // indirect
 	modernc.org/mathutil v1.5.0 // indirect
 	modernc.org/memory v1.5.0 // indirect

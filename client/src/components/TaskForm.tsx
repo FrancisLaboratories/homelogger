@@ -1,5 +1,7 @@
 import React from "react";
+import { useCurrency } from "@/context/useCurrency";
 import { Form } from "react-bootstrap";
+import CurrencyInput from "@/components/CurrencyInput";
 
 export const PRIORITY_OPTIONS = ["", "low", "medium", "high", "critical"];
 export const UNIT_OPTIONS = ["days", "weeks", "months", "years"];
@@ -55,6 +57,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
   quickMode = false,
   setQuickMode,
 }) => {
+  const { currency } = useCurrency();
   return (
     <>
       {showQuickToggle && (
@@ -135,13 +138,11 @@ const TaskForm: React.FC<TaskFormProps> = ({
           </div>
 
           <Form.Group className="mb-3">
-            <Form.Label>Estimated Cost ($)</Form.Label>
-            <Form.Control
-              type="number"
-              min="0"
-              step="0.01"
+            <Form.Label>Estimated Cost</Form.Label>
+            <CurrencyInput
+              currency={currency}
               value={estimatedCost}
-              onChange={(e) => setEstimatedCost(e.target.value)}
+              onChange={setEstimatedCost}
               placeholder="Optional"
             />
           </Form.Group>

@@ -42,6 +42,10 @@ paths:
                     type: boolean
                     example: false
                     description: True when the server is currently restoring a backup
+                  currency:
+                    type: string
+                    example: "USD"
+                    description: Server-configured display currency
   /task:
     get:
       summary: Get tasks (optionally filtered by appliance or space)

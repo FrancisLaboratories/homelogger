@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Button, Form, Modal } from "react-bootstrap";
 import { SERVER_URL } from "@/context/DemoContext";
+import { useCurrency } from "@/context/useCurrency";
+import CurrencyInput from "@/components/CurrencyInput";
 
 interface EditApplianceModalProps {
   show: boolean;
@@ -35,6 +37,7 @@ const EditApplianceModal: React.FC<EditApplianceModalProps> = ({
   handleSave,
   appliance,
 }) => {
+  const { currency } = useCurrency();
   const [applianceName, setApplianceName] = useState(appliance.applianceName);
   const [manufacturer, setManufacturer] = useState(appliance.manufacturer);
   const [modelNumber, setModelNumber] = useState(appliance.modelNumber);
@@ -176,11 +179,11 @@ const EditApplianceModal: React.FC<EditApplianceModalProps> = ({
           </Form.Group>
           <Form.Group controlId="formPurchasePrice">
             <Form.Label>Purchase Price</Form.Label>
-            <Form.Control
-              type="text"
+            <CurrencyInput
+              currency={currency}
               placeholder="e.g. 499.99, 1299.00..."
               value={purchasePrice}
-              onChange={(e) => setPurchasePrice(e.target.value)}
+              onChange={setPurchasePrice}
             />
           </Form.Group>
         </Form>

@@ -4,6 +4,8 @@ import "bootstrap-icons/font/bootstrap-icons.css";
 import { SERVER_URL } from "@/context/DemoContext";
 import AddMaintenanceModal from "@/components/AddMaintenanceModal";
 import ShowMaintenanceModal from "@/components/ShowMaintenanceModal";
+import { useCurrency } from "@/context/useCurrency";
+import { formatCurrency } from "@/utils/currency";
 
 export type MaintenanceReferenceType = "Appliance" | "Space";
 
@@ -39,6 +41,7 @@ const MaintenanceSection: React.FC<MaintenanceProps> = ({
   referenceType,
   spaceType,
 }) => {
+  const { currency } = useCurrency();
   const [maintenanceRecords, setMaintenanceRecords] = useState<
     MaintenanceRecord[]
   >([]);
@@ -126,7 +129,7 @@ const MaintenanceSection: React.FC<MaintenanceProps> = ({
                   style={{ cursor: "pointer" }}
                 >
                   <td>{record.description}</td>
-                  <td>{record.cost}</td>
+                  <td>{formatCurrency(record.cost, currency)}</td>
                   <td>{record.date}</td>
                 </tr>
               ))
@@ -147,7 +150,9 @@ const MaintenanceSection: React.FC<MaintenanceProps> = ({
             style={{ fontSize: "2rem", cursor: "pointer" }}
             onClick={handleShowAddModal}
           ></i>
-          <div>Total Maintenance Cost: ${totalCost}</div>
+          <div>
+            Total Maintenance Cost: {formatCurrency(totalCost, currency)}
+          </div>
         </div>
       </Card.Body>
       <AddMaintenanceModal

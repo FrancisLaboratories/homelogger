@@ -60,7 +60,7 @@ func TestHealthEndpoint_RealHandlerWithDB(t *testing.T) {
 	var importing atomic.Bool
 
 	app := fiber.New()
-	app.Get("/api/health", HealthHandler(func() *gorm.DB { return db }, false, &importing))
+	app.Get("/api/health", HealthHandler(func() *gorm.DB { return db }, false, "EUR", &importing))
 
 	req := httptest.NewRequest("GET", "/api/health", nil)
 	resp, _ := app.Test(req)
@@ -79,6 +79,9 @@ func TestHealthEndpoint_RealHandlerWithDB(t *testing.T) {
 	if body["db"] != "ok" {
 		t.Errorf("expected db ok, got %v", body["db"])
 	}
+	if body["currency"] != "EUR" {
+		t.Errorf("expected currency EUR, got %v", body["currency"])
+	}
 }
 
 func TestHealthEndpoint_UsesLatestDB(t *testing.T) {
@@ -88,7 +91,7 @@ func TestHealthEndpoint_UsesLatestDB(t *testing.T) {
 	currentDB := db1
 
 	app := fiber.New()
-	app.Get("/api/health", HealthHandler(func() *gorm.DB { return currentDB }, false, &importing))
+	app.Get("/api/health", HealthHandler(func() *gorm.DB { return currentDB }, false, "USD", &importing))
 
 	req := httptest.NewRequest("GET", "/api/health", nil)
 	resp, _ := app.Test(req)

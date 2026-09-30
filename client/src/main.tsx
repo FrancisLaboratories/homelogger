@@ -5,6 +5,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import App from "./App";
 import { DemoProvider } from "./context/DemoContext";
+import { CurrencyProvider } from "./context/CurrencyProvider";
 import { ImportProvider } from "./context/ImportProvider";
 import { HelmetProvider } from "react-helmet-async";
 import { BrowserRouter } from "react-router";
@@ -13,11 +14,13 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <HelmetProvider>
       <DemoProvider>
-        <ImportProvider>
-          <BrowserRouter>
-            <App />
-          </BrowserRouter>
-        </ImportProvider>
+        <CurrencyProvider>
+          <ImportProvider>
+            <BrowserRouter>
+              <App />
+            </BrowserRouter>
+          </ImportProvider>
+        </CurrencyProvider>
       </DemoProvider>
     </HelmetProvider>
   </StrictMode>,

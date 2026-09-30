@@ -87,9 +87,10 @@ You'll need to have the following installed:
 
    Copy the client example file and adjust if needed:
 
-   ```bash
-   cp client/.env.example client/.env.local
-   ```
+    ```bash
+    cp client/.env.example client/.env.local
+    cp server/.env.example server/.env
+    ```
 
    The defaults work out of the box — you only need to change them if you want to use a different database or port. See the [Environment configuration](#environment-configuration) section for all available options.
 
@@ -151,12 +152,41 @@ Create `.env` at `server/` for server vars. Create `client/.env.local` for clien
 | `DB_SSLMODE` | `disable` | No | Postgres SSL mode |
 | `LOG_CONSOLE` | `true` | No | Console request logging. Set to `true` or `false` |
 | `LOG_FILE` | — | No | File path for request logs (e.g. `/var/log/homelogger.log`). Leave unset or blank to disable file logging |
+| `CURRENCY` | `USD` | No | Server-wide display currency. See [Currency configuration](#currency-configuration). |
 
 **Client variables**
 
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `VITE_SERVER_URL` | Yes | API server URL (e.g. `http://localhost:3005/api` for local dev, `/api` when served via Docker monolith). Only needed when running the client standalone or building locally |
+
+### Currency configuration
+
+Set `CURRENCY` in `server/.env`:
+
+```env
+CURRENCY=EUR
+```
+
+Restart HomeLogger after changing this value. If `CURRENCY` is not set, HomeLogger uses `USD`.
+
+HomeLogger accepts recognized [ISO 4217 currency codes](https://en.wikipedia.org/wiki/ISO_4217#List_of_ISO_4217_currency_codes). Common examples:
+
+| Code | Currency |
+|------|----------|
+| `USD` | US Dollar |
+| `EUR` | Euro |
+| `GBP` | British Pound |
+| `JPY` | Japanese Yen |
+| `CNY` | Chinese Yuan |
+| `INR` | Indian Rupee |
+| `CAD` | Canadian Dollar |
+| `AUD` | Australian Dollar |
+| `CHF` | Swiss Franc |
+
+This list is not exhaustive. Invalid currency codes prevent the server from starting. If `CURRENCY` is not set, HomeLogger defaults to `USD`.
+
+Currency formatting uses each currency's standard decimal precision while preserving additional fractional digits already present in stored or newly entered values. Changing `CURRENCY` changes display only; it does not convert, round, or rewrite existing records.
 
 ## API and docs
 

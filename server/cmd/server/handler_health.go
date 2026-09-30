@@ -8,7 +8,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func HealthHandler(db func() *gorm.DB, demoMode bool, importing *atomic.Bool) fiber.Handler {
+func HealthHandler(db func() *gorm.DB, demoMode bool, currency string, importing *atomic.Bool) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		dbStatus := "ok"
 		if dbConn := db(); dbConn == nil {
@@ -24,6 +24,7 @@ func HealthHandler(db func() *gorm.DB, demoMode bool, importing *atomic.Bool) fi
 			"version":   version.Version,
 			"db":        dbStatus,
 			"demo":      demoMode,
+			"currency":  currency,
 			"importing": importing.Load(),
 		}
 

@@ -5,6 +5,8 @@ import { SERVER_URL } from "@/context/DemoContext";
 import type { Task } from "./TasksSection";
 import CompleteTaskModal from "./CompleteTaskModal";
 import EditTaskModal from "./EditTaskModal";
+import { useCurrency } from "@/context/useCurrency";
+import { formatCurrency } from "@/utils/currency";
 
 interface TaskItemProps {
   task: Task;
@@ -64,6 +66,7 @@ const TaskItem: React.FC<TaskItemProps> = ({
   sourceLabel,
   sourceHref,
 }) => {
+  const { currency } = useCurrency();
   const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
 
@@ -150,8 +153,8 @@ const TaskItem: React.FC<TaskItemProps> = ({
             )}
             {task.estimatedCost != null && (
               <span className="text-muted">
-                <i className="bi bi-currency-dollar me-1" />
-                Est. ${task.estimatedCost.toFixed(2)}
+                <i className="bi bi-cash me-1" />
+                Est. {formatCurrency(task.estimatedCost, currency)}
               </span>
             )}
             {task.lastCompletedAt && (

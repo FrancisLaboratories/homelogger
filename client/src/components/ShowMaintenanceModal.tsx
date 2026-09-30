@@ -2,6 +2,9 @@ import React, { useEffect, useRef, useState } from "react";
 import { Button, Modal, Form } from "react-bootstrap";
 import type { MaintenanceRecord } from "./MaintenanceSection";
 import { SERVER_URL } from "@/context/DemoContext";
+import { useCurrency } from "@/context/useCurrency";
+import { formatCurrency } from "@/utils/currency";
+import CurrencyInput from "@/components/CurrencyInput";
 
 interface Props {
   show: boolean;
@@ -23,6 +26,7 @@ const ShowMaintenanceModal: React.FC<Props> = ({
   handleDeleteMaintenance,
   handleUpdateMaintenance,
 }) => {
+  const { currency } = useCurrency();
   const [attachments, setAttachments] = useState<AttachmentInfo[]>([]);
   const [uploadMessage, setUploadMessage] = useState("");
   const [uploadError, setUploadError] = useState("");
@@ -31,7 +35,7 @@ const ShowMaintenanceModal: React.FC<Props> = ({
   const [editing, setEditing] = useState(false);
   const [editDescription, setEditDescription] = useState("");
   const [editDate, setEditDate] = useState("");
-  const [editCost, setEditCost] = useState(0);
+  const [editCost, setEditCost] = useState("0");
   const [editNotes, setEditNotes] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
@@ -59,7 +63,7 @@ const ShowMaintenanceModal: React.FC<Props> = ({
     if (show) {
       setEditDescription(maintenanceRecord.description);
       setEditDate(maintenanceRecord.date);
-      setEditCost(maintenanceRecord.cost);
+      setEditCost(String(maintenanceRecord.cost));
       setEditNotes(maintenanceRecord.notes);
     } else {
       setEditing(false);
@@ -130,6 +134,11 @@ const ShowMaintenanceModal: React.FC<Props> = ({
       setSaveError("Date is required");
       return;
     }
+    const numericCost = Number(editCost);
+    if (!Number.isFinite(numericCost) || numericCost < 0) {
+      setSaveError("Cost must be a positive number");
+      return;
+    }
     setIsSaving(true);
     try {
       const res = await fetch(
@@ -140,7 +149,7 @@ const ShowMaintenanceModal: React.FC<Props> = ({
           body: JSON.stringify({
             description: editDescription.trim(),
             date: editDate,
-            cost: editCost,
+            cost: numericCost,
             notes: editNotes,
           }),
         },
@@ -199,13 +208,11 @@ const ShowMaintenanceModal: React.FC<Props> = ({
               />
             </Form.Group>
             <Form.Group className="mb-3" controlId="editCost">
-              <Form.Label>Cost ($)</Form.Label>
-              <Form.Control
-                type="number"
-                min={0}
-                step="0.01"
+              <Form.Label>Cost</Form.Label>
+              <CurrencyInput
+                currency={currency}
                 value={editCost}
-                onChange={(e) => setEditCost(parseFloat(e.target.value) || 0)}
+                onChange={setEditCost}
               />
             </Form.Group>
             <Form.Group className="mb-3" controlId="editNotes">
@@ -227,7 +234,8 @@ const ShowMaintenanceModal: React.FC<Props> = ({
               <strong>Date:</strong> {maintenanceRecord.date}
             </p>
             <p>
-              <strong>Cost:</strong> ${maintenanceRecord.cost}
+              <strong>Cost:</strong>{" "}
+              {formatCurrency(maintenanceRecord.cost, currency)}
             </p>
             <Form.Group>
               <Form.Label>

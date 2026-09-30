@@ -3,6 +3,8 @@ import { Card, Table } from "react-bootstrap";
 import { SERVER_URL } from "@/context/DemoContext";
 import AddRepairModal from "@/components/AddRepairModal";
 import ShowRepairModal from "@/components/ShowRepairModal";
+import { useCurrency } from "@/context/useCurrency";
+import { formatCurrency } from "@/utils/currency";
 
 export type RepairRecord = {
   id: number;
@@ -33,6 +35,7 @@ const RepairSection: React.FC<RepairSectionProps> = ({
   applianceId,
   spaceType,
 }) => {
+  const { currency } = useCurrency();
   const [records, setRecords] = useState<RepairRecord[]>([]);
   const [showAdd, setShowAdd] = useState(false);
   const [showView, setShowView] = useState(false);
@@ -106,7 +109,7 @@ const RepairSection: React.FC<RepairSectionProps> = ({
                   style={{ cursor: "pointer" }}
                 >
                   <td>{r.description}</td>
-                  <td>{r.cost}</td>
+                  <td>{formatCurrency(r.cost, currency)}</td>
                   <td>{r.date}</td>
                 </tr>
               ))
@@ -126,7 +129,7 @@ const RepairSection: React.FC<RepairSectionProps> = ({
             onClick={handleShowAdd}
           ></i>
           <div style={{ fontWeight: "bold" }}>
-            Total Repair Cost: ${totalCost}
+            Total Repair Cost: {formatCurrency(totalCost, currency)}
           </div>
         </div>
       </Card.Body>
