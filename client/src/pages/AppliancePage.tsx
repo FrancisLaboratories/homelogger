@@ -9,6 +9,8 @@ import TasksSection from "@/components/TasksSection";
 import NotesSection from "@/components/NotesSection";
 import EditApplianceModal from "@/components/EditApplianceModal";
 import { SERVER_URL } from "@/context/DemoContext";
+import { useCurrency } from "@/context/useCurrency";
+import { formatCurrency } from "@/utils/currency";
 
 interface Appliance {
   id: number;
@@ -25,6 +27,7 @@ interface Appliance {
 const AppliancePage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { currency } = useCurrency();
   const idParam = searchParams.get("id");
   const id = idParam ? Number(idParam) : null;
 
@@ -86,6 +89,13 @@ const AppliancePage: React.FC = () => {
     return <div>Loading...</div>;
   }
 
+  const numericPurchasePrice = Number(appliance.purchasePrice);
+  const purchasePrice =
+    appliance.purchasePrice.trim() !== "" &&
+    Number.isFinite(numericPurchasePrice)
+      ? formatCurrency(numericPurchasePrice, currency)
+      : appliance.purchasePrice;
+
   return (
     <Row className="justify-content-center">
       <Col md={8}>
@@ -108,7 +118,7 @@ const AppliancePage: React.FC = () => {
                   <br />
                   <strong>Year Purchased:</strong> {appliance.yearPurchased}
                   <br />
-                  <strong>Purchase Price:</strong> {appliance.purchasePrice}
+                  <strong>Purchase Price:</strong> {purchasePrice}
                   <br />
                 </Card.Text>
                 <Row>

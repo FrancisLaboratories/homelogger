@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Button, Form, Modal } from "react-bootstrap";
 import { SERVER_URL } from "@/context/DemoContext";
 import { useCurrency } from "@/context/useCurrency";
+import CurrencyInput from "@/components/CurrencyInput";
 import type {
   MaintenanceRecord,
   MaintenanceReferenceType,
@@ -28,7 +29,7 @@ const AddMaintenanceModal: React.FC<AddMaintenanceModalProps> = ({
   const { currency } = useCurrency();
   const [description, setDescription] = useState("");
   const [date, setDate] = useState("");
-  const [cost, setCost] = useState(0);
+  const [cost, setCost] = useState("0");
   const [notes, setNotes] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [errors, setErrors] = useState<string[]>([]);
@@ -38,7 +39,7 @@ const AddMaintenanceModal: React.FC<AddMaintenanceModalProps> = ({
     if (!show) {
       setDescription("");
       setDate("");
-      setCost(0);
+      setCost("0");
       setNotes("");
       setFiles([]);
     }
@@ -50,7 +51,9 @@ const AddMaintenanceModal: React.FC<AddMaintenanceModalProps> = ({
     if (!description || description.trim() === "")
       errs.push("Description is required");
     if (!date) errs.push("Date is required");
-    if (isNaN(cost) || cost < 0) errs.push("Cost must be a positive number");
+    const numericCost = Number(cost);
+    if (cost.trim() === "" || !Number.isFinite(numericCost) || numericCost < 0)
+      errs.push("Cost must be a positive number");
     if (errs.length > 0) {
       setErrors(errs);
       return;
@@ -100,7 +103,7 @@ const AddMaintenanceModal: React.FC<AddMaintenanceModalProps> = ({
     } = {
       description,
       date: standardizedDate,
-      cost,
+      cost: numericCost,
       notes,
       spaceType,
       referenceType,
@@ -156,12 +159,12 @@ const AddMaintenanceModal: React.FC<AddMaintenanceModalProps> = ({
             />
           </Form.Group>
           <Form.Group controlId="formCost">
-            <Form.Label>Cost ({currency})</Form.Label>
-            <Form.Control
-              type="number"
+            <Form.Label>Cost</Form.Label>
+            <CurrencyInput
+              currency={currency}
               placeholder="Enter cost"
               value={cost}
-              onChange={(e) => setCost(parseFloat(e.target.value))}
+              onChange={setCost}
             />
           </Form.Group>
           <Form.Group controlId="formNotes">

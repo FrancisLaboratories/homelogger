@@ -3,6 +3,7 @@ import { Button, Form, Modal } from "react-bootstrap";
 import { SERVER_URL } from "@/context/DemoContext";
 import { useCurrency } from "@/context/useCurrency";
 import type { Task } from "./TasksSection";
+import CurrencyInput from "@/components/CurrencyInput";
 
 interface CompleteTaskModalProps {
   show: boolean;
@@ -144,13 +145,13 @@ const CompleteTaskModal: React.FC<CompleteTaskModalProps> = ({
               />
             </Form.Group>
             <Form.Group>
-              <Form.Label>Cost ({currency})</Form.Label>
-              <Form.Control
-                type="number"
+              <Form.Label>Cost</Form.Label>
+              <CurrencyInput
+                currency={currency}
                 min="0"
                 step="0.01"
                 value={cost}
-                onChange={(e) => setCost(e.target.value)}
+                onChange={setCost}
                 placeholder="0"
               />
             </Form.Group>
