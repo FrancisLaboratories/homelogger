@@ -90,8 +90,7 @@ const TasksDashboard: React.FC = () => {
   const [quickLabel, setQuickLabel] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
   const [sortOption, setSortOption] = useState<SortOption>("due_asc");
-  const [filterOption, setFilterOption] =
-    useState<FilterOption>("active");
+  const [filterOption, setFilterOption] = useState<FilterOption>("active");
   type GroupMode = "due" | "source" | "priority" | "none";
   const [groupMode, setGroupMode] = useState<GroupMode>("due");
 
