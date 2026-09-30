@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { SERVER_URL } from "./DemoContext";
 import { CurrencyContext } from "./CurrencyContext";
 
 export const CurrencyProvider = ({ children }: { children: ReactNode }) => {
   const [currency, setCurrency] = useState("USD");
+  const contextValue = useMemo(() => ({ currency }), [currency]);
 
   useEffect(() => {
     let mounted = true;
@@ -21,14 +22,14 @@ export const CurrencyProvider = ({ children }: { children: ReactNode }) => {
       }
     };
 
-    loadCurrency();
+    void loadCurrency();
     return () => {
       mounted = false;
     };
   }, []);
 
   return (
-    <CurrencyContext.Provider value={{ currency }}>
+    <CurrencyContext.Provider value={contextValue}>
       {children}
     </CurrencyContext.Provider>
   );
