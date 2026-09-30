@@ -152,7 +152,7 @@ Create `.env` at `server/` for server vars. Create `client/.env.local` for clien
 | `DB_SSLMODE` | `disable` | No | Postgres SSL mode |
 | `LOG_CONSOLE` | `true` | No | Console request logging. Set to `true` or `false` |
 | `LOG_FILE` | — | No | File path for request logs (e.g. `/var/log/homelogger.log`). Leave unset or blank to disable file logging |
-| `CURRENCY` | `USD` | No | Server-wide display currency. Accepts recognized ISO 4217 currency codes. |
+| `CURRENCY` | `USD` | No | Server-wide display currency. See [Currency configuration](#currency-configuration). |
 
 **Client variables**
 
@@ -160,9 +160,17 @@ Create `.env` at `server/` for server vars. Create `client/.env.local` for clien
 |----------|----------|-------------|
 | `VITE_SERVER_URL` | Yes | API server URL (e.g. `http://localhost:3005/api` for local dev, `/api` when served via Docker monolith). Only needed when running the client standalone or building locally |
 
-### Currency codes
+### Currency configuration
 
-HomeLogger accepts recognized ISO 4217 currency codes. Common examples:
+Set `CURRENCY` in `server/.env`:
+
+```env
+CURRENCY=EUR
+```
+
+Restart HomeLogger after changing this value. If `CURRENCY` is not set, HomeLogger uses `USD`.
+
+HomeLogger accepts recognized [ISO 4217 currency codes](https://en.wikipedia.org/wiki/ISO_4217#List_of_ISO_4217_currency_codes). Common examples:
 
 | Code | Currency |
 |------|----------|
@@ -175,11 +183,8 @@ HomeLogger accepts recognized ISO 4217 currency codes. Common examples:
 | `CAD` | Canadian Dollar |
 | `AUD` | Australian Dollar |
 | `CHF` | Swiss Franc |
-| `KRW` | South Korean Won |
-| `BRL` | Brazilian Real |
-| `MXN` | Mexican Peso |
 
-This list is illustrative, not exhaustive. See the complete [ISO 4217 currency code list](https://en.wikipedia.org/wiki/ISO_4217#List_of_ISO_4217_currency_codes). If `CURRENCY` is omitted, HomeLogger uses `USD`.
+This list is not exhaustive. Invalid currency codes prevent the server from starting. If `CURRENCY` is not set, HomeLogger defaults to `USD`.
 
 Currency formatting uses each currency's standard decimal precision while preserving additional fractional digits already present in stored or newly entered values. Changing `CURRENCY` changes display only; it does not convert, round, or rewrite existing records.
 
