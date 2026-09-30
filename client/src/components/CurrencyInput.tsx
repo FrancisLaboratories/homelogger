@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Form, InputGroup } from "react-bootstrap";
+import { getFractionDigits } from "@/utils/currency";
 
 interface CurrencyInputProps {
   value: string;
@@ -24,7 +25,13 @@ const formatInputValue = (value: string, currency: string) => {
   }).resolvedOptions();
   return new Intl.NumberFormat(getUserLocale(), {
     minimumFractionDigits: currencyOptions.minimumFractionDigits,
-    maximumFractionDigits: currencyOptions.maximumFractionDigits,
+    maximumFractionDigits: Math.min(
+      20,
+      Math.max(
+        currencyOptions.maximumFractionDigits ?? 0,
+        getFractionDigits(value),
+      ),
+    ),
   }).format(numericValue);
 };
 
@@ -38,12 +45,10 @@ const parseDisplayValue = (value: string) => {
     .replace(decimalSeparator ?? ".", ".");
 };
 
-const normalizeValue = (value: string, currency: string) => {
+const normalizeValue = (value: string) => {
   const parsedValue = Number(parseDisplayValue(value).trim());
   if (!Number.isFinite(parsedValue)) return null;
-
-  const formattedValue = formatInputValue(String(parsedValue), currency);
-  return String(Number(parseDisplayValue(formattedValue)));
+  return String(parsedValue);
 };
 
 const CurrencyInput: React.FC<CurrencyInputProps> = ({
@@ -57,7 +62,7 @@ const CurrencyInput: React.FC<CurrencyInputProps> = ({
 
   const handleBlur = () => {
     const rawValue = displayValue.trim();
-    const normalizedValue = normalizeValue(rawValue, currency);
+    const normalizedValue = normalizeValue(rawValue);
 
     if (rawValue === "" || normalizedValue === null) {
       const parsedValue = parseDisplayValue(rawValue).trim();

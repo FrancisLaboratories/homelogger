@@ -181,6 +181,8 @@ HomeLogger accepts recognized ISO 4217 currency codes. Common examples:
 
 This list is illustrative, not exhaustive. See the complete [ISO 4217 currency code list](https://en.wikipedia.org/wiki/ISO_4217#List_of_ISO_4217_currency_codes). If `CURRENCY` is omitted, HomeLogger uses `USD`.
 
+Currency formatting uses each currency's standard decimal precision while preserving additional fractional digits already present in stored or newly entered values. Changing `CURRENCY` changes display only; it does not convert, round, or rewrite existing records.
+
 ## API and docs
 
 The server exposes a REST API. The OpenAPI spec is available at [server/openapi.yaml](server/openapi.yaml). Use it to generate clients, inspect endpoints, or run API docs tools (Swagger UI / Redoc).
