@@ -121,7 +121,7 @@ const SettingsPage: React.FC = () => {
         Settings
       </h4>
       <div style={{ marginTop: "1rem" }}>
-        <p>Server-configured currency: {currency}</p>
+        <p>Currency: {currency}</p>
         <p>Download a backup of the database and uploaded files.</p>
         <Button
           onClick={handleDownloadBackup}
