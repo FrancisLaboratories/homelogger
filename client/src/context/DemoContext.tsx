@@ -1,8 +1,16 @@
 import { createContext, useEffect, useState } from "react";
 import type { ReactNode } from "react";
 
-export const DemoContext = createContext<{ isDemo: boolean }>({
+const configuredDemoMode =
+  import.meta.env.VITE_DEMO_MODE === "true" ||
+  import.meta.env.VITE_DEMO_MODE === "1";
+
+export const DemoContext = createContext<{
+  isDemo: boolean;
+  isDemoResolved: boolean;
+}>({
   isDemo: false,
+  isDemoResolved: false,
 });
 
 if (!import.meta.env.VITE_SERVER_URL) {
@@ -14,7 +22,8 @@ if (!import.meta.env.VITE_SERVER_URL) {
 export const SERVER_URL = `${import.meta.env.VITE_SERVER_URL}`;
 
 export const DemoProvider = ({ children }: { children: ReactNode }) => {
-  const [isDemo, setIsDemo] = useState(false);
+  const [isDemo, setIsDemo] = useState(configuredDemoMode);
+  const [isDemoResolved, setIsDemoResolved] = useState(configuredDemoMode);
 
   useEffect(() => {
     let mounted = true;
@@ -23,7 +32,10 @@ export const DemoProvider = ({ children }: { children: ReactNode }) => {
         const res = await fetch(`${SERVER_URL}/health`);
         if (!res.ok) return;
         const j = await res.json();
-        if (mounted) setIsDemo(!!j.demo);
+        if (mounted) {
+          setIsDemo(!!j.demo);
+          setIsDemoResolved(true);
+        }
       } catch {
         // ignore network errors
       }
@@ -35,7 +47,9 @@ export const DemoProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   return (
-    <DemoContext.Provider value={{ isDemo }}>{children}</DemoContext.Provider>
+    <DemoContext.Provider value={{ isDemo, isDemoResolved }}>
+      {children}
+    </DemoContext.Provider>
   );
 };
 
