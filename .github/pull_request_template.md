@@ -26,7 +26,7 @@ The `/api/something` endpoint is now `/api/something-else`
 
 ## Checklist:
 
-- [ ] I have carefully read CONTRIBUTING.md and understand my PR may be closed if it does not follow the guidelines
+- [ ] I have carefully read the [contributor guidelines](CONTRIBUTING.md) and the [Code of Conduct](CODE_OF_CONDUCT.md), and I understand my PR may be closed if it does not follow the guidelines
 - [ ] I have performed a self-review of my own code
 - [ ] This is not an unsolicited PR. I have discussed this change with the maintainers and received approval to submit it.
 - [ ] I have made corresponding changes to the documentation if applicable
@@ -35,7 +35,7 @@ The `/api/something` endpoint is now `/api/something-else`
 - [ ] I have written tests for new code (if applicable)
 - [ ] I have followed naming conventions/patterns in the surrounding code.
 - [ ] I have read, agree to, and am in compliance with the Developer Certificate of Origin (DCO) as outlined in the [DCO file](DCO.md).
-- [ ] I have read the AI guidelines and understand that my feature request may be closed if it does not follow them.
+- [ ] I have read the [AI guidelines](AI_POLICY.md) and understand that my feature request may be closed if it does not follow them.
 
 
 ## Please describe to which degree, if any, an LLM was used in creating this pull request.
