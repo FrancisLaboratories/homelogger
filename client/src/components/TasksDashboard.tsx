@@ -1,7 +1,13 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, {
+  startTransition,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+} from "react";
 import { Button, Form, ListGroup } from "react-bootstrap";
 import "bootstrap-icons/font/bootstrap-icons.css";
-import { SERVER_URL } from "@/context/DemoContext";
+import { DemoContext, SERVER_URL } from "@/context/DemoContext";
 import type { Task } from "./TasksSection";
 import TaskItem from "./TaskItem";
 import AddTaskModal from "./AddTaskModal";
@@ -65,6 +71,10 @@ function setCookie(name: string, value: string) {
   document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires.toUTCString()}; path=/`;
 }
 
+function deleteCookie(name: string) {
+  document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+}
+
 interface TaskGroup {
   label: string;
   tasks: Task[];
@@ -72,22 +82,45 @@ interface TaskGroup {
 }
 
 const TasksDashboard: React.FC = () => {
+  const { isDemo, isDemoResolved } = useContext(DemoContext);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [applianceNames, setApplianceNames] = useState<Record<number, string>>(
     {},
   );
   const [quickLabel, setQuickLabel] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
-  const [sortOption, setSortOption] = useState<SortOption>(
-    () => (getCookie("hl_dashboard_sort") as SortOption) || "due_asc",
-  );
-  const [filterOption, setFilterOption] = useState<FilterOption>(
-    () => (getCookie("hl_dashboard_filter") as FilterOption) || "active",
-  );
+  const [sortOption, setSortOption] = useState<SortOption>("due_asc");
+  const [filterOption, setFilterOption] =
+    useState<FilterOption>("active");
   type GroupMode = "due" | "source" | "priority" | "none";
-  const [groupMode, setGroupMode] = useState<GroupMode>(
-    () => (getCookie("hl_dashboard_group_mode") as GroupMode) || "due",
-  );
+  const [groupMode, setGroupMode] = useState<GroupMode>("due");
+
+  useEffect(() => {
+    if (!isDemoResolved) return;
+
+    if (isDemo) {
+      deleteCookie("hl_dashboard_sort");
+      deleteCookie("hl_dashboard_filter");
+      deleteCookie("hl_dashboard_group_mode");
+      return;
+    }
+
+    startTransition(() => {
+      setSortOption(
+        (getCookie("hl_dashboard_sort") as SortOption) || "due_asc",
+      );
+      setFilterOption(
+        (getCookie("hl_dashboard_filter") as FilterOption) || "active",
+      );
+      setGroupMode(
+        (getCookie("hl_dashboard_group_mode") as GroupMode) || "due",
+      );
+    });
+  }, [isDemo, isDemoResolved]);
+
+  const persistCookie = (name: string, value: string) => {
+    if (isDemoResolved && !isDemo) setCookie(name, value);
+  };
 
   const fetchTasks = useCallback(async () => {
     try {
@@ -131,7 +164,7 @@ const TasksDashboard: React.FC = () => {
     fetchTasks();
     if (!updated.isRecurring && filterOption === "active") {
       setFilterOption("all");
-      setCookie("hl_dashboard_filter", "all");
+      persistCookie("hl_dashboard_filter", "all");
     }
   };
 
@@ -288,7 +321,7 @@ const TasksDashboard: React.FC = () => {
           value={filterOption}
           onChange={(e) => {
             setFilterOption(e.target.value as FilterOption);
-            setCookie("hl_dashboard_filter", e.target.value);
+            persistCookie("hl_dashboard_filter", e.target.value);
           }}
           aria-label="Filter tasks"
         >
@@ -307,7 +340,7 @@ const TasksDashboard: React.FC = () => {
           onChange={(e) => {
             const v = e.target.value as SortOption;
             setSortOption(v);
-            setCookie("hl_dashboard_sort", v);
+            persistCookie("hl_dashboard_sort", v);
           }}
           aria-label="Sort tasks"
         >
@@ -325,7 +358,7 @@ const TasksDashboard: React.FC = () => {
           onChange={(e) => {
             const v = e.target.value as GroupMode;
             setGroupMode(v);
-            setCookie("hl_dashboard_group_mode", v);
+            persistCookie("hl_dashboard_group_mode", v);
           }}
           aria-label="Group tasks"
         >
