@@ -141,8 +141,6 @@ const TaskForm: React.FC<TaskFormProps> = ({
             <Form.Label>Estimated Cost</Form.Label>
             <CurrencyInput
               currency={currency}
-              min="0"
-              step="0.01"
               value={estimatedCost}
               onChange={setEstimatedCost}
               placeholder="Optional"

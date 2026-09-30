@@ -211,8 +211,6 @@ const ShowRepairModal: React.FC<Props> = ({
               <Form.Label>Cost</Form.Label>
               <CurrencyInput
                 currency={currency}
-                min="0"
-                step="0.01"
                 value={editCost}
                 onChange={setEditCost}
               />

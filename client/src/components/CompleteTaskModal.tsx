@@ -148,8 +148,6 @@ const CompleteTaskModal: React.FC<CompleteTaskModalProps> = ({
               <Form.Label>Cost</Form.Label>
               <CurrencyInput
                 currency={currency}
-                min="0"
-                step="0.01"
                 value={cost}
                 onChange={setCost}
                 placeholder="0"
