@@ -1274,7 +1274,7 @@ func main() {
 	} else if _, err := strconv.Atoi(addr); err == nil {
 		addr = ":" + addr
 	}
-	fmt.Printf("\n\nStarting HomeLogger %s on port %s\n\n", version.Version, addr)
+	fmt.Printf("\nStarting HomeLogger %s on port %s\n\n", version.Version, addr)
 
 	// Start server in goroutine so we can handle signals and cleanup
 	serverErr := make(chan error, 1)
