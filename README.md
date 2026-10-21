@@ -142,7 +142,7 @@ Create `.env` at `server/` for server vars. Create `client/.env.local` for clien
 | `DB_DIALECT_LOCK_PATH` | `./data/db/.db_dialect` | No | Dialect lock file path |
 | `FORCE_DB_DIALECT_CHANGE` | — | No | Override dialect lock (advanced — see caution above). Set to `true` or `1` |
 | `DEMO_DB_PATH` | — | No | Override SQLite DB file path |
-| `DEMO_MODE` | — | No | Enable demo seed/reset. Set to `true` or `1`. SQLite only |
+| `DEMO_MODE` | — | No | Set to `true` to enable demo mode. SQLite only |
 | `DEMO_FILE_PATH` | — | No | Path to demo seed JSON |
 | `DB_HOST` | `localhost` | Conditional | Postgres host (when `DB_DIALECT=postgres` and no `DATABASE_URL`) |
 | `DB_PORT` | `5432` | Conditional | Postgres port |
