@@ -243,7 +243,7 @@ For questions or feedback, open an issue or discussion post in this repo. To pri
 
 Development is ongoing. Planned features include:
 
-- Planning/scheduling tools for seasonal maintenance and repairs
 - Report creation and export functionality
+- Reminders/Notifications
 - Much more to come. Also open to suggestions and contributions!
   - Please don't submit a PR for a major feature without discussing it first via an issue or discussion post.
