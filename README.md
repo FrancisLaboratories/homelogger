@@ -49,7 +49,7 @@ This repository contains a Go (Fiber + GORM) server with a built-in React SPA (s
 
 You have two options: run everything with Docker (recommended, no setup needed) or run locally if you want to make changes to the code.
 
-### Option 1: Docker (easiest)
+### Option 1: Docker Compose (easiest)
 
 You will need [Docker](https://docker.com) installed on your machine. Copy the contents of [example.docker-compose.yml](example.docker-compose.yml) into your `docker-compose.yml` file. 
 
