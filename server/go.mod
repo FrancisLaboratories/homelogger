@@ -1,6 +1,6 @@
 module github.com/masoncfrancis/homelogger/server
 
-go 1.26.0
+go 1.25.0
 
 require (
 	github.com/glebarez/sqlite v1.11.0
