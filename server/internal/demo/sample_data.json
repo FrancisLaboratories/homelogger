@@ -60,7 +60,7 @@
       "recurrenceUnit": "months",
       "recurrenceMode": "completion_date",
       "userID": "1",
-      "applianceIndex": 1
+      "applianceIndex": 0
     },
     {
       "label": "Clean washer door seal and lint trap",
@@ -682,6 +682,24 @@
       "notes": "Replaced 1-pole corroded breaker",
       "referenceType": "Space",
       "spaceType": "Electrical"
+    }
+  ],
+  "improvements": [
+    {
+      "description": "Install smart thermostat",
+      "date": "2024-05-14",
+      "cost": 280.0,
+      "notes": "Added programmable thermostat with remote sensors",
+      "referenceType": "Appliance",
+      "applianceIndex": 0
+    },
+    {
+      "description": "Upgrade patio lighting",
+      "date": "2023-08-20",
+      "cost": 175.0,
+      "notes": "Replaced fixtures with low-voltage LED lighting",
+      "referenceType": "Space",
+      "spaceType": "Yard"
     }
   ],
   "files": []

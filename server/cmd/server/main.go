@@ -33,6 +33,13 @@ var backupMu sync.Mutex
 var demoMu sync.Mutex
 var importing atomic.Bool
 
+const (
+	missingReferenceTypeQueryError = "Missing required query parameter: referenceType"
+	missingSpaceTypeQueryError     = "Missing required query parameter: spaceType for Space reference"
+	missingApplianceIDQueryError   = "Missing required query parameter: applianceId for Appliance reference"
+	invalidApplianceIDFormatError  = "Invalid applianceId format"
+)
+
 func main() {
 	if err := godotenv.Load(); err != nil && !os.IsNotExist(err) {
 		fmt.Fprintf(os.Stderr, "Error loading .env: %v\n", err)
@@ -398,12 +405,12 @@ func main() {
 		spaceType := c.Query("spaceType")
 
 		if referenceType == "" {
-			return c.Status(fiber.StatusBadRequest).SendString("Missing required query parameter: referenceType")
+			return c.Status(fiber.StatusBadRequest).SendString(missingReferenceTypeQueryError)
 		}
 
 		if referenceType == "Space" {
 			if spaceType == "" {
-				return c.Status(fiber.StatusBadRequest).SendString("Missing required query parameter: spaceType for Space reference")
+				return c.Status(fiber.StatusBadRequest).SendString(missingSpaceTypeQueryError)
 			}
 			maintenances, err := database.GetMaintenances(db, 0, referenceType, spaceType)
 			if err != nil {
@@ -413,12 +420,12 @@ func main() {
 		}
 
 		if applianceId == "" {
-			return c.Status(fiber.StatusBadRequest).SendString("Missing required query parameter: applianceId for Appliance reference")
+			return c.Status(fiber.StatusBadRequest).SendString(missingApplianceIDQueryError)
 		}
 
 		applianceIdUint, err := strconv.ParseUint(applianceId, 10, 32)
 		if err != nil {
-			return c.Status(fiber.StatusBadRequest).SendString("Invalid applianceId format")
+			return c.Status(fiber.StatusBadRequest).SendString(invalidApplianceIDFormatError)
 		}
 
 		maintenances, err := database.GetMaintenances(db, uint(applianceIdUint), referenceType, spaceType)
@@ -505,12 +512,12 @@ func main() {
 		spaceType := c.Query("spaceType")
 
 		if referenceType == "" {
-			return c.Status(fiber.StatusBadRequest).SendString("Missing required query parameter: referenceType")
+			return c.Status(fiber.StatusBadRequest).SendString(missingReferenceTypeQueryError)
 		}
 
 		if referenceType == "Space" {
 			if spaceType == "" {
-				return c.Status(fiber.StatusBadRequest).SendString("Missing required query parameter: spaceType for Space reference")
+				return c.Status(fiber.StatusBadRequest).SendString(missingSpaceTypeQueryError)
 			}
 			repairs, err := database.GetRepairs(db, 0, referenceType, spaceType)
 			if err != nil {
@@ -520,12 +527,12 @@ func main() {
 		}
 
 		if applianceId == "" {
-			return c.Status(fiber.StatusBadRequest).SendString("Missing required query parameter: applianceId for Appliance reference")
+			return c.Status(fiber.StatusBadRequest).SendString(missingApplianceIDQueryError)
 		}
 
 		applianceIdUint, err := strconv.ParseUint(applianceId, 10, 32)
 		if err != nil {
-			return c.Status(fiber.StatusBadRequest).SendString("Invalid applianceId format")
+			return c.Status(fiber.StatusBadRequest).SendString(invalidApplianceIDFormatError)
 		}
 
 		repairs, err := database.GetRepairs(db, uint(applianceIdUint), referenceType, spaceType)
@@ -598,6 +605,100 @@ func main() {
 		updated, err := database.UpdateRepair(db, uint(idUint), body.Description, body.Date, body.Cost, body.Notes)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).SendString("Error updating repair record: " + err.Error())
+		}
+		return c.JSON(updated)
+	})
+
+	// Improvement endpoints
+	api.Get("/improvement", func(c fiber.Ctx) error {
+		applianceID := c.Query("applianceId")
+		referenceType := c.Query("referenceType")
+		spaceType := c.Query("spaceType")
+		if referenceType == "" {
+			return c.Status(fiber.StatusBadRequest).SendString(missingReferenceTypeQueryError)
+		}
+		if referenceType == "Space" {
+			if spaceType == "" {
+				return c.Status(fiber.StatusBadRequest).SendString(missingSpaceTypeQueryError)
+			}
+			improvements, err := database.GetImprovements(db, 0, referenceType, spaceType)
+			if err != nil {
+				return c.Status(fiber.StatusInternalServerError).SendString("Error getting improvement records: " + err.Error())
+			}
+			return c.JSON(improvements)
+		}
+		if applianceID == "" {
+			return c.Status(fiber.StatusBadRequest).SendString(missingApplianceIDQueryError)
+		}
+		id, err := strconv.ParseUint(applianceID, 10, 32)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).SendString(invalidApplianceIDFormatError)
+		}
+		improvements, err := database.GetImprovements(db, uint(id), referenceType, spaceType)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).SendString("Error getting improvement records: " + err.Error())
+		}
+		return c.JSON(improvements)
+	})
+
+	api.Post("/improvement/add", func(c fiber.Ctx) error {
+		var body struct {
+			models.Improvement
+			AttachmentIDs []uint `json:"attachmentIds"`
+		}
+		if err := c.Bind().Body(&body); err != nil {
+			return c.Status(fiber.StatusBadRequest).SendString("Error parsing body: " + err.Error())
+		}
+		improvement, err := database.AddImprovement(db, &body.Improvement)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).SendString("Error adding improvement record: " + err.Error())
+		}
+		for _, fileID := range body.AttachmentIDs {
+			_ = database.AttachFileToImprovement(db, fileID, improvement.ID)
+		}
+		return c.Status(fiber.StatusCreated).JSON(improvement)
+	})
+
+	api.Get("/improvement/:id", func(c fiber.Ctx) error {
+		id, err := strconv.ParseUint(c.Params("id"), 10, 32)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).SendString("Invalid ID format")
+		}
+		improvement, err := database.GetImprovement(db, uint(id))
+		if err != nil {
+			return c.Status(fiber.StatusNotFound).SendString("Improvement record not found: " + err.Error())
+		}
+		return c.JSON(improvement)
+	})
+
+	api.Delete("/improvement/delete/:id", func(c fiber.Ctx) error {
+		id, err := strconv.ParseUint(c.Params("id"), 10, 32)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).SendString("Invalid ID format")
+		}
+		if err := database.DeleteImprovement(db, uint(id)); err != nil {
+			return c.Status(fiber.StatusInternalServerError).SendString("Error deleting improvement record: " + err.Error())
+		}
+		return c.SendStatus(fiber.StatusNoContent)
+	})
+
+	api.Put("/improvement/update/:id", func(c fiber.Ctx) error {
+		id, err := strconv.ParseUint(c.Params("id"), 10, 32)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).SendString("Invalid ID format")
+		}
+		var body struct {
+			Description string  `json:"description"`
+			Date        string  `json:"date"`
+			Cost        float64 `json:"cost"`
+			Notes       string  `json:"notes"`
+		}
+		if err := c.Bind().Body(&body); err != nil {
+			return c.Status(fiber.StatusBadRequest).SendString("Error parsing body: " + err.Error())
+		}
+		updated, err := database.UpdateImprovement(db, uint(id), body.Description, body.Date, body.Cost, body.Notes)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).SendString("Error updating improvement record: " + err.Error())
 		}
 		return c.JSON(updated)
 	})
@@ -714,6 +815,18 @@ func main() {
 		}
 
 		files, err := database.GetFilesByRepair(db, uint(idUint))
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).SendString("Error getting files: " + err.Error())
+		}
+		return c.JSON(files)
+	})
+
+	api.Get("/files/improvement/:id", func(c fiber.Ctx) error {
+		id, err := strconv.ParseUint(c.Params("id"), 10, 32)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).SendString("Invalid ID format")
+		}
+		files, err := database.GetFilesByImprovement(db, uint(id))
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).SendString("Error getting files: " + err.Error())
 		}
@@ -896,12 +1009,13 @@ func main() {
 		return c.SendString("Note deleted")
 	})
 
-	// Associate an existing uploaded file with a maintenance, repair, appliance, or space
+	// Associate an existing uploaded file with a maintenance, repair, improvement, appliance, or space
 	api.Post("/files/attach", func(c fiber.Ctx) error {
 		var body struct {
 			FileID        uint   `json:"fileId"`
 			MaintenanceID uint   `json:"maintenanceId"`
 			RepairID      uint   `json:"repairId"`
+			ImprovementID uint   `json:"improvementId"`
 			ApplianceID   uint   `json:"applianceId"`
 			SpaceType     string `json:"spaceType"`
 		}
@@ -916,6 +1030,11 @@ func main() {
 		}
 		if body.RepairID != 0 {
 			if err := database.AttachFileToRepair(db, body.FileID, body.RepairID); err != nil {
+				return c.Status(fiber.StatusInternalServerError).SendString("Error attaching file: " + err.Error())
+			}
+		}
+		if body.ImprovementID != 0 {
+			if err := database.AttachFileToImprovement(db, body.FileID, body.ImprovementID); err != nil {
 				return c.Status(fiber.StatusInternalServerError).SendString("Error attaching file: " + err.Error())
 			}
 		}
@@ -1120,7 +1239,7 @@ func main() {
 			return c.Status(fiber.StatusInternalServerError).SendString("Error completing task: " + err.Error())
 		}
 
-		// Optionally create a Maintenance or Repair record
+		// Optionally create a Maintenance, Repair, or Improvement record
 		if body.CreateRecord {
 			description := body.Description
 			if description == "" {
@@ -1150,6 +1269,19 @@ func main() {
 				}
 				if _, err := database.AddRepair(db, repair); err != nil {
 					return c.Status(fiber.StatusInternalServerError).SendString("Error creating repair record: " + err.Error())
+				}
+			} else if body.RecordType == "improvement" {
+				improvement := &models.Improvement{
+					Description:   description,
+					Date:          body.CompletionDate,
+					Cost:          body.Cost,
+					Notes:         "",
+					SpaceType:     spaceType,
+					ReferenceType: refType,
+					ApplianceID:   applianceId,
+				}
+				if _, err := database.AddImprovement(db, improvement); err != nil {
+					return c.Status(fiber.StatusInternalServerError).SendString("Error creating improvement record: " + err.Error())
 				}
 			} else {
 				maintenance := &models.Maintenance{

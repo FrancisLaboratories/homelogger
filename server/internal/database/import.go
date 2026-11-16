@@ -18,6 +18,7 @@ var tableDropOrder = []string{
 	"tasks",
 	"notes",
 	"saved_files",
+	"improvements",
 	"repairs",
 	"maintenances",
 	"appliances",
@@ -48,6 +49,7 @@ var tablesWithSequences = []string{
 	"tasks",
 	"notes",
 	"saved_files",
+	"improvements",
 	"repairs",
 	"maintenances",
 	"appliances",
@@ -199,6 +201,22 @@ func validatePayload(payload *models.BackupPayload) error {
 	}
 
 	seenIDs = make(map[uint]bool)
+	for i, e := range payload.Entities.Improvements {
+		if e.Description == "" {
+			return fmt.Errorf("improvement[%d].description: must not be empty", i)
+		}
+		if e.Date == "" {
+			return fmt.Errorf("improvement[%d].date: must not be empty", i)
+		}
+		if e.ID != 0 {
+			if seenIDs[e.ID] {
+				return fmt.Errorf("duplicate improvement ID: %d", e.ID)
+			}
+			seenIDs[e.ID] = true
+		}
+	}
+
+	seenIDs = make(map[uint]bool)
 	for i, e := range payload.Entities.SavedFiles {
 		if e.Path == "" {
 			return fmt.Errorf("savedFile[%d].path: must not be empty", i)
@@ -325,6 +343,9 @@ func ImportFromJSON(db *gorm.DB, payload *models.BackupPayload, uploadsDir strin
 			return err
 		}
 		if err := insertEach("Repair", func(i int) error { return tx.Create(&payload.Entities.Repairs[i]).Error }, len(payload.Entities.Repairs)); err != nil {
+			return err
+		}
+		if err := insertEach("Improvement", func(i int) error { return tx.Create(&payload.Entities.Improvements[i]).Error }, len(payload.Entities.Improvements)); err != nil {
 			return err
 		}
 		if err := insertEach("SavedFile", func(i int) error { return tx.Create(&payload.Entities.SavedFiles[i]).Error }, len(payload.Entities.SavedFiles)); err != nil {

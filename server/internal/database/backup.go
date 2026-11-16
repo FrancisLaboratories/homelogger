@@ -31,6 +31,9 @@ func ExportToJSON(db *gorm.DB, dbType string) (*models.BackupPayload, error) {
 	if err := db.Find(&payload.Entities.Repairs).Error; err != nil {
 		return nil, fmt.Errorf("fetch Repair: %w", err)
 	}
+	if err := db.Find(&payload.Entities.Improvements).Error; err != nil {
+		return nil, fmt.Errorf("fetch Improvement: %w", err)
+	}
 	if err := db.Find(&payload.Entities.SavedFiles).Error; err != nil {
 		return nil, fmt.Errorf("fetch SavedFile: %w", err)
 	}

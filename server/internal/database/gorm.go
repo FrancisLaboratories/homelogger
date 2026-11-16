@@ -231,7 +231,7 @@ func ConnectGorm() (*gorm.DB, error) {
 
 // MigrateGorm migrates the database
 func MigrateGorm(db *gorm.DB) error {
-	err := db.AutoMigrate(&models.Todo{}, &models.Appliance{}, &models.Maintenance{}, &models.Repair{}, &models.SavedFile{}, &models.Note{}, &models.Task{})
+	err := db.AutoMigrate(&models.Todo{}, &models.Appliance{}, &models.Maintenance{}, &models.Repair{}, &models.Improvement{}, &models.SavedFile{}, &models.Note{}, &models.Task{})
 	if err != nil {
 		return err
 	}

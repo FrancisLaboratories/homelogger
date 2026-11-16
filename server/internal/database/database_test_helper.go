@@ -82,6 +82,7 @@ func resetPostgresTestSchema(db *gorm.DB) error {
         "tasks",
         "notes",
         "saved_files",
+		"improvements",
         "repairs",
         "maintenances",
         "appliances",

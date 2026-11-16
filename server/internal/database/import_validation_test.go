@@ -110,6 +110,24 @@ func TestValidatePayload(t *testing.T) {
 		}
 	})
 
+	t.Run("improvement missing description", func(t *testing.T) {
+		p := validMinimalPayload()
+		p.Entities.Improvements = append(p.Entities.Improvements, models.Improvement{Date: "2026-01-01"})
+		err := validatePayload(p)
+		if err == nil {
+			t.Fatal("expected error for improvement with empty description")
+		}
+	})
+
+	t.Run("improvement missing date", func(t *testing.T) {
+		p := validMinimalPayload()
+		p.Entities.Improvements = append(p.Entities.Improvements, models.Improvement{Description: "Test"})
+		err := validatePayload(p)
+		if err == nil {
+			t.Fatal("expected error for improvement with empty date")
+		}
+	})
+
 	t.Run("savedFile missing path", func(t *testing.T) {
 		p := validMinimalPayload()
 		p.Entities.SavedFiles = append(p.Entities.SavedFiles, models.SavedFile{OriginalName: "f", UserID: "u"})
@@ -213,6 +231,18 @@ func TestValidatePayload_Duplicates(t *testing.T) {
 		err := validatePayload(p)
 		if err == nil {
 			t.Fatal("expected error for duplicate repair IDs")
+		}
+	})
+
+	t.Run("duplicate improvement IDs", func(t *testing.T) {
+		p := validMinimalPayload()
+		p.Entities.Improvements = []models.Improvement{
+			{Description: "A", Date: "2026-01-01", ID: 1},
+			{Description: "B", Date: "2026-01-02", ID: 1},
+		}
+		err := validatePayload(p)
+		if err == nil {
+			t.Fatal("expected error for duplicate improvement IDs")
 		}
 	})
 

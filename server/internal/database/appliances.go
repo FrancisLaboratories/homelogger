@@ -86,6 +86,19 @@ func DeleteAppliance(db *gorm.DB, id uint) error {
 		return err
 	}
 
+	var improvements []models.Improvement
+	if err := db.Select("id").Where("appliance_id = ?", id).Find(&improvements).Error; err != nil {
+		return err
+	}
+	for _, improvement := range improvements {
+		if err := DeleteFilesByImprovement(db, improvement.ID); err != nil {
+			return err
+		}
+	}
+	if err := db.Where("appliance_id = ?", id).Delete(&models.Improvement{}).Error; err != nil {
+		return err
+	}
+
 	// Finally delete the appliance
 	result := db.Where("id = ?", id).Delete(&models.Appliance{})
 	if result.Error != nil {

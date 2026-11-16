@@ -12,7 +12,7 @@ export type RepairRecord = {
   date: string;
   cost: number;
   notes: string;
-  resolved: boolean;
+  resolved?: boolean;
 };
 
 export type RepairReferenceType = "Appliance" | "Space";

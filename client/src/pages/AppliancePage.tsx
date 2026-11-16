@@ -4,6 +4,7 @@ import { Button, Card, Col, Row, Tab, Tabs } from "react-bootstrap";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import MaintenanceSection from "@/components/MaintenanceSection";
 import RepairSection from "@/components/RepairSection";
+import ImprovementSection from "@/components/ImprovementSection";
 import DocumentationSection from "@/components/DocumentationSection";
 import TasksSection from "@/components/TasksSection";
 import NotesSection from "@/components/NotesSection";
@@ -151,6 +152,9 @@ const AppliancePage: React.FC = () => {
           </Tab>
           <Tab eventKey="repairs" title="Repairs">
             <RepairSection applianceId={appliance.id} />
+          </Tab>
+          <Tab eventKey="improvements" title="Improvements">
+            <ImprovementSection applianceId={appliance.id} />
           </Tab>
           <Tab eventKey="documentation" title="Documentation">
             <DocumentationSection applianceId={appliance.id} />
