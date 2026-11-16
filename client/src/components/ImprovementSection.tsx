@@ -3,10 +3,7 @@ import { Card, Table } from "react-bootstrap";
 import { SERVER_URL } from "@/context/DemoContext";
 import AddRepairModal from "@/components/AddRepairModal";
 import ShowRepairModal from "@/components/ShowRepairModal";
-import type {
-  RepairRecord,
-  RepairSpaceType,
-} from "@/components/RepairSection";
+import type { RepairRecord, RepairSpaceType } from "@/components/RepairSection";
 import { useCurrency } from "@/context/useCurrency";
 import { formatCurrency } from "@/utils/currency";
 
@@ -107,15 +104,15 @@ const ImprovementSection: React.FC<ImprovementSectionProps> = ({
             role="button"
             aria-label="Add improvement"
           />
-          <div>Total Improvement Cost: {formatCurrency(totalCost, currency)}</div>
+          <div>
+            Total Improvement Cost: {formatCurrency(totalCost, currency)}
+          </div>
         </div>
       </Card.Body>
       <AddRepairModal
         show={showAdd}
         handleClose={() => setShowAdd(false)}
-        handleSave={(record) =>
-          setRecords((previous) => [...previous, record])
-        }
+        handleSave={(record) => setRecords((previous) => [...previous, record])}
         applianceId={applianceId}
         referenceType={spaceType ? "Space" : "Appliance"}
         spaceType={spaceType ?? "NotApplicable"}
