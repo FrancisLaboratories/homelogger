@@ -7,6 +7,8 @@ import (
 	"gorm.io/gorm"
 )
 
+const improvementIDPredicate = "improvement_id = ?"
+
 // FileInfoResponse represents the response structure for file information
 type FileInfoResponse struct {
 	ID           uint   `json:"id"`
@@ -125,7 +127,7 @@ func GetFilesByRepair(db *gorm.DB, repairID uint) ([]FileInfoResponse, error) {
 
 func GetFilesByImprovement(db *gorm.DB, improvementID uint) ([]FileInfoResponse, error) {
 	var files []models.SavedFile
-	result := db.Select("id", "original_name", "user_id").Where("improvement_id = ?", improvementID).Find(&files)
+	result := db.Select("id", "original_name", "user_id").Where(improvementIDPredicate, improvementID).Find(&files)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -180,7 +182,7 @@ func DeleteFilesByRepair(db *gorm.DB, repairID uint) error {
 
 func DeleteFilesByImprovement(db *gorm.DB, improvementID uint) error {
 	var files []models.SavedFile
-	result := db.Select("id", "path").Where("improvement_id = ?", improvementID).Find(&files)
+	result := db.Select("id", "path").Where(improvementIDPredicate, improvementID).Find(&files)
 	if result.Error != nil {
 		return result.Error
 	}
@@ -189,7 +191,7 @@ func DeleteFilesByImprovement(db *gorm.DB, improvementID uint) error {
 			_ = os.Remove(f.Path)
 		}
 	}
-	return db.Unscoped().Where("improvement_id = ?", improvementID).Delete(&models.SavedFile{}).Error
+	return db.Unscoped().Where(improvementIDPredicate, improvementID).Delete(&models.SavedFile{}).Error
 }
 
 // DeleteFilesByAppliance removes files on disk and deletes their DB rows for an appliance

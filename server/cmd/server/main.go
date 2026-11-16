@@ -33,6 +33,13 @@ var backupMu sync.Mutex
 var demoMu sync.Mutex
 var importing atomic.Bool
 
+const (
+	missingReferenceTypeQueryError = "Missing required query parameter: referenceType"
+	missingSpaceTypeQueryError     = "Missing required query parameter: spaceType for Space reference"
+	missingApplianceIDQueryError   = "Missing required query parameter: applianceId for Appliance reference"
+	invalidApplianceIDFormatError  = "Invalid applianceId format"
+)
+
 func main() {
 	if err := godotenv.Load(); err != nil && !os.IsNotExist(err) {
 		fmt.Fprintf(os.Stderr, "Error loading .env: %v\n", err)
@@ -398,12 +405,12 @@ func main() {
 		spaceType := c.Query("spaceType")
 
 		if referenceType == "" {
-			return c.Status(fiber.StatusBadRequest).SendString("Missing required query parameter: referenceType")
+			return c.Status(fiber.StatusBadRequest).SendString(missingReferenceTypeQueryError)
 		}
 
 		if referenceType == "Space" {
 			if spaceType == "" {
-				return c.Status(fiber.StatusBadRequest).SendString("Missing required query parameter: spaceType for Space reference")
+				return c.Status(fiber.StatusBadRequest).SendString(missingSpaceTypeQueryError)
 			}
 			maintenances, err := database.GetMaintenances(db, 0, referenceType, spaceType)
 			if err != nil {
@@ -413,12 +420,12 @@ func main() {
 		}
 
 		if applianceId == "" {
-			return c.Status(fiber.StatusBadRequest).SendString("Missing required query parameter: applianceId for Appliance reference")
+			return c.Status(fiber.StatusBadRequest).SendString(missingApplianceIDQueryError)
 		}
 
 		applianceIdUint, err := strconv.ParseUint(applianceId, 10, 32)
 		if err != nil {
-			return c.Status(fiber.StatusBadRequest).SendString("Invalid applianceId format")
+			return c.Status(fiber.StatusBadRequest).SendString(invalidApplianceIDFormatError)
 		}
 
 		maintenances, err := database.GetMaintenances(db, uint(applianceIdUint), referenceType, spaceType)
@@ -505,12 +512,12 @@ func main() {
 		spaceType := c.Query("spaceType")
 
 		if referenceType == "" {
-			return c.Status(fiber.StatusBadRequest).SendString("Missing required query parameter: referenceType")
+			return c.Status(fiber.StatusBadRequest).SendString(missingReferenceTypeQueryError)
 		}
 
 		if referenceType == "Space" {
 			if spaceType == "" {
-				return c.Status(fiber.StatusBadRequest).SendString("Missing required query parameter: spaceType for Space reference")
+				return c.Status(fiber.StatusBadRequest).SendString(missingSpaceTypeQueryError)
 			}
 			repairs, err := database.GetRepairs(db, 0, referenceType, spaceType)
 			if err != nil {
@@ -520,12 +527,12 @@ func main() {
 		}
 
 		if applianceId == "" {
-			return c.Status(fiber.StatusBadRequest).SendString("Missing required query parameter: applianceId for Appliance reference")
+			return c.Status(fiber.StatusBadRequest).SendString(missingApplianceIDQueryError)
 		}
 
 		applianceIdUint, err := strconv.ParseUint(applianceId, 10, 32)
 		if err != nil {
-			return c.Status(fiber.StatusBadRequest).SendString("Invalid applianceId format")
+			return c.Status(fiber.StatusBadRequest).SendString(invalidApplianceIDFormatError)
 		}
 
 		repairs, err := database.GetRepairs(db, uint(applianceIdUint), referenceType, spaceType)
@@ -608,11 +615,11 @@ func main() {
 		referenceType := c.Query("referenceType")
 		spaceType := c.Query("spaceType")
 		if referenceType == "" {
-			return c.Status(fiber.StatusBadRequest).SendString("Missing required query parameter: referenceType")
+			return c.Status(fiber.StatusBadRequest).SendString(missingReferenceTypeQueryError)
 		}
 		if referenceType == "Space" {
 			if spaceType == "" {
-				return c.Status(fiber.StatusBadRequest).SendString("Missing required query parameter: spaceType for Space reference")
+				return c.Status(fiber.StatusBadRequest).SendString(missingSpaceTypeQueryError)
 			}
 			improvements, err := database.GetImprovements(db, 0, referenceType, spaceType)
 			if err != nil {
@@ -621,11 +628,11 @@ func main() {
 			return c.JSON(improvements)
 		}
 		if applianceID == "" {
-			return c.Status(fiber.StatusBadRequest).SendString("Missing required query parameter: applianceId for Appliance reference")
+			return c.Status(fiber.StatusBadRequest).SendString(missingApplianceIDQueryError)
 		}
 		id, err := strconv.ParseUint(applianceID, 10, 32)
 		if err != nil {
-			return c.Status(fiber.StatusBadRequest).SendString("Invalid applianceId format")
+			return c.Status(fiber.StatusBadRequest).SendString(invalidApplianceIDFormatError)
 		}
 		improvements, err := database.GetImprovements(db, uint(id), referenceType, spaceType)
 		if err != nil {
