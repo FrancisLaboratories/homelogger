@@ -42,7 +42,7 @@ const ImprovementSection: React.FC<ImprovementSectionProps> = ({
         console.error("Error loading improvements:", error);
       }
     };
-    load();
+    void load();
   }, [applianceId, spaceType]);
 
   const handleUpdate = (updated: RepairRecord) => {
