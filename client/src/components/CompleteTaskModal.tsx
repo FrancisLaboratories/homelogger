@@ -22,7 +22,7 @@ const CompleteTaskModal: React.FC<CompleteTaskModalProps> = ({
   const today = new Date().toISOString().split("T")[0];
   const [completionDate, setCompletionDate] = useState(today);
   const [recordType, setRecordType] = useState<
-    "none" | "maintenance" | "repair"
+    "none" | "maintenance" | "repair" | "improvement"
   >("none");
   const [description, setDescription] = useState("");
   const [cost, setCost] = useState("");
@@ -130,6 +130,14 @@ const CompleteTaskModal: React.FC<CompleteTaskModalProps> = ({
               id="record-repair"
               checked={recordType === "repair"}
               onChange={() => setRecordType("repair")}
+            />
+            <Form.Check
+              inline
+              type="radio"
+              label="Improvement"
+              id="record-improvement"
+              checked={recordType === "improvement"}
+              onChange={() => setRecordType("improvement")}
             />
           </div>
         </Form.Group>

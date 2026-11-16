@@ -4,7 +4,7 @@ import (
 	"gorm.io/gorm"
 )
 
-// Task represents a planned maintenance or repair item with optional scheduling and recurrence.
+// Task represents a planned maintenance, repair, or improvement item with optional scheduling and recurrence.
 type Task struct {
 	gorm.Model
 	ID                 uint     `json:"id" gorm:"primaryKey"`

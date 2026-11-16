@@ -16,6 +16,7 @@ interface AddRepairModalProps {
   applianceId?: number;
   referenceType: RepairReferenceType;
   spaceType: RepairSpaceType;
+  recordKind?: "repair" | "improvement";
 }
 
 const AddRepairModal: React.FC<AddRepairModalProps> = ({
@@ -25,6 +26,7 @@ const AddRepairModal: React.FC<AddRepairModalProps> = ({
   applianceId,
   referenceType,
   spaceType,
+  recordKind = "repair",
 }) => {
   const { currency } = useCurrency();
   const [description, setDescription] = useState("");
@@ -111,7 +113,9 @@ const AddRepairModal: React.FC<AddRepairModalProps> = ({
     };
 
     try {
-      const response = await fetch(`${SERVER_URL}/repair/add`, {
+      const recordName =
+        recordKind === "improvement" ? "improvement" : "repair";
+      const response = await fetch(`${SERVER_URL}/${recordName}/add`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -120,7 +124,7 @@ const AddRepairModal: React.FC<AddRepairModalProps> = ({
       });
 
       if (!response.ok) {
-        throw new Error("Failed to add repair record");
+        throw new Error(`Failed to add ${recordName} record`);
       }
 
       const addedRepair = await response.json();
@@ -136,7 +140,9 @@ const AddRepairModal: React.FC<AddRepairModalProps> = ({
   return (
     <Modal show={show} onHide={handleClose}>
       <Modal.Header closeButton>
-        <Modal.Title>Add Repair Record</Modal.Title>
+        <Modal.Title>
+          Add {recordKind === "improvement" ? "Improvement" : "Repair"} Record
+        </Modal.Title>
       </Modal.Header>
       <Modal.Body>
         <Form>

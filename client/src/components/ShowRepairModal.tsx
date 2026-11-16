@@ -12,6 +12,7 @@ interface Props {
   repairRecord: RepairRecord;
   handleDeleteRepair: (id: number) => void;
   handleUpdateRepair?: (updated: RepairRecord) => void;
+  recordKind?: "repair" | "improvement";
 }
 
 interface AttachmentInfo {
@@ -25,7 +26,10 @@ const ShowRepairModal: React.FC<Props> = ({
   repairRecord,
   handleDeleteRepair,
   handleUpdateRepair,
+  recordKind = "repair",
 }) => {
+  const recordName = recordKind === "improvement" ? "improvement" : "repair";
+  const recordTitle = recordKind === "improvement" ? "Improvement" : "Repair";
   const { currency } = useCurrency();
   const [attachments, setAttachments] = useState<AttachmentInfo[]>([]);
   const [uploadMessage, setUploadMessage] = useState("");
@@ -44,7 +48,7 @@ const ShowRepairModal: React.FC<Props> = ({
     const loadAttachments = async () => {
       try {
         const resp = await fetch(
-          `${SERVER_URL}/files/repair/${repairRecord.id}`,
+          `${SERVER_URL}/files/${recordName}/${repairRecord.id}`,
         );
         if (!resp.ok) return;
         const data: Array<{ id: number; originalName: string }> =
@@ -57,7 +61,7 @@ const ShowRepairModal: React.FC<Props> = ({
       }
     };
     if (show) loadAttachments();
-  }, [show, repairRecord.id]);
+  }, [show, repairRecord.id, recordName]);
 
   useEffect(() => {
     if (show) {
@@ -104,7 +108,7 @@ const ShowRepairModal: React.FC<Props> = ({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             fileId: uploadData.id,
-            repairId: repairRecord.id,
+            [`${recordName}Id`]: repairRecord.id,
           }),
         });
         if (!attachResp.ok) throw new Error("Failed to attach file");
@@ -142,7 +146,7 @@ const ShowRepairModal: React.FC<Props> = ({
     setIsSaving(true);
     try {
       const res = await fetch(
-        `${SERVER_URL}/repair/update/${repairRecord.id}`,
+        `${SERVER_URL}/${recordName}/update/${repairRecord.id}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -169,21 +173,22 @@ const ShowRepairModal: React.FC<Props> = ({
     if (!window.confirm("Are you sure you want to delete this?")) return;
     try {
       const response = await fetch(
-        `${SERVER_URL}/repair/delete/${repairRecord.id}`,
+        `${SERVER_URL}/${recordName}/delete/${repairRecord.id}`,
         { method: "DELETE" },
       );
-      if (!response.ok) throw new Error("Failed to delete repair record");
+      if (!response.ok)
+        throw new Error(`Failed to delete ${recordName} record`);
       handleDeleteRepair(repairRecord.id);
       handleClose();
     } catch (error) {
-      console.error("Error deleting repair record:", error);
+      console.error(`Error deleting ${recordName} record:`, error);
     }
   };
 
   return (
     <Modal show={show} onHide={handleClose}>
       <Modal.Header closeButton>
-        <Modal.Title>Repair Record Details</Modal.Title>
+        <Modal.Title>{recordTitle} Record Details</Modal.Title>
       </Modal.Header>
       <Modal.Body>
         {saveError && (

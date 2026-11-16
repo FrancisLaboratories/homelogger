@@ -16,6 +16,7 @@ type Entities struct {
 	Tasks        []Task        `json:"tasks"`
 	Maintenance  []Maintenance `json:"maintenance"`
 	Repairs      []Repair      `json:"repairs"`
+	Improvements []Improvement `json:"improvements"`
 	SavedFiles   []SavedFile   `json:"savedFiles"`
 	Notes        []Note        `json:"notes"`
 	Todos        []Todo        `json:"todos"`
@@ -38,5 +39,3 @@ func (r *ImportResult) GetImportID() string {
 	}
 	return r.ImportID
 }
-
-

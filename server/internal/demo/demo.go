@@ -59,12 +59,22 @@ type DemoData struct {
         SpaceType     string  `json:"spaceType"`
         ApplianceIndex *int    `json:"applianceIndex,omitempty"`
     } `json:"repairs"`
+    Improvements []struct {
+        Description   string  `json:"description"`
+        Date          string  `json:"date"`
+        Cost          float64 `json:"cost"`
+        Notes         string  `json:"notes"`
+        ReferenceType string  `json:"referenceType"`
+        SpaceType     string  `json:"spaceType"`
+        ApplianceIndex *int    `json:"applianceIndex,omitempty"`
+    } `json:"improvements"`
     Files []struct {
         OriginalName  string `json:"originalName"`
         UserID        string `json:"userID"`
         ApplianceIndex *int   `json:"applianceIndex,omitempty"`
         MaintenanceIndex *int `json:"maintenanceIndex,omitempty"`
         RepairIndex    *int   `json:"repairIndex,omitempty"`
+        ImprovementIndex *int   `json:"improvementIndex,omitempty"`
         SpaceType      string `json:"spaceType,omitempty"`
     } `json:"files"`
 }
@@ -83,10 +93,10 @@ func shiftDateField(date *string, addYears int) {
 
 // shiftDates transforms all dates in demo data so they appear current.
 // Task dueDates spread across Aug 2026 – Jan 2027, with one overdue.
-// Maintenance and repair dates shift +1 year so all stay historical.
+// Maintenance, repair, and improvement dates shift +1 year so all stay historical.
 func (d *DemoData) shiftDates() {
     d.shiftTaskDates(time.Now())
-    d.shiftMaintRepairDates()
+    d.shiftRecordDates()
 }
 
 func (d *DemoData) shiftTaskDates(now time.Time) {
@@ -119,12 +129,15 @@ func (d *DemoData) shiftTaskDates(now time.Time) {
     }
 }
 
-func (d *DemoData) shiftMaintRepairDates() {
+func (d *DemoData) shiftRecordDates() {
     for i := range d.Maintenances {
         shiftDateField(&d.Maintenances[i].Date, 1)
     }
     for i := range d.Repairs {
         shiftDateField(&d.Repairs[i].Date, 1)
+    }
+    for i := range d.Improvements {
+        shiftDateField(&d.Improvements[i].Date, 1)
     }
 }
 
@@ -260,6 +273,33 @@ func Seed(db *gorm.DB, demoFilePath string) error {
         repairIDs = append(repairIDs, created.ID)
     }
 
+    improvementIDs := make([]uint, 0, len(d.Improvements))
+    for i, improvement := range d.Improvements {
+        var applianceID *uint
+        if improvement.ApplianceIndex != nil {
+            idx := *improvement.ApplianceIndex
+            if idx >= 0 && idx < len(applianceIDs) {
+                id := applianceIDs[idx]
+                applianceID = &id
+            }
+        }
+        record := &models.Improvement{
+            Description:   improvement.Description,
+            Date:          improvement.Date,
+            Cost:          improvement.Cost,
+            Notes:         improvement.Notes,
+            SpaceType:     improvement.SpaceType,
+            ReferenceType: improvement.ReferenceType,
+            ApplianceID:   applianceID,
+        }
+        created, err := database.AddImprovement(db, record)
+        if err != nil {
+            fmt.Printf("demo: error adding improvement %d: %v\n", i, err)
+            continue
+        }
+        improvementIDs = append(improvementIDs, created.ID)
+    }
+
     // files
     for i, f := range d.Files {
         sf := &models.SavedFile{OriginalName: f.OriginalName, UserID: f.UserID}
@@ -296,6 +336,12 @@ func Seed(db *gorm.DB, demoFilePath string) error {
             idx := *f.RepairIndex
             if idx >= 0 && idx < len(repairIDs) {
                 _ = database.AttachFileToRepair(db, created.ID, repairIDs[idx])
+            }
+        }
+        if f.ImprovementIndex != nil {
+            idx := *f.ImprovementIndex
+            if idx >= 0 && idx < len(improvementIDs) {
+                _ = database.AttachFileToImprovement(db, created.ID, improvementIDs[idx])
             }
         }
         if f.SpaceType != "" {

@@ -23,7 +23,7 @@ This repository contains a Go (Fiber + GORM) server with a built-in React SPA (s
 
 **Goals**
 
-- Track appliances, repairs and maintenance history
+- Track appliances, repairs, improvements, and maintenance history
 - Attach files (receipts/photos) to records
 - Provide a simple, local-first experience with optional Docker support
 

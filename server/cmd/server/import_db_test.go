@@ -28,6 +28,9 @@ func TestImportFromJSON_AllEntities(t *testing.T) {
 			Repairs: []models.Repair{
 				{Description: "Fix leak", Date: "2026-03-01"},
 			},
+			Improvements: []models.Improvement{
+				{Description: "Smart thermostat", Date: "2026-03-02"},
+			},
 			SavedFiles: []models.SavedFile{
 				{Path: "./data/uploads/1", OriginalName: "doc.pdf", UserID: "u1"},
 			},
@@ -46,7 +49,7 @@ func TestImportFromJSON_AllEntities(t *testing.T) {
 		t.Fatalf("import failed: %v", err)
 	}
 
-	expected := 10 // 2 + 2 + 1 + 1 + 1 + 1 + 2
+	expected := 11 // 2 + 2 + 1 + 1 + 1 + 1 + 1 + 2
 	if result.Inserted != expected {
 		t.Errorf("expected %d inserted records, got %d", expected, result.Inserted)
 	}
@@ -81,6 +84,14 @@ func TestImportFromJSON_AllEntities(t *testing.T) {
 	}
 	if len(repairs) != 1 {
 		t.Errorf("expected 1 repair, got %d", len(repairs))
+	}
+
+	var improvements []models.Improvement
+	if err := db.Find(&improvements).Error; err != nil {
+		t.Fatalf("query improvements: %v", err)
+	}
+	if len(improvements) != 1 {
+		t.Errorf("expected 1 improvement, got %d", len(improvements))
 	}
 
 	var savedFiles []models.SavedFile
@@ -191,5 +202,3 @@ func TestImportFromJSON_WipesExistingData(t *testing.T) {
 		t.Errorf("expected 'New Fridge', got %q", appliances[0].ApplianceName)
 	}
 }
-
-

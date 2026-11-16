@@ -79,6 +79,11 @@ func AttachFileToRepair(db *gorm.DB, fileID uint, repairID uint) error {
 	return nil
 }
 
+func AttachFileToImprovement(db *gorm.DB, fileID uint, improvementID uint) error {
+	result := db.Model(&models.SavedFile{}).Where("id = ?", fileID).Update("improvement_id", improvementID)
+	return result.Error
+}
+
 // DeleteFile deletes the file record by ID
 func DeleteFile(db *gorm.DB, id uint) error {
 	result := db.Unscoped().Where("id = ?", id).Delete(&models.SavedFile{})
@@ -111,6 +116,19 @@ func GetFilesByRepair(db *gorm.DB, repairID uint) ([]FileInfoResponse, error) {
 		return nil, result.Error
 	}
 
+	resp := make([]FileInfoResponse, 0, len(files))
+	for _, f := range files {
+		resp = append(resp, FileInfoResponse{ID: f.ID, OriginalName: f.OriginalName, UserID: f.UserID})
+	}
+	return resp, nil
+}
+
+func GetFilesByImprovement(db *gorm.DB, improvementID uint) ([]FileInfoResponse, error) {
+	var files []models.SavedFile
+	result := db.Select("id", "original_name", "user_id").Where("improvement_id = ?", improvementID).Find(&files)
+	if result.Error != nil {
+		return nil, result.Error
+	}
 	resp := make([]FileInfoResponse, 0, len(files))
 	for _, f := range files {
 		resp = append(resp, FileInfoResponse{ID: f.ID, OriginalName: f.OriginalName, UserID: f.UserID})
@@ -158,6 +176,20 @@ func DeleteFilesByRepair(db *gorm.DB, repairID uint) error {
 		return err
 	}
 	return nil
+}
+
+func DeleteFilesByImprovement(db *gorm.DB, improvementID uint) error {
+	var files []models.SavedFile
+	result := db.Select("id", "path").Where("improvement_id = ?", improvementID).Find(&files)
+	if result.Error != nil {
+		return result.Error
+	}
+	for _, f := range files {
+		if f.Path != "" {
+			_ = os.Remove(f.Path)
+		}
+	}
+	return db.Unscoped().Where("improvement_id = ?", improvementID).Delete(&models.SavedFile{}).Error
 }
 
 // DeleteFilesByAppliance removes files on disk and deletes their DB rows for an appliance

@@ -232,6 +232,20 @@ func TestSanitizeFKs(t *testing.T) {
 		}
 	})
 
+	t.Run("orphaned improvement FK on savedFile is nilled", func(t *testing.T) {
+		payload := &models.BackupPayload{
+			Entities: models.Entities{
+				SavedFiles: []models.SavedFile{
+					{ImprovementID: uintPtr(99)},
+				},
+			},
+		}
+		SanitizeFKs(payload)
+		if payload.Entities.SavedFiles[0].ImprovementID != nil {
+			t.Error("expected ImprovementID to be nil")
+		}
+	})
+
 	t.Run("orphaned appliance FK on note is nilled", func(t *testing.T) {
 		payload := &models.BackupPayload{
 			Entities: models.Entities{
@@ -260,5 +274,4 @@ func TestSanitizeFKs(t *testing.T) {
 		}
 	})
 }
-
 

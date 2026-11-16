@@ -3,6 +3,7 @@ import { Tab, Tabs } from "react-bootstrap";
 import MaintenanceSection from "@/components/MaintenanceSection";
 import type { MaintenanceSpaceType } from "@/components/MaintenanceSection";
 import RepairSection from "@/components/RepairSection";
+import ImprovementSection from "@/components/ImprovementSection";
 import DocumentationSection from "@/components/DocumentationSection";
 import TasksSection from "@/components/TasksSection";
 import NotesSection from "@/components/NotesSection";
@@ -22,6 +23,9 @@ const SpacePage: React.FC<Props> = ({ spaceType, title }) => {
         </Tab>
         <Tab eventKey="repair" title="Repairs">
           <RepairSection spaceType={spaceType} />
+        </Tab>
+        <Tab eventKey="improvements" title="Improvements">
+          <ImprovementSection spaceType={spaceType} />
         </Tab>
         <Tab eventKey="documents" title="Documents">
           <DocumentationSection spaceType={spaceType} />

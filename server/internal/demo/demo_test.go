@@ -86,6 +86,14 @@ func TestSeedLoadsSampleData(t *testing.T) {
     if len(rep) == 0 {
         t.Fatalf("expected repairs for appliance %d, got 0", aid)
     }
+
+    improvements, err := database.GetImprovements(db, aid, "Appliance", "")
+    if err != nil {
+        t.Fatalf("GetImprovements error: %v", err)
+    }
+    if len(improvements) == 0 {
+        t.Fatalf("expected improvements for appliance %d, got 0", aid)
+    }
 }
 
 type testTask struct {
@@ -103,8 +111,13 @@ type testRepair struct {
     Date        string
     Cost        float64
 }
+type testImprovement struct {
+	Description string
+	Date        string
+	Cost        float64
+}
 
-func demoDataFromFixtures(tasks []testTask, maintenances []testMaintenance, repairs []testRepair) DemoData {
+func demoDataFromFixtures(tasks []testTask, maintenances []testMaintenance, repairs []testRepair, improvements []testImprovement) DemoData {
     d := DemoData{}
     for _, tt := range tasks {
         st := tt
@@ -147,6 +160,18 @@ func demoDataFromFixtures(tasks []testTask, maintenances []testMaintenance, repa
             SpaceType     string  `json:"spaceType"`
             ApplianceIndex *int    `json:"applianceIndex,omitempty"`
         }{Description: sr.Description, Date: sr.Date, Cost: sr.Cost})
+    }
+    for _, it := range improvements {
+        si := it
+        d.Improvements = append(d.Improvements, struct {
+            Description    string  `json:"description"`
+            Date           string  `json:"date"`
+            Cost           float64 `json:"cost"`
+            Notes          string  `json:"notes"`
+            ReferenceType  string  `json:"referenceType"`
+            SpaceType      string  `json:"spaceType"`
+            ApplianceIndex *int    `json:"applianceIndex,omitempty"`
+        }{Description: si.Description, Date: si.Date, Cost: si.Cost})
     }
     return d
 }
@@ -251,6 +276,9 @@ func TestShiftDates(t *testing.T) {
         []testRepair{
             {Description: "Washer motor repair", Date: dateRep, Cost: 250},
         },
+        []testImprovement{
+            {Description: "Smart thermostat", Date: dateRep, Cost: 300},
+        },
     )
 
     d.shiftDates()
@@ -285,6 +313,12 @@ func TestShiftDates(t *testing.T) {
         repairOrig, _ := time.Parse("2006-01-02", dateRep)
         want := repairOrig.AddDate(1, 0, 0).Format("2006-01-02")
         verifyDateShift(t, "repair", d.Repairs[0].Date, want)
+    })
+
+    t.Run("improvement shifted +1 year", func(t *testing.T) {
+        improvementOrig, _ := time.Parse("2006-01-02", dateRep)
+        want := improvementOrig.AddDate(1, 0, 0).Format("2006-01-02")
+        verifyDateShift(t, "improvement", d.Improvements[0].Date, want)
     })
 
     t.Run("day clamping", func(t *testing.T) {

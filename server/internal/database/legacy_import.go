@@ -62,6 +62,12 @@ func ConvertLegacyDB(dbPath string) (*models.BackupPayload, error) {
 		}
 	}
 
+	if migrator.HasTable("improvements") {
+		if err := oldDB.Unscoped().Find(&payload.Entities.Improvements).Error; err != nil {
+			return nil, fmt.Errorf("read improvements: %w", err)
+		}
+	}
+
 	if migrator.HasTable("saved_files") {
 		if err := oldDB.Unscoped().Find(&payload.Entities.SavedFiles).Error; err != nil {
 			return nil, fmt.Errorf("read saved_files: %w", err)
@@ -103,6 +109,10 @@ func SanitizeFKs(payload *models.BackupPayload) {
 	for _, r := range payload.Entities.Repairs {
 		validRepairIDs[r.ID] = struct{}{}
 	}
+	validImprovementIDs := make(map[uint]struct{}, len(payload.Entities.Improvements))
+	for _, improvement := range payload.Entities.Improvements {
+		validImprovementIDs[improvement.ID] = struct{}{}
+	}
 
 	for i := range payload.Entities.Maintenance {
 		m := &payload.Entities.Maintenance[i]
@@ -132,6 +142,15 @@ func SanitizeFKs(payload *models.BackupPayload) {
 		}
 	}
 
+	for i := range payload.Entities.Improvements {
+		improvement := &payload.Entities.Improvements[i]
+		if improvement.ApplianceID != nil {
+			if _, ok := validApplianceIDs[*improvement.ApplianceID]; !ok {
+				improvement.ApplianceID = nil
+			}
+		}
+	}
+
 	for i := range payload.Entities.SavedFiles {
 		f := &payload.Entities.SavedFiles[i]
 		if f.ApplianceID != nil {
@@ -147,6 +166,11 @@ func SanitizeFKs(payload *models.BackupPayload) {
 		if f.RepairID != nil {
 			if _, ok := validRepairIDs[*f.RepairID]; !ok {
 				f.RepairID = nil
+			}
+		}
+		if f.ImprovementID != nil {
+			if _, ok := validImprovementIDs[*f.ImprovementID]; !ok {
+				f.ImprovementID = nil
 			}
 		}
 	}
