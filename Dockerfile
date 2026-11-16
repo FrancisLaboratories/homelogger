@@ -1,5 +1,5 @@
 # Stage 1: Build the Next.js app
-FROM node:24-alpine AS client-builder
+FROM node:26-alpine AS client-builder
 
 WORKDIR /client
 
