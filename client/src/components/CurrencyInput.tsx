@@ -59,7 +59,7 @@ const CurrencyInput: React.FC<CurrencyInputProps> = ({
 }) => {
   const [isFocused, setIsFocused] = useState(false);
   const [displayValue, setDisplayValue] = useState(value);
-  const inputRef = useRef<HTMLInputElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const handleBlur = () => {
     const rawValue = displayValue.trim();
@@ -88,7 +88,7 @@ const CurrencyInput: React.FC<CurrencyInputProps> = ({
         onFocus={() => {
           setIsFocused(true);
           setDisplayValue(formatInputValue(value, currency));
-          inputRef?.current?.select()
+          inputRef?.current?.select();
         }}
         onChange={(event) => {
           setDisplayValue(event.target.value);
