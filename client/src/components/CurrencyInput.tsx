@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Form, InputGroup } from "react-bootstrap";
 import { getFractionDigits } from "@/utils/currency";
 
@@ -59,6 +59,7 @@ const CurrencyInput: React.FC<CurrencyInputProps> = ({
 }) => {
   const [isFocused, setIsFocused] = useState(false);
   const [displayValue, setDisplayValue] = useState(value);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const handleBlur = () => {
     const rawValue = displayValue.trim();
@@ -79,6 +80,7 @@ const CurrencyInput: React.FC<CurrencyInputProps> = ({
     <InputGroup>
       <InputGroup.Text>{currency}</InputGroup.Text>
       <Form.Control
+        ref={inputRef}
         type="text"
         inputMode="decimal"
         value={isFocused ? displayValue : formatInputValue(value, currency)}
@@ -86,6 +88,7 @@ const CurrencyInput: React.FC<CurrencyInputProps> = ({
         onFocus={() => {
           setIsFocused(true);
           setDisplayValue(formatInputValue(value, currency));
+          inputRef?.current?.select();
         }}
         onChange={(event) => {
           setDisplayValue(event.target.value);
